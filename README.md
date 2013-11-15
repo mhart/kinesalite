@@ -11,4 +11,4 @@ focussed on correctness and performance, and built on LevelDB
 TODO
 ----
 
-* Everything
+* Everything (so far only stream creation, deletion and listing is done)
