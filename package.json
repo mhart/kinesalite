@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "description": "A mock implementation of Amazon's Kinesis built on LevelDB",
   "main": "index.js",
+  "bin": "cli.js",
   "repository": "mhart/kinesis-mock",
   "keywords": [
     "kinesis",
@@ -15,5 +16,15 @@
     "logging"
   ],
   "author": "Michael Hart <michael.hart.au@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "once": "~1.3.0",
+    "buffer-crc32": "~0.2.1",
+    "async": "~0.2.9",
+    "lazy": "~1.0.11",
+    "memdown": "~0.5.1",
+    "levelup": "~0.17.0",
+    "level-sublevel": "~5.1.1",
+    "level-delete-stream": "0.0.1"
+  }
 }
