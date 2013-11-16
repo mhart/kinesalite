@@ -1,13 +1,14 @@
 {
-  "name": "kinesis-mock",
+  "name": "kinesilite",
   "version": "0.0.1",
   "description": "A mock implementation of Amazon's Kinesis built on LevelDB",
   "main": "index.js",
   "bin": "cli.js",
-  "repository": "mhart/kinesis-mock",
+  "repository": "mhart/kinesilite",
   "keywords": [
     "kinesis",
     "mock",
+    "kinesis-mock",
     "test",
     "stream",
     "streaming",

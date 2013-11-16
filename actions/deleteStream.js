@@ -28,7 +28,6 @@ module.exports = function deleteStream(data, cb) {
         if (err) return cb(err)
 
         setTimeout(function() {
-          // TODO: Delete records too
           metaDb.del(key, function(err) {
             // TODO: Need to check this
             if (err) console.error(err)

@@ -9,7 +9,7 @@ var validApis = ['Kinesis_20130901'],
     validOperations = ['CreateStream', 'DeleteStream', 'DescribeStream', 'GetNextRecords',
       'GetShardIterator', 'ListStreams', 'MergeShards', 'PutRecord', 'SplitShard']
 
-module.exports = function kinesisMock(options) {
+module.exports = function kinesilite(options) {
   return http.createServer(httpHandler)
 }
 
@@ -190,5 +190,5 @@ function httpHandler(req, res) {
   })
 }
 
-if (require.main === module) kinesisMock().listen(4567)
+if (require.main === module) kinesilite().listen(4567)
 
