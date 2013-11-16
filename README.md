@@ -37,6 +37,7 @@ server.listen(4567, function(err) {
 Done
 ----
 
+* All validations
 * CreateStream
 * DeleteStream
 * DescribeStream

@@ -250,8 +250,8 @@ function validate(predicate, msg, data, parent, key, errors) {
 
 function validateStreamName(key, val) {
   if (val == null) return
-  if (val.length < 3 || val.length > 255)
-    return key + ' must be at least 3 characters long and at most 255 characters long'
+  if (val.length < 1 || val.length > 128)
+    return key + ' must be at least 1 characters long and at most 128 characters long'
 }
 
 function toLowerFirst(str) {
