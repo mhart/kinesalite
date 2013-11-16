@@ -1,7 +1,7 @@
-Kinesilite (formerly kinesis-mock)
+Kinesalite (formerly kinesis-mock)
 ----------------------------------
 
-[![Build Status](https://secure.travis-ci.org/mhart/kinesilite.png?branch=master)](http://travis-ci.org/mhart/kinesilite)
+[![Build Status](https://secure.travis-ci.org/mhart/kinesalite.png?branch=master)](http://travis-ci.org/mhart/kinesalite)
 
 A mock implementation of [Amazon's Kinesis](http://docs.aws.amazon.com/kinesis/latest/APIReference/),
 focussed on correctness and performance, and built on LevelDB
@@ -16,21 +16,21 @@ Example
 -------
 
 ```sh
-$ PORT=8000 kinesilite
+$ PORT=8000 kinesalite
 ```
 
 Or programmatically:
 
 ```js
-var kinesilite = require('kinesilite')
+var kinesalite = require('kinesalite')
 
 // Returns a standard Node.js HTTP server
-var server = kinesilite()
+var server = kinesalite()
 
 // Listen on port 4567
 server.listen(4567, function(err) {
   if (err) throw err
-  console.log('Kinesilite started on port 4567')
+  console.log('Kinesalite started on port 4567')
 })
 ```
 
