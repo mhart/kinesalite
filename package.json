@@ -26,7 +26,6 @@
     "lazy": "~1.0.11",
     "memdown": "~0.5.1",
     "levelup": "~0.17.0",
-    "level-sublevel": "~5.1.1",
-    "level-delete-stream": "0.0.1"
+    "level-sublevel": "~5.1.1"
   }
 }

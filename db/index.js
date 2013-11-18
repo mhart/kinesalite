@@ -32,7 +32,9 @@ function getStreamDb(name) {
 function deleteStreamDb(name, cb) {
   var streamDb = streamDbs[name] || db.sublevel('stream-' + name, {valueEncoding: 'json'})
   delete streamDbs[name]
-  itemDb.createKeyStream().pipe(deleteStream(db, cb))
+  lazyStream(streamDb.createKeyStream(), cb).join(function(keys) {
+    streamDb.batch(keys.map(function(key) { return {type: 'del', key: key} }), cb)
+  })
 }
 
 function getStream(name, checkStatus, cb) {

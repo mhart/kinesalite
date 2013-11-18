@@ -1,6 +1,6 @@
 exports.types = {
   Data: {
-    type: 'String',
+    type: 'Blob',
     required: true,
     lengthLessThanOrEqual: 51200,
   },
