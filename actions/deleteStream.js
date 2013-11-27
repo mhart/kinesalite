@@ -1,11 +1,9 @@
-var db = require('../db'),
-    metaDb = db.metaDb
 
-module.exports = function deleteStream(data, cb) {
+module.exports = function deleteStream(store, data, cb) {
 
-  var key = data.StreamName
+  var key = data.StreamName, metaDb = store.metaDb
 
-  db.getStream(key, false, function(err, stream) {
+  store.getStream(key, false, function(err, stream) {
     if (err) return cb(err)
 
     // Check if stream is ACTIVE or not?
@@ -24,7 +22,7 @@ module.exports = function deleteStream(data, cb) {
     metaDb.put(key, stream, function(err) {
       if (err) return cb(err)
 
-      db.deleteStreamDb(key, function(err) {
+      store.deleteStreamDb(key, function(err) {
         if (err) return cb(err)
 
         setTimeout(function() {
@@ -32,7 +30,7 @@ module.exports = function deleteStream(data, cb) {
             // TODO: Need to check this
             if (err) console.error(err)
           })
-        }, db.deleteStreamMs)
+        }, store.deleteStreamMs)
 
         cb()
       })

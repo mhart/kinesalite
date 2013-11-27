@@ -1,9 +1,7 @@
-var db = require('../db'),
-    metaDb = db.metaDb
 
-module.exports = function createStream(data, cb) {
+module.exports = function createStream(store, data, cb) {
 
-  var key = data.StreamName
+  var key = data.StreamName, metaDb = store.metaDb
 
   metaDb.lock(key, function(release) {
     cb = release(cb)
@@ -57,7 +55,7 @@ module.exports = function createStream(data, cb) {
             if (err) console.error(err)
           })
 
-        }, db.createStreamMs)
+        }, store.createStreamMs)
 
         cb()
       })

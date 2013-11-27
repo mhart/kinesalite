@@ -1,17 +1,28 @@
 var http = require('http'),
     crypto = require('crypto'),
     crc32 = require('buffer-crc32'),
-    validations = require('./validations')
+    validations = require('./validations'),
+    db = require('./db')
 
 var MAX_REQUEST_BYTES = 8 * 1024 * 1024
 
 var validApis = ['Kinesis_20130901'],
     validOperations = ['CreateStream', 'DeleteStream', 'DescribeStream', 'GetNextRecords',
-      'GetShardIterator', 'ListStreams', 'MergeShards', 'PutRecord', 'SplitShard']
+      'GetShardIterator', 'ListStreams', 'MergeShards', 'PutRecord', 'SplitShard'],
+    actions = {},
+    actionValidations = {}
 
-module.exports = function kinesalite(options) {
-  return http.createServer(httpHandler)
+module.exports = kinesalite
+
+function kinesalite(options) {
+  return http.createServer(httpHandler.bind(null, db.create(options)))
 }
+
+validOperations.forEach(function(action) {
+  action = validations.toLowerFirst(action)
+  actions[action] = require('./actions/' + action)
+  actionValidations[action] = require('./validations/' + action)
+})
 
 function rand52CharId(cb) {
   // 39 bytes turns into 52 base64 characters
@@ -35,7 +46,7 @@ function sendData(req, res, data, statusCode) {
   res.end(body)
 }
 
-function httpHandler(req, res) {
+function httpHandler(store, req, res) {
   var body
   req.on('error', function(err) { throw err })
   req.on('data', function(data) {
@@ -171,17 +182,16 @@ function httpHandler(req, res) {
       if (!body)
         return sendData(req, res, {__type: 'com.amazon.coral.service#SerializationException'}, 400)
 
-      var actionValidations = require('./validations/' + action)
+      var actionValidation = actionValidations[action]
       try {
-        data = validations.checkTypes(data, actionValidations.types)
-        validations.checkValidations(data, actionValidations.types, actionValidations.custom, target[1])
+        data = validations.checkTypes(data, actionValidation.types)
+        validations.checkValidations(data, actionValidation.types, actionValidation.custom, target[1])
       } catch (e) {
         if (e.statusCode) return sendData(req, res, e.body, e.statusCode)
         throw e
       }
 
-      var action = require('./actions/' + action)
-      action(data, function(err, data) {
+      actions[action](store, data, function(err, data) {
         if (err && err.statusCode) return sendData(req, res, err.body, err.statusCode)
         if (err) throw err
         sendData(req, res, data)

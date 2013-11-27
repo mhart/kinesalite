@@ -1,15 +1,14 @@
 var once = require('once'),
-    db = require('../db'),
-    metaDb = db.metaDb
+    db = require('../db')
 
-module.exports = function listStreams(data, cb) {
+module.exports = function listStreams(store, data, cb) {
   cb = once(cb)
   var opts, keys
 
   if (data.ExclusiveStartStreamName)
     opts = {start: data.ExclusiveStartStreamName + '\x00'}
 
-  keys = db.lazy(metaDb.createKeyStream(opts), cb)
+  keys = db.lazy(store.metaDb.createKeyStream(opts), cb)
 
   if (data.Limit) keys = keys.take(data.Limit)
 

@@ -16,22 +16,44 @@ Example
 -------
 
 ```sh
-$ PORT=8000 kinesalite
+$ kinesalite --help
+
+Usage: kinesalite [--port <port>] [--path <path>] [options]
+
+A mock Kinesis http server, optionally backed by LevelDB
+
+Options:
+--help                 Display this help message and exit
+--port <port>          The port to listen on (default: 4567)
+--path <path>          The path to use for the LevelDB store (in-memory by default)
+--createStreamMs <ms>  Amount of time streams stay in CREATING state (default: 500)
+--deleteStreamMs <ms>  Amount of time streams stay in DELETING state (default: 500)
+--updateStreamMs <ms>  Amount of time streams stay in UPDATING state (default: 500)
+
+Report bugs at github.com/mhart/kinesalite/issues
 ```
 
 Or programmatically:
 
 ```js
-var kinesalite = require('kinesalite')
-
 // Returns a standard Node.js HTTP server
-var server = kinesalite()
+var kinesalite = require('kinesalite'),
+    kinesaliteServer = kinesalite({path: './mydb', createStreamMs: 50})
 
 // Listen on port 4567
-server.listen(4567, function(err) {
+kinesaliteServer.listen(4567, function(err) {
   if (err) throw err
   console.log('Kinesalite started on port 4567')
 })
+```
+
+Installation
+------------
+
+With [npm](http://npmjs.org/) do:
+
+```sh
+$ npm install -g kinesalite
 ```
 
 Done

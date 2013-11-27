@@ -25,7 +25,12 @@
     "async": "~0.2.9",
     "lazy": "~1.0.11",
     "memdown": "~0.5.1",
-    "levelup": "~0.17.0",
-    "level-sublevel": "~5.1.1"
+    "levelup": "~0.18.2",
+    "level-sublevel": "~5.1.1",
+    "lock": "~0.0.4",
+    "minimist": "~0.0.5"
+  },
+  "optionalDependencies": {
+    "leveldown": "~0.10.0"
   }
 }

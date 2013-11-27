@@ -1,8 +1,7 @@
-var db = require('../db')
 
-module.exports = function describeStream(data, cb) {
+module.exports = function describeStream(store, data, cb) {
 
-  db.getStream(data.StreamName, false, function(err, stream) {
+  store.getStream(data.StreamName, false, function(err, stream) {
     if (err) return cb(err)
 
     cb(null, {StreamDescription: stream})
