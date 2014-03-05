@@ -20,7 +20,7 @@ function checkTypes(data, types) {
     var err = new Error(msg)
     err.statusCode = 400
     err.body = {
-      __type: 'com.amazon.coral.service#SerializationException',
+      __type: 'SerializationException',
       Message: msg,
     }
     return err
@@ -151,7 +151,7 @@ function checkValidations(data, validations, custom, target) {
     var err = new Error(msg)
     err.statusCode = 400
     err.body = {
-      __type: 'com.amazon.coral.validate#ValidationException',
+      __type: 'ValidationException',
       message: msg,
     }
     return err

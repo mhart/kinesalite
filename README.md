@@ -68,7 +68,7 @@ Done
 TODO
 ----
 
-* GetNextRecords
+* GetRecords
 * GetShardIterator
 * PutRecord
 * MergeShards

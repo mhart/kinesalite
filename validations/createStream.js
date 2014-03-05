@@ -1,14 +1,15 @@
 exports.types = {
   ShardCount: {
-    type: 'Long',
-    required: true,
+    type: 'Integer',
+    notNull: true,
     greaterThanOrEqual: 1,
   },
   StreamName: {
     type: 'String',
-    required: true,
-    streamName: true,
+    notNull: true,
     regex: '[a-zA-Z0-9_.-]+',
+    lengthGreaterThanOrEqual: 1,
+    lengthLessThanOrEqual: 128,
   },
 }
 

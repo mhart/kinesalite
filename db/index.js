@@ -21,6 +21,9 @@ function create(options) {
 
   metaDb.lock = new Lock()
 
+  // XXX: Is there a better way to get this?
+  metaDb.awsAccountId = (process.env.AWS_ACCOUNT_ID || '0000-0000-0000').replace(/[^\d]/g, '')
+
   function getStreamDb(name) {
     if (!streamDbs[name]) {
       streamDbs[name] = db.sublevel('stream-' + name, {valueEncoding: 'json'})
@@ -49,10 +52,10 @@ function create(options) {
         if (err.name == 'NotFoundError') {
           err.statusCode = 400
           err.body = {
-            __type: 'com.amazonaws.kinesis.v20130901#ResourceNotFoundException',
-            message: 'Requested resource not found',
+            __type: 'ResourceNotFoundException',
+            message: 'Stream ' + name + ' under account ' + metaDb.awsAccountId + ' not found.',
           }
-          if (!checkStatus) err.body.message += ': Stream: ' + name + ' not found'
+          //if (!checkStatus) err.body.message += ': Stream: ' + name + ' not found'
         }
         return cb(err)
       }
@@ -82,7 +85,7 @@ function validationError(msg) {
   var err = new Error(msg)
   err.statusCode = 400
   err.body = {
-    __type: 'com.amazon.coral.validate#ValidationException',
+    __type: 'ValidationException',
     message: msg,
   }
   return err

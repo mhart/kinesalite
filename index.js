@@ -1,4 +1,5 @@
-var http = require('http'),
+var https = require('https'),
+    fs = require('fs'),
     crypto = require('crypto'),
     crc32 = require('buffer-crc32'),
     validations = require('./validations'),
@@ -6,8 +7,8 @@ var http = require('http'),
 
 var MAX_REQUEST_BYTES = 8 * 1024 * 1024
 
-var validApis = ['Kinesis_20130901'],
-    validOperations = ['CreateStream', 'DeleteStream', 'DescribeStream', 'GetNextRecords',
+var validApis = ['Kinesis_20131202'],
+    validOperations = ['CreateStream', 'DeleteStream', 'DescribeStream', 'GetRecords',
       'GetShardIterator', 'ListStreams', 'MergeShards', 'PutRecord', 'SplitShard'],
     actions = {},
     actionValidations = {}
@@ -15,7 +16,10 @@ var validApis = ['Kinesis_20130901'],
 module.exports = kinesalite
 
 function kinesalite(options) {
-  return http.createServer(httpHandler.bind(null, db.create(options)))
+  options = options || {}
+  options.key = options.key || fs.readFileSync(__dirname + '/key.pem')
+  options.cert = options.cert || fs.readFileSync(__dirname + '/cert.pem')
+  return https.createServer(options, httpHandler.bind(null, db.create(options)))
 }
 
 validOperations.forEach(function(action) {
@@ -90,7 +94,7 @@ function httpHandler(store, req, res) {
         try {
           data = JSON.parse(body)
         } catch (e) {
-          return sendData(req, res, {__type: 'com.amazon.coral.service#SerializationException'}, 400)
+          return sendData(req, res, {__type: 'SerializationException'}, 400)
         }
       }
 
@@ -170,7 +174,7 @@ function httpHandler(store, req, res) {
       // THEN check types (note different capitalization for Message and poor grammar for a/an):
 
       // THEN validation checks (note different service):
-      // {"__type":"com.amazon.coral.validate#ValidationException","message":"3 validation errors detected: \
+      // {"__type":"ValidationException","message":"3 validation errors detected: \
       // Value \'2147483647\' at \'limit\' failed to satisfy constraint: \
       // Member must have value less than or equal to 100; \
       // Value \'89hls;;f;d\' at \'exclusiveStartTableName\' failed to satisfy constraint: \
@@ -180,7 +184,7 @@ function httpHandler(store, req, res) {
 
       // For some reason, the serialization checks seem to be a bit out of sync
       if (!body)
-        return sendData(req, res, {__type: 'com.amazon.coral.service#SerializationException'}, 400)
+        return sendData(req, res, {__type: 'SerializationException'}, 400)
 
       var actionValidation = actionValidations[action]
       try {

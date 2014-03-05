@@ -1,9 +1,10 @@
 exports.types = {
   StreamName: {
     type: 'String',
-    required: true,
-    streamName: true,
+    notNull: true,
     regex: '[a-zA-Z0-9_.-]+',
+    lengthGreaterThanOrEqual: 1,
+    lengthLessThanOrEqual: 128,
   },
 }
 
