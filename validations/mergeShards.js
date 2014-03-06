@@ -1,21 +1,24 @@
 exports.types = {
-  AdjacentShardToMerge: {
+  ShardToMerge: {
     type: 'String',
-    required: true,
+    notNull: true,
+    regex: '[a-zA-Z0-9_.-]+',
     lengthGreaterThanOrEqual: 1,
     lengthLessThanOrEqual: 128,
   },
-  ShardToMerge: {
+  AdjacentShardToMerge: {
     type: 'String',
-    required: true,
+    notNull: true,
+    regex: '[a-zA-Z0-9_.-]+',
     lengthGreaterThanOrEqual: 1,
     lengthLessThanOrEqual: 128,
   },
   StreamName: {
     type: 'String',
-    required: true,
-    streamName: true,
+    notNull: true,
     regex: '[a-zA-Z0-9_.-]+',
+    lengthGreaterThanOrEqual: 1,
+    lengthLessThanOrEqual: 128,
   },
 }
 

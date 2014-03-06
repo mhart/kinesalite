@@ -6,7 +6,7 @@ exports.types = {
   },
   ShardIterator: {
     type: 'String',
-    required: true,
+    notNull: true,
     lengthGreaterThanOrEqual: 1,
     lengthLessThanOrEqual: 512,
   },

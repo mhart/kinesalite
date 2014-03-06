@@ -21,6 +21,7 @@ exports.assertValidation = assertValidation
 exports.assertNotFound = assertNotFound
 exports.assertInUse = assertInUse
 exports.assertLimitExceeded = assertLimitExceeded
+exports.assertInvalidArgument = assertInvalidArgument
 exports.randomString = randomString
 exports.randomName = randomName
 exports.waitUntilActive = waitUntilActive
@@ -243,6 +244,18 @@ function assertLimitExceeded(target, data, msg, done) {
     res.statusCode.should.equal(400)
     res.body.should.eql({
       __type: 'LimitExceededException',
+      message: msg,
+    })
+    done()
+  })
+}
+
+function assertInvalidArgument(target, data, msg, done) {
+  request(opts(target, data), function(err, res) {
+    if (err) return done(err)
+    res.statusCode.should.equal(400)
+    res.body.should.eql({
+      __type: 'InvalidArgumentException',
       message: msg,
     })
     done()

@@ -1,27 +1,28 @@
 exports.types = {
-  Data: {
-    type: 'Blob',
-    required: true,
-    lengthLessThanOrEqual: 51200,
-  },
-  ExclusiveMinimumSequenceNumber: {
+  SequenceNumberForOrdering: {
     type: 'String',
-    lengthGreaterThanOrEqual: 1,
-  },
-  ExplicitHashKey: {
-    type: 'String',
-    lengthGreaterThanOrEqual: 1,
+    regex: '0|([1-9]\\d{0,128})',
   },
   PartitionKey: {
     type: 'String',
+    notNull: true,
     lengthGreaterThanOrEqual: 1,
-    lengthLessThanOrEqual: 256,
+  },
+  Data: {
+    type: 'Blob',
+    notNull: true,
+    lengthLessThanOrEqual: 51200,
+  },
+  ExplicitHashKey: {
+    type: 'String',
+    regex: '0|([1-9]\\d{0,38})',
   },
   StreamName: {
     type: 'String',
-    required: true,
-    streamName: true,
+    notNull: true,
     regex: '[a-zA-Z0-9_.-]+',
+    lengthGreaterThanOrEqual: 1,
+    lengthLessThanOrEqual: 128,
   },
 }
 
