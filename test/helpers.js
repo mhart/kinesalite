@@ -6,10 +6,10 @@ var https = require('https'),
 
 var port = 10000 + Math.round(Math.random() * 10000),
     requestOpts = process.env.REMOTE ?
-      {host: 'kinesis.us-east-1.amazonaws.com', method: 'POST'} : {host: 'localhost', port: port, method: 'POST'}
+      {host: 'kinesis.us-east-1.amazonaws.com', method: 'POST'} :
+      {host: 'localhost', port: port, method: 'POST', rejectUnauthorized: false}
 
 https.globalAgent.maxSockets = Infinity
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
 exports.version = 'Kinesis_20131202'
 exports.prefix = '__kinesalite_test_'

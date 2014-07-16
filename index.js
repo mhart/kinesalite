@@ -19,6 +19,9 @@ function kinesalite(options) {
   options = options || {}
   options.key = options.key || fs.readFileSync(__dirname + '/key.pem')
   options.cert = options.cert || fs.readFileSync(__dirname + '/cert.pem')
+  options.ca = options.ca || fs.readFileSync(__dirname + '/ca.pem')
+  options.requestCert = true
+  options.rejectUnauthorized = false
   return https.createServer(options, httpHandler.bind(null, db.create(options)))
 }
 
