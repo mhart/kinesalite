@@ -9,7 +9,7 @@ var MAX_REQUEST_BYTES = 8 * 1024 * 1024
 
 var validApis = ['Kinesis_20131202'],
     validOperations = ['CreateStream', 'DeleteStream', 'DescribeStream', 'GetRecords',
-      'GetShardIterator', 'ListStreams', 'MergeShards', 'PutRecord', 'SplitShard'],
+      'GetShardIterator', 'ListStreams', 'MergeShards', 'PutRecord', 'PutRecords', 'SplitShard'],
     actions = {},
     actionValidations = {}
 
