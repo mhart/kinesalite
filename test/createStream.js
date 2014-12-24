@@ -58,8 +58,8 @@ describe('createStream', function() {
         'This request would exceed the shard limit for the account ' + helpers.awsAccountId + ' in us-east-1. ' +
         'Current shard count for the account: 0. Limit: 10. ' +
         'Number of additional shards that would have resulted from this request: 1000. ' +
-        'Shard limit increases can be requested by submitting a case to the AWS Support Center at ' +
-        'https://aws.amazon.com/support/createCase?type=service_limit_increase&serviceLimitIncreaseType=kinesis-limits.', done)
+        'Refer to the AWS Service Limits page (http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) ' +
+        'for current limits and how to request higher limits.', done)
     })
 
   })

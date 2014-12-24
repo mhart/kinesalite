@@ -74,8 +74,11 @@ describe('getShardIterator', function() {
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {
       var name1 = helpers.randomString(), name2 = helpers.randomString()
-      assertNotFound({StreamName: name1, ShardId: name2, StartingSequenceNumber: '0', ShardIteratorType: 'LATEST'},
-        'Shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + ' does not exist', done)
+      assertNotFound({StreamName: name1, ShardId: name2, StartingSequenceNumber: '0', ShardIteratorType: 'LATEST'}, [
+        'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.',
+        'Shard shardId-' + ('000000000000' + name2).slice(-12) + ' in stream ' + name1 + ' under account ' +
+          helpers.awsAccountId + ' does not exist',
+      ], done)
     })
 
   })

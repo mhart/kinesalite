@@ -6,8 +6,8 @@ module.exports = function getShardIterator(store, data, cb) {
   store.getStream(data.StreamName, false, function(err, stream) {
     if (err) {
       if (err.name == 'NotFoundError' && err.body) {
-        err.body.message = 'Shard ' + data.ShardId + ' in stream ' + data.StreamName +
-          ' under account ' + metaDb.awsAccountId + ' does not exist'
+        err.body.message = 'Could not find shard ' + data.ShardId + ' in stream ' + data.StreamName +
+          ' under account ' + metaDb.awsAccountId + '.'
       }
       return cb(err)
     }

@@ -215,13 +215,12 @@ function assertValidation(target, data, msg, done) {
 }
 
 function assertNotFound(target, data, msg, done) {
+  if (!Array.isArray(msg)) msg = [msg]
   request(opts(target, data), function(err, res) {
     if (err) return done(err)
     res.statusCode.should.equal(400)
-    res.body.should.eql({
-      __type: 'ResourceNotFoundException',
-      message: msg,
-    })
+    res.body.__type.should.equal('ResourceNotFoundException')
+    msg.should.containEql(res.body.message)
     done()
   })
 }

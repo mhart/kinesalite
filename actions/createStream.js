@@ -28,9 +28,9 @@ module.exports = function createStream(store, data, cb) {
           __type: 'LimitExceededException',
           message: 'This request would exceed the shard limit for the account ' + metaDb.awsAccountId + ' in us-east-1. ' +
             'Current shard count for the account: 0. Limit: 10. Number of additional shards that would have ' +
-            'resulted from this request: ' + data.ShardCount + '. Shard limit increases can be requested by ' +
-            'submitting a case to the AWS Support Center at https://aws.amazon.com/support/createCase?' +
-            'type=service_limit_increase&serviceLimitIncreaseType=kinesis-limits.',
+            'resulted from this request: ' + data.ShardCount + '. Refer to the AWS Service Limits page ' +
+            '(http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) ' +
+            'for current limits and how to request higher limits.',
         }
         return cb(err)
       }
