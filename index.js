@@ -8,8 +8,9 @@ var https = require('https'),
 var MAX_REQUEST_BYTES = 7 * 1024 * 1024
 
 var validApis = ['Kinesis_20131202'],
-    validOperations = ['CreateStream', 'DeleteStream', 'DescribeStream', 'GetRecords',
-      'GetShardIterator', 'ListStreams', 'MergeShards', 'PutRecord', 'PutRecords', 'SplitShard'],
+    validOperations = ['AddTagsToStream', 'CreateStream', 'DeleteStream', 'DescribeStream', 'GetRecords',
+      'GetShardIterator', 'ListStreams', 'ListTagsForStream', 'MergeShards', 'PutRecord', 'PutRecords',
+      'RemoveTagsFromStream', 'SplitShard'],
     actions = {},
     actionValidations = {}
 
