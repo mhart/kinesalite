@@ -26,11 +26,18 @@ exports.randomString = randomString
 exports.randomName = randomName
 exports.waitUntilActive = waitUntilActive
 exports.waitUntilDeleted = waitUntilDeleted
+exports.testStream = randomName()
+// For testing:
+//exports.testStream = '__kinesalite_test_1'
 
 var kinesaliteServer = kinesalite({path: process.env.KINESALITE_PATH})
 
 before(function(done) {
-  kinesaliteServer.listen(port, done)
+  this.timeout(200000)
+  kinesaliteServer.listen(port, function(err) {
+    if (err) return done(err)
+    createTestStreams(done)
+  })
   // TODO: Resolve account ID - can be found from a DeleteStream request with bogus name
   exports.awsAccountId = (process.env.AWS_ACCOUNT_ID || '0000-0000-0000').replace(/[^\d]/g, '')
 })
@@ -261,11 +268,28 @@ function assertInvalidArgument(target, data, msg, done) {
   })
 }
 
+function createTestStreams(done) {
+  var streams = [{
+    StreamName: exports.testStream,
+    ShardCount: 3,
+  }]
+  async.forEach(streams, createAndWait, done)
+}
+
 function deleteTestStreams(done) {
   request(opts('ListStreams', {}), function(err, res) {
     if (err) return done(err)
     var names = res.body.StreamNames.filter(function(name) { return name.indexOf(exports.prefix) === 0 })
     async.forEach(names, deleteAndWait, done)
+  })
+}
+
+function createAndWait(stream, done) {
+  request(opts('CreateStream', stream), function(err, res) {
+    if (err) return done(err)
+    if (res.body.__type)
+      return done(new Error(res.body.__type + ': ' + res.body.message))
+    setTimeout(waitUntilActive, 1000, stream.StreamName, done)
   })
 }
 

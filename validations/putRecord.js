@@ -7,6 +7,7 @@ exports.types = {
     type: 'String',
     notNull: true,
     lengthGreaterThanOrEqual: 1,
+    lengthLessThanOrEqual: 256,
   },
   Data: {
     type: 'Blob',

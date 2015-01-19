@@ -202,7 +202,7 @@ function checkValidations(data, validations, custom, target) {
         checkNonRequireds(data, validations.children, (parent ? parent + '.' : '') + toLowerFirst(attr))
         continue
       }
-      validateFns[validation](parent, attr, validations[validation], data, errors)
+      validateFns[validation](parent, attr, validations[validation], data, validations.type, errors)
     }
   }
 
@@ -216,33 +216,33 @@ function checkValidations(data, validations, custom, target) {
 }
 
 var validateFns = {}
-validateFns.notNull = function(parent, key, val, data, errors) {
-  validate(data != null, 'Member must not be null', data, parent, key, errors)
+validateFns.notNull = function(parent, key, val, data, type, errors) {
+  validate(data != null, 'Member must not be null', data, type, parent, key, errors)
 }
-validateFns.greaterThanOrEqual = function(parent, key, val, data, errors) {
-  validate(data >= val, 'Member must have value greater than or equal to ' + val, data, parent, key, errors)
+validateFns.greaterThanOrEqual = function(parent, key, val, data, type, errors) {
+  validate(data >= val, 'Member must have value greater than or equal to ' + val, data, type, parent, key, errors)
 }
-validateFns.lessThanOrEqual = function(parent, key, val, data, errors) {
-  validate(data <= val, 'Member must have value less than or equal to ' + val, data, parent, key, errors)
+validateFns.lessThanOrEqual = function(parent, key, val, data, type, errors) {
+  validate(data <= val, 'Member must have value less than or equal to ' + val, data, type, parent, key, errors)
 }
-validateFns.regex = function(parent, key, pattern, data, errors) {
-  validate(RegExp('^' + pattern + '$').test(data), 'Member must satisfy regular expression pattern: ' + pattern, data, parent, key, errors)
+validateFns.regex = function(parent, key, pattern, data, type, errors) {
+  validate(RegExp('^' + pattern + '$').test(data), 'Member must satisfy regular expression pattern: ' + pattern, data, type, parent, key, errors)
 }
-validateFns.lengthGreaterThanOrEqual = function(parent, key, val, data, errors) {
+validateFns.lengthGreaterThanOrEqual = function(parent, key, val, data, type, errors) {
   var length = (typeof data == 'object' && !Array.isArray(data)) ? Object.keys(data).length : data.length
-  validate(length >= val, 'Member must have length greater than or equal to ' + val, data, parent, key, errors)
+  validate(length >= val, 'Member must have length greater than or equal to ' + val, data, type, parent, key, errors)
 }
-validateFns.lengthLessThanOrEqual = function(parent, key, val, data, errors) {
+validateFns.lengthLessThanOrEqual = function(parent, key, val, data, type, errors) {
   var length = (typeof data == 'object' && !Array.isArray(data)) ? Object.keys(data).length : data.length
-  validate(length <= val, 'Member must have length less than or equal to ' + val, data, parent, key, errors)
+  validate(length <= val, 'Member must have length less than or equal to ' + val, data, type, parent, key, errors)
 }
-validateFns.enum = function(parent, key, val, data, errors) {
-  validate(~val.indexOf(data), 'Member must satisfy enum value set: [' + val.join(', ') + ']', data, parent, key, errors)
+validateFns.enum = function(parent, key, val, data, type, errors) {
+  validate(~val.indexOf(data), 'Member must satisfy enum value set: [' + val.join(', ') + ']', data, type, parent, key, errors)
 }
 
-function validate(predicate, msg, data, parent, key, errors) {
+function validate(predicate, msg, data, type, parent, key, errors) {
   if (predicate) return
-  var value = valueStr(data)
+  var value = valueStr(data, type)
   if (value != 'null') value = '\'' + value + '\''
   parent = parent ? parent + '.' : ''
   errors.push('Value ' + value + ' at \'' + parent + toLowerFirst(key) + '\' failed to satisfy constraint: ' + msg)
@@ -258,7 +258,10 @@ function toLowerFirst(str) {
   return str[0].toLowerCase() + str.slice(1)
 }
 
-function valueStr(data) {
-  return data == null ? 'null' : Array.isArray(data) ? '[' + data.join(', ') + ']' : typeof data == 'object' ? JSON.stringify(data) : data
+function valueStr(data, type) {
+  return data == null ? 'null' : type == 'Blob' ?
+    'java.nio.HeapByteBuffer[pos=0 lim=' + new Buffer(data, 'base64').length + ' cap=' + new Buffer(data, 'base64').length + ']' :
+      Array.isArray(data) ? '[' + data.join(', ') + ']' :
+        typeof data == 'object' ? JSON.stringify(data) : data
 }
 

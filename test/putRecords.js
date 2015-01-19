@@ -84,3 +84,4 @@ describe('putRecords', function() {
 
 })
 
+// In PutRecords, a block of SequenceNumbers is reserved for each shard, eg Shard 0: 1-100, 1: 101-200, 2: 201-300

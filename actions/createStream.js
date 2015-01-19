@@ -63,6 +63,7 @@ module.exports = function createStream(store, data, cb) {
           StreamARN: 'arn:aws:kinesis:us-east-1:' + metaDb.awsAccountId + ':stream/' + data.StreamName,
           StreamName: data.StreamName,
           StreamStatus: 'CREATING',
+          _seqIx: 0, // Hidden data, remove when returning
         }
 
         metaDb.put(key, data, function(err) {
