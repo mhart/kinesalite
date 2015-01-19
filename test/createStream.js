@@ -1,4 +1,5 @@
 var should = require('should'),
+    BigNumber = require('bignumber.js'),
     helpers = require('./helpers')
 
 var target = 'CreateStream',
@@ -56,7 +57,7 @@ describe('createStream', function() {
     it('should return LimitExceededException for large ShardCount', function(done) {
       assertLimitExceeded({StreamName: randomName(), ShardCount: 1000},
         'This request would exceed the shard limit for the account ' + helpers.awsAccountId + ' in us-east-1. ' +
-        'Current shard count for the account: 0. Limit: 10. ' +
+        'Current shard count for the account: 3. Limit: 10. ' +
         'Number of additional shards that would have resulted from this request: 1000. ' +
         'Refer to the AWS Service Limits page (http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) ' +
         'for current limits and how to request higher limits.', done)
@@ -66,12 +67,14 @@ describe('createStream', function() {
 
   describe('functionality', function() {
 
-    it('should create a basic 2-shard stream', function(done) {
+    it('should create a basic 3-shard stream', function(done) {
       this.timeout(100000)
-      var stream = {StreamName: randomName(), ShardCount: 2}
+      var stream = {StreamName: randomName(), ShardCount: 3}
       request(opts(stream), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
+
+        var createdAt = Date.now()
 
         res.body.should.equal('')
 
@@ -89,35 +92,36 @@ describe('createStream', function() {
             if (err) return done(err)
 
             res.body.StreamDescription.StreamStatus.should.equal('ACTIVE')
-            res.body.StreamDescription.Shards.should.have.length(2)
+            res.body.StreamDescription.Shards.should.have.length(3)
 
             res.body.StreamDescription.Shards[0].ShardId.should.equal('shardId-000000000000')
             res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber.should.have.length(56)
             res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d+$/)
             res.body.StreamDescription.Shards[0].HashKeyRange.StartingHashKey.should.equal('0')
-            res.body.StreamDescription.Shards[0].HashKeyRange.EndingHashKey.should.equal('170141183460469231731687303715884105727')
+            res.body.StreamDescription.Shards[0].HashKeyRange.EndingHashKey.should.equal('113427455640312821154458202477256070484')
 
             res.body.StreamDescription.Shards[1].ShardId.should.equal('shardId-000000000001')
             res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber.should.have.length(56)
             res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d+$/)
-            res.body.StreamDescription.Shards[1].HashKeyRange.StartingHashKey.should.equal('170141183460469231731687303715884105728')
-            res.body.StreamDescription.Shards[1].HashKeyRange.EndingHashKey.should.equal('340282366920938463463374607431768211455')
+            res.body.StreamDescription.Shards[1].HashKeyRange.StartingHashKey.should.equal('113427455640312821154458202477256070485')
+            res.body.StreamDescription.Shards[1].HashKeyRange.EndingHashKey.should.equal('226854911280625642308916404954512140969')
 
-            // Eg, for shard index 1 of a total of 3
-            // Big.RM = 0 (round down)
-            // Big('340282366920938463463374607431768211456').div(3).times(1).toFixed(0) to
-            // Big('340282366920938463463374607431768211456').div(3).times(2).minus(1).toFixed(0)
+            res.body.StreamDescription.Shards[2].ShardId.should.equal('shardId-000000000002')
+            res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber.should.have.length(56)
+            res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d+$/)
+            res.body.StreamDescription.Shards[2].HashKeyRange.StartingHashKey.should.equal('226854911280625642308916404954512140970')
+            res.body.StreamDescription.Shards[2].HashKeyRange.EndingHashKey.should.equal('340282366920938463463374607431768211455')
 
-            // Eg hash ranges for 3 shards:
-            // shard 0: 0 - 113427455640312821154458202477256070484
-            // shard 1: 113427455640312821154458202477256070485 - 226854911280625642308916404954512140969
-            // shard 2: 226854911280625642308916404954512140970 - 340282366920938463463374607431768211455
+            var startSeq0 = BigNumber(res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber),
+              startSeq1 = BigNumber(res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber),
+              startSeq2 = BigNumber(res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber)
 
-            // Eg hash ranges for 4 shards:
-            // shard 0: 0 - 85070591730234615865843651857942052863
-            // shard 1: 85070591730234615865843651857942052864 - 170141183460469231731687303715884105727
-            // shard 2: 170141183460469231731687303715884105728 - 255211775190703847597530955573826158591
-            // shard 3: 255211775190703847597530955573826158592 - 340282366920938463463374607431768211455
+            startSeq1.minus(startSeq0).toFixed().should.equal('22300745198530623141535718272648361505980432')
+            startSeq2.minus(startSeq1).toFixed().should.equal('22300745198530623141535718272648361505980432')
+
+            var startDiff = parseInt(startSeq0.toString(16).slice(2, 10), 16) - (createdAt / 1000)
+            startDiff.should.be.lessThan(-2)
+            startDiff.should.be.greaterThan(-6)
 
             done()
           })
