@@ -9,14 +9,14 @@ exports.types = {
     lengthGreaterThanOrEqual: 1,
     lengthLessThanOrEqual: 256,
   },
+  ExplicitHashKey: {
+    type: 'String',
+    regex: '0|([1-9]\\d{0,38})',
+  },
   Data: {
     type: 'Blob',
     notNull: true,
     lengthLessThanOrEqual: 51200,
-  },
-  ExplicitHashKey: {
-    type: 'String',
-    regex: '0|([1-9]\\d{0,38})',
   },
   StreamName: {
     type: 'String',

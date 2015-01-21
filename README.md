@@ -65,11 +65,11 @@ Done
 * DescribeStream
 * ListStreams
 * PutRecord
+* PutRecords
 
 TODO
 ----
 
-* PutRecords
 * GetRecords
 * GetShardIterator
 * MergeShards

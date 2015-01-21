@@ -1,8 +1,6 @@
 var BigNumber = require('bignumber.js'),
     db = require('../db')
 
-var seqIx = 0
-
 module.exports = function putRecord(store, data, cb) {
 
   var key = data.StreamName, metaDb = store.metaDb, streamDb = store.getStreamDb(data.StreamName)
@@ -61,19 +59,22 @@ module.exports = function putRecord(store, data, cb) {
             hashKey.cmp(stream.Shards[i].HashKeyRange.EndingHashKey) <= 0) {
           shardIx = i
           shardId = stream.Shards[i].ShardId
-          streamCreateTime = db.parseSequence(stream.Shards[i].SequenceNumberRange.StartingSequenceNumber).streamCreateTime
+          streamCreateTime = db.parseSequence(
+            stream.Shards[i].SequenceNumberRange.StartingSequenceNumber).streamCreateTime
           break
         }
       }
 
+      var seqIxIx = Math.floor(shardIx / 5)
+
       var seqNum = db.stringifySequence({
         streamCreateTime: streamCreateTime,
         shardIx: shardIx,
-        seqIx: stream._seqIx,
+        seqIx: stream._seqIx[seqIxIx],
         seqTime: Date.now(),
       })
 
-      stream._seqIx++
+      stream._seqIx[seqIxIx]++
 
       metaDb.put(key, stream, function(err) {
         if (err) return cb(err)

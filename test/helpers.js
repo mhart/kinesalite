@@ -2,6 +2,7 @@ var https = require('https'),
     aws4 = require('aws4'),
     async = require('async'),
     once = require('once'),
+    BigNumber = require('bignumber.js'),
     kinesalite = require('..')
 
 var port = 10000 + Math.round(Math.random() * 10000),
@@ -22,6 +23,7 @@ exports.assertNotFound = assertNotFound
 exports.assertInUse = assertInUse
 exports.assertLimitExceeded = assertLimitExceeded
 exports.assertInvalidArgument = assertInvalidArgument
+exports.assertSequenceNumber = assertSequenceNumber
 exports.randomString = randomString
 exports.randomName = randomName
 exports.waitUntilActive = waitUntilActive
@@ -37,6 +39,7 @@ before(function(done) {
   kinesaliteServer.listen(port, function(err) {
     if (err) return done(err)
     createTestStreams(done)
+    //done()
   })
   // TODO: Resolve account ID - can be found from a DeleteStream request with bogus name
   exports.awsAccountId = (process.env.AWS_ACCOUNT_ID || '0000-0000-0000').replace(/[^\d]/g, '')
@@ -268,6 +271,14 @@ function assertInvalidArgument(target, data, msg, done) {
   })
 }
 
+function assertSequenceNumber(seqNum, shardIx, timestamp) {
+  var hex = BigNumber(seqNum).toString(16)
+  hex.should.match(new RegExp('^20[0-9a-f]{8}' + shardIx + '[0-9a-f]{16}000[0-9a-f]{8}0000000' + shardIx + '2$'))
+  parseInt(hex.slice(2, 10), 16).should.be.within(new Date('2015-01-01') / 1000, Date.now() / 1000 - 2)
+  parseInt(hex.slice(11, 27), 16).should.be.greaterThan(-1)
+  parseInt(hex.slice(30, 38), 16).should.be.within(Math.floor(timestamp / 1000) - 3, Date.now() / 1000)
+}
+
 function createTestStreams(done) {
   var streams = [{
     StreamName: exports.testStream,
@@ -325,5 +336,4 @@ function waitUntilDeleted(name, done) {
     setTimeout(waitUntilDeleted, 1000, name, done)
   })
 }
-
 

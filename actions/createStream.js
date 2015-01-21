@@ -41,7 +41,7 @@ module.exports = function createStream(store, data, cb) {
         }
 
         var i, shards = new Array(data.ShardCount), shardHash = POW_128.div(data.ShardCount).floor(),
-          createTime = Date.now() - SEQ_ADJUST_MS
+          createTime = Date.now() - SEQ_ADJUST_MS, seqIx = new Array(Math.ceil(data.ShardCount / 5))
         for (i = 0; i < data.ShardCount; i++) {
           shards[i] = {
             //ParentShardId: '',
@@ -56,6 +56,7 @@ module.exports = function createStream(store, data, cb) {
             },
             ShardId: 'shardId-' + ('00000000000' + i).slice(-12)
           }
+          seqIx[i / 5] = 0
         }
         data = {
           HasMoreShards: false,
@@ -63,7 +64,7 @@ module.exports = function createStream(store, data, cb) {
           StreamARN: 'arn:aws:kinesis:us-east-1:' + metaDb.awsAccountId + ':stream/' + data.StreamName,
           StreamName: data.StreamName,
           StreamStatus: 'CREATING',
-          _seqIx: 0, // Hidden data, remove when returning
+          _seqIx: seqIx, // Hidden data, remove when returning
         }
 
         metaDb.put(key, data, function(err) {

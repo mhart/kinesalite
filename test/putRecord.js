@@ -4,7 +4,6 @@ var should = require('should'),
 
 var target = 'PutRecord',
     request = helpers.request,
-    randomName = helpers.randomName,
     opts = helpers.opts.bind(null, target),
     assertType = helpers.assertType.bind(null, target),
     assertValidation = helpers.assertValidation.bind(null, target),
@@ -68,10 +67,12 @@ describe('putRecord ', function() {
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a'), name2 = new Array(257 + 1).join('a'),
         data = new Buffer(51201).toString('base64')
-      assertValidation({StreamName: name, PartitionKey: name2, Data: data},
-        '3 validation errors detected: ' +
+      assertValidation({StreamName: name, PartitionKey: name2, Data: data, ExplicitHashKey: ''},
+        '4 validation errors detected: ' +
         'Value \'' + name2 + '\' at \'partitionKey\' failed to satisfy constraint: ' +
         'Member must have length less than or equal to 256; ' +
+        'Value \'\' at \'explicitHashKey\' failed to satisfy constraint: ' +
+        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,38}); ' +
         'Value \'java.nio.HeapByteBuffer[pos=0 lim=51201 cap=51201]\' at \'data\' failed to satisfy constraint: ' +
         'Member must have length less than or equal to 51200; ' +
         'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
@@ -169,7 +170,7 @@ describe('putRecord ', function() {
         if (err) return done(err)
         res.statusCode.should.equal(200)
         res.body.ShardId.should.equal('shardId-000000000000')
-        validateSequenceNumber(res.body.SequenceNumber, 0, now)
+        helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
         done()
       })
     })
@@ -180,7 +181,7 @@ describe('putRecord ', function() {
         if (err) return done(err)
         res.statusCode.should.equal(200)
         res.body.ShardId.should.equal('shardId-000000000002')
-        validateSequenceNumber(res.body.SequenceNumber, 2, now)
+        helpers.assertSequenceNumber(res.body.SequenceNumber, 2, now)
         done()
       })
     })
@@ -191,7 +192,7 @@ describe('putRecord ', function() {
         if (err) return done(err)
         res.statusCode.should.equal(200)
         res.body.ShardId.should.equal('shardId-000000000001')
-        validateSequenceNumber(res.body.SequenceNumber, 1, now)
+        helpers.assertSequenceNumber(res.body.SequenceNumber, 1, now)
         done()
       })
     })
@@ -202,7 +203,7 @@ describe('putRecord ', function() {
         if (err) return done(err)
         res.statusCode.should.equal(200)
         res.body.ShardId.should.equal('shardId-000000000002')
-        validateSequenceNumber(res.body.SequenceNumber, 2, now)
+        helpers.assertSequenceNumber(res.body.SequenceNumber, 2, now)
         done()
       })
     })
@@ -213,7 +214,7 @@ describe('putRecord ', function() {
         if (err) return done(err)
         res.statusCode.should.equal(200)
         res.body.ShardId.should.equal('shardId-000000000000')
-        validateSequenceNumber(res.body.SequenceNumber, 0, now)
+        helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
         done()
       })
     })
@@ -224,7 +225,7 @@ describe('putRecord ', function() {
         if (err) return done(err)
         res.statusCode.should.equal(200)
         res.body.ShardId.should.equal('shardId-000000000000')
-        validateSequenceNumber(res.body.SequenceNumber, 0, now)
+        helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
         done()
       })
     })
@@ -235,7 +236,7 @@ describe('putRecord ', function() {
         if (err) return done(err)
         res.statusCode.should.equal(200)
         res.body.ShardId.should.equal('shardId-000000000000')
-        validateSequenceNumber(res.body.SequenceNumber, 0, now)
+        helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
         done()
       })
     })
@@ -247,7 +248,7 @@ describe('putRecord ', function() {
         if (err) return done(err)
         res.statusCode.should.equal(200)
         res.body.ShardId.should.equal('shardId-000000000000')
-        validateSequenceNumber(res.body.SequenceNumber, 0, now)
+        helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
         done()
       })
     })
@@ -262,7 +263,7 @@ describe('putRecord ', function() {
           if (err) return done(err)
           res.statusCode.should.equal(200)
           res.body.ShardId.should.equal('shardId-000000000000')
-          validateSequenceNumber(res.body.SequenceNumber, 0, now)
+          helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
 
           seqIxs.push(parseInt(BigNumber(res.body.SequenceNumber).toString(16).slice(11, 27), 16))
 
@@ -271,7 +272,7 @@ describe('putRecord ', function() {
             if (err) return done(err)
             res.statusCode.should.equal(200)
             res.body.ShardId.should.equal('shardId-000000000001')
-            validateSequenceNumber(res.body.SequenceNumber, 1, now)
+            helpers.assertSequenceNumber(res.body.SequenceNumber, 1, now)
 
             seqIxs.push(parseInt(BigNumber(res.body.SequenceNumber).toString(16).slice(11, 27), 16))
 
@@ -297,12 +298,4 @@ describe('putRecord ', function() {
   })
 
 })
-
-function validateSequenceNumber(seqNum, shardIx, timestamp) {
-  var hex = BigNumber(seqNum).toString(16)
-  hex.should.match(new RegExp('^20[0-9a-f]{8}' + shardIx + '[0-9a-f]{16}000[0-9a-f]{8}0000000' + shardIx + '2$'))
-  parseInt(hex.slice(2, 10), 16).should.be.lessThan(Date.now() / 1000 - 2)
-  parseInt(hex.slice(11, 27), 16).should.be.greaterThan(-1)
-  parseInt(hex.slice(30, 38), 16).should.be.within(Math.floor(timestamp / 1000) - 2, Date.now() / 1000)
-}
 
