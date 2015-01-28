@@ -13,6 +13,7 @@ if (argv.help) {
     '--help                 Display this help message and exit',
     '--port <port>          The port to listen on (default: 4567)',
     '--path <path>          The path to use for the LevelDB store (in-memory by default)',
+    '--ssl                  Enable SSL for the web server, disable with --no-ssl (default: true)',
     '--createStreamMs <ms>  Amount of time streams stay in CREATING state (default: 500)',
     '--deleteStreamMs <ms>  Amount of time streams stay in DELETING state (default: 500)',
     '--updateStreamMs <ms>  Amount of time streams stay in UPDATING state (default: 500)',
