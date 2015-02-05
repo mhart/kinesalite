@@ -5,13 +5,9 @@ var https = require('https'),
     BigNumber = require('bignumber.js'),
     kinesalite = require('..')
 
-var port = 10000 + Math.round(Math.random() * 10000),
-    requestOpts = process.env.REMOTE ?
-      {host: 'kinesis.us-east-1.amazonaws.com', method: 'POST'} :
-      {host: 'localhost', port: port, method: 'POST', rejectUnauthorized: false}
-
 https.globalAgent.maxSockets = Infinity
 
+exports.awsRegion = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1'
 exports.version = 'Kinesis_20131202'
 exports.prefix = '__kinesalite_test_'
 exports.request = request
@@ -31,6 +27,11 @@ exports.waitUntilDeleted = waitUntilDeleted
 exports.testStream = randomName()
 // For testing:
 //exports.testStream = '__kinesalite_test_1'
+
+var port = 10000 + Math.round(Math.random() * 10000),
+    requestOpts = process.env.REMOTE ?
+      {host: 'kinesis.' + exports.awsRegion + '.amazonaws.com', method: 'POST'} :
+      {host: 'localhost', port: port, method: 'POST', rejectUnauthorized: false}
 
 var kinesaliteServer = kinesalite({path: process.env.KINESALITE_PATH})
 

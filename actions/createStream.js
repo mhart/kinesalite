@@ -61,7 +61,7 @@ module.exports = function createStream(store, data, cb) {
         data = {
           HasMoreShards: false,
           Shards: [],
-          StreamARN: 'arn:aws:kinesis:us-east-1:' + metaDb.awsAccountId + ':stream/' + data.StreamName,
+          StreamARN: 'arn:aws:kinesis:' + metaDb.awsRegion + ':' + metaDb.awsAccountId + ':stream/' + data.StreamName,
           StreamName: data.StreamName,
           StreamStatus: 'CREATING',
           _seqIx: seqIx, // Hidden data, remove when returning
