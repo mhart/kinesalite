@@ -8,6 +8,8 @@ var crypto = require('crypto'),
 
 exports.create = create
 exports.lazy = lazyStream
+exports.clientError = clientError
+exports.serverError = serverError
 exports.validationError = validationError
 exports.parseSequence = parseSequence
 exports.stringifySequence = stringifySequence
@@ -88,15 +90,22 @@ function lazyStream(stream, errHandler) {
   return streamAsLazy
 }
 
+function clientError(type, msg, statusCode) {
+  if (statusCode == null) statusCode = 400
+  var err = new Error(msg || type)
+  err.statusCode = statusCode
+  err.body = {__type: type}
+  if (msg != null) err.body.message = msg
+  return err
+}
+
+function serverError(type, msg, statusCode) {
+  return clientError(type || 'InternalFailure', msg, statusCode || 500)
+}
+
 function validationError(msg) {
   if (msg == null) msg = 'The provided key element does not match the schema'
-  var err = new Error(msg)
-  err.statusCode = 400
-  err.body = {
-    __type: 'ValidationException',
-    message: msg,
-  }
-  return err
+  return clientError('ValidationException', msg)
 }
 
 function parseSequence(seq) {

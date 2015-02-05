@@ -9,6 +9,7 @@ var target = 'PutRecord',
     assertType = helpers.assertType.bind(null, target),
     assertValidation = helpers.assertValidation.bind(null, target),
     assertNotFound = helpers.assertNotFound.bind(null, target),
+    assertInternalFailure = helpers.assertInternalFailure.bind(null, target),
     assertInvalidArgument = helpers.assertInvalidArgument.bind(null, target)
 
 describe('putRecord ', function() {
@@ -108,12 +109,7 @@ describe('putRecord ', function() {
 
     it('should return InternalFailure for version 3 in SequenceNumberForOrdering', function(done) {
       var seq = BigNumber('20000000000000000000000000000000000000000000003', 16).toFixed()
-      request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}), function(err, res) {
-        if (err) return done(err)
-        res.statusCode.should.equal(500)
-        res.body.should.eql({__type: 'InternalFailure'})
-        done()
-      })
+      assertInternalFailure({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}, done)
     })
 
     it('should return InvalidArgumentException for initial 3 in SequenceNumberForOrdering', function(done) {
@@ -144,14 +140,10 @@ describe('putRecord ', function() {
         ' under account ' + helpers.awsAccountId + ' is invalid.', done)
     })
 
-    it('should return InternalFailure for 8 and real time in SequenceNumberForOrdering', function(done) {
+    // Not really sure that this is necessary - seems obscure
+    it.skip('should return InternalFailure for 8 and real time in SequenceNumberForOrdering', function(done) {
       var seq = BigNumber('2ffffffffff7fffffffffffffff000' + Math.floor(Date.now() / 1000).toString(16) + '7fffffff2', 16).toFixed()
-      request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}), function(err, res) {
-        if (err) return done(err)
-        res.statusCode.should.equal(500)
-        res.body.should.eql({__type: 'InternalFailure'})
-        done()
-      })
+      assertInternalFailure({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}, done)
     })
 
     it('should return InvalidArgumentException for future time in SequenceNumberForOrdering', function(done) {

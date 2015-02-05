@@ -19,6 +19,7 @@ exports.assertNotFound = assertNotFound
 exports.assertInUse = assertInUse
 exports.assertLimitExceeded = assertLimitExceeded
 exports.assertInvalidArgument = assertInvalidArgument
+exports.assertInternalFailure = assertInternalFailure
 exports.assertSequenceNumber = assertSequenceNumber
 exports.randomString = randomString
 exports.randomName = randomName
@@ -267,6 +268,17 @@ function assertInvalidArgument(target, data, msg, done) {
     res.body.should.eql({
       __type: 'InvalidArgumentException',
       message: msg,
+    })
+    done()
+  })
+}
+
+function assertInternalFailure(target, data, done) {
+  request(opts(target, data), function(err, res) {
+    if (err) return done(err)
+    res.statusCode.should.equal(500)
+    res.body.should.eql({
+      __type: 'InternalFailure'
     })
     done()
   })

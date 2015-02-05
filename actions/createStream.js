@@ -13,31 +13,19 @@ module.exports = function createStream(store, data, cb) {
 
     metaDb.get(key, function(err) {
       if (err && err.name != 'NotFoundError') return cb(err)
-      if (!err) {
-        err = new Error
-        err.statusCode = 400
-        err.body = {
-          __type: 'ResourceInUseException',
-          message: '',
-        }
-        return cb(err)
-      }
+      if (!err) return cb(db.clientError('ResourceInUseException', ''))
 
       sumShards(metaDb, function(err, shardSum) {
         if (err) return cb(err)
 
         if (shardSum + data.ShardCount > 10) {
-          err = new Error
-          err.statusCode = 400
-          err.body = {
-            __type: 'LimitExceededException',
-            message: 'This request would exceed the shard limit for the account ' + metaDb.awsAccountId + ' in us-east-1. ' +
-              'Current shard count for the account: ' + shardSum + '. Limit: 10. Number of additional shards that would have ' +
+          return cb(db.clientError('LimitExceededException',
+              'This request would exceed the shard limit for the account ' + metaDb.awsAccountId + ' in ' +
+              metaDb.awsRegion + '. Current shard count for the account: ' + shardSum +
+              '. Limit: 10. Number of additional shards that would have ' +
               'resulted from this request: ' + data.ShardCount + '. Refer to the AWS Service Limits page ' +
               '(http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) ' +
-              'for current limits and how to request higher limits.',
-          }
-          return cb(err)
+              'for current limits and how to request higher limits.'))
         }
 
         var i, shards = new Array(data.ShardCount), shardHash = POW_128.div(data.ShardCount).floor(),
