@@ -35,8 +35,8 @@ module.exports = function putRecords(store, data, cb) {
             seqPieces[i] = {
               shardIx: j,
               shardId: stream.Shards[j].ShardId,
-              streamCreateTime: db.parseSequence(
-                stream.Shards[j].SequenceNumberRange.StartingSequenceNumber).streamCreateTime
+              shardCreateTime: db.parseSequence(
+                stream.Shards[j].SequenceNumberRange.StartingSequenceNumber).shardCreateTime
             }
             break
           }
@@ -44,10 +44,10 @@ module.exports = function putRecords(store, data, cb) {
       }
 
       // This appears to be the order that shards are processed in a PutRecords call
-      var shardOrder = [4, 1, 0, 3, 2, 5, 7, 6, 9, 8]
+      var shardOrder = [5, 4, 7, 6, 9, 19, 18, 17, 8, 16, 15, 14, 13, 12, 11, 1, 10, 0, 3, 21, 2, 20]
 
-      // Unsure of order after shard 9, just process sequentially
-      for (i = 10; i < stream.Shards.length; i++) {
+      // Unsure of order after shard 21, just process sequentially
+      for (i = 22; i < stream.Shards.length; i++) {
         shardOrder.push(i)
       }
 
@@ -63,7 +63,7 @@ module.exports = function putRecords(store, data, cb) {
           var seqIxIx = Math.floor(shardIx / 5)
 
           var seqNum = db.stringifySequence({
-            streamCreateTime: seqPiece.streamCreateTime,
+            shardCreateTime: seqPiece.shardCreateTime,
             shardIx: shardIx,
             seqIx: stream._seqIx[seqIxIx],
             seqTime: Date.now(),

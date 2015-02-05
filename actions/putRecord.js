@@ -11,7 +11,7 @@ module.exports = function putRecord(store, data, cb) {
     store.getStream(data.StreamName, false, function(err, stream) {
       if (err) return cb(err)
 
-      var hashKey, shardIx, shardId, streamCreateTime
+      var hashKey, shardIx, shardId, shardCreateTime
 
       if (data.ExplicitHashKey != null) {
         hashKey = BigNumber(data.ExplicitHashKey)
@@ -26,26 +26,13 @@ module.exports = function putRecord(store, data, cb) {
       }
 
       if (data.SequenceNumberForOrdering != null) {
-        var hex = BigNumber(data.SequenceNumberForOrdering).toString(16)
-        if (hex[0] != '2' || parseInt(hex[11], 16) > 7 || hex.slice(27, 30) != '000' || parseInt(hex[38], 16) > 7 ||
-            parseInt(hex.slice(30, 38), 16) > Math.floor(Date.now() / 1000) || !~['1', '2', '3'].indexOf(hex[46])) {
-          err = new Error
-          err.statusCode = 400
-          err.body = {
-            __type: 'InvalidArgumentException',
-            message: 'ExclusiveMinimumSequenceNumber ' + data.SequenceNumberForOrdering +
-              ' used in PutRecord on stream ' + data.StreamName +
-              ' under account ' + store.metaDb.awsAccountId + ' is invalid.',
-          }
-          return cb(err)
-        }
-        if (hex[46] == '3' || (parseInt(hex[19], 16) > 7 && parseInt(hex.slice(30, 38), 16) > 0)) {
-          err = new Error
-          err.statusCode = 500
-          err.body = {
-            __type: 'InternalFailure',
-          }
-          return cb(err)
+        try {
+          var seqObj = db.parseSequence(data.SequenceNumberForOrdering)
+          if (seqObj.seqTime > Date.now()) throw new Error('Sequence time in the future')
+        } catch (e) {
+          return cb(e.message == 'Unknown version: 3' ? db.serverError() : db.clientError('InvalidArgumentException',
+              'ExclusiveMinimumSequenceNumber ' + data.SequenceNumberForOrdering + ' used in PutRecord on stream ' +
+              data.StreamName + ' under account ' + metaDb.awsAccountId + ' is invalid.'))
         }
       }
 
@@ -54,8 +41,8 @@ module.exports = function putRecord(store, data, cb) {
             hashKey.cmp(stream.Shards[i].HashKeyRange.EndingHashKey) <= 0) {
           shardIx = i
           shardId = stream.Shards[i].ShardId
-          streamCreateTime = db.parseSequence(
-            stream.Shards[i].SequenceNumberRange.StartingSequenceNumber).streamCreateTime
+          shardCreateTime = db.parseSequence(
+            stream.Shards[i].SequenceNumberRange.StartingSequenceNumber).shardCreateTime
           break
         }
       }
@@ -63,7 +50,7 @@ module.exports = function putRecord(store, data, cb) {
       var seqIxIx = Math.floor(shardIx / 5)
 
       var seqNum = db.stringifySequence({
-        streamCreateTime: streamCreateTime,
+        shardCreateTime: shardCreateTime,
         shardIx: shardIx,
         seqIx: stream._seqIx[seqIxIx],
         seqTime: Date.now(),

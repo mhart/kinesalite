@@ -1,4 +1,5 @@
 var should = require('should'),
+    BigNumber = require('bignumber.js'),
     helpers = require('./helpers')
 
 var target = 'GetShardIterator',
@@ -8,6 +9,7 @@ var target = 'GetShardIterator',
     assertType = helpers.assertType.bind(null, target),
     assertValidation = helpers.assertValidation.bind(null, target),
     assertNotFound = helpers.assertNotFound.bind(null, target),
+    assertInternalFailure = helpers.assertInternalFailure.bind(null, target),
     assertInvalidArgument = helpers.assertInvalidArgument.bind(null, target)
 
 describe('getShardIterator', function() {
@@ -72,20 +74,180 @@ describe('getShardIterator', function() {
         'Member must have length less than or equal to 128', done)
     })
 
-    it('should return ResourceNotFoundException if stream does not exist', function(done) {
-      var name1 = helpers.randomString(), name2 = helpers.randomString()
-      assertNotFound({StreamName: name1, ShardId: name2, StartingSequenceNumber: '0', ShardIteratorType: 'LATEST'}, [
-        'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.',
+    it('should return ValidationException for long StreamName', function(done) {
+      var name = new Array(129 + 1).join('a')
+      assertValidation({StreamName: name, ShardId: name, ShardIteratorType: 'LATEST'},
+        '2 validation errors detected: ' +
+        'Value \'' + name + '\' at \'shardId\' failed to satisfy constraint: ' +
+        'Member must have length less than or equal to 128; ' +
+        'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
+        'Member must have length less than or equal to 128', done)
+    })
+
+    it('should return ResourceNotFoundException if unknown stream and shard ID just small enough', function(done) {
+      var name1 = randomName(), name2 = '2147483647'
+      assertNotFound({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'},
         'Shard shardId-' + ('000000000000' + name2).slice(-12) + ' in stream ' + name1 + ' under account ' +
-          helpers.awsAccountId + ' does not exist',
-      ], done)
+          helpers.awsAccountId + ' does not exist', done)
+    })
+
+    it('should return ResourceNotFoundException if unknown stream and random shard name', function(done) {
+      var name1 = randomName(), name2 = randomName() + '-2147483647'
+      assertNotFound({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'},
+        'Shard shardId-002147483647 in stream ' + name1 + ' under account ' +
+          helpers.awsAccountId + ' does not exist', done)
+    })
+
+    it('should return ResourceNotFoundException if unknown stream and short prefix', function(done) {
+      var name1 = randomName(), name2 = 'a-00002147483647'
+      assertNotFound({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'},
+        'Shard shardId-002147483647 in stream ' + name1 + ' under account ' +
+          helpers.awsAccountId + ' does not exist', done)
+    })
+
+    it('should return ResourceNotFoundException if unknown stream and no prefix', function(done) {
+      var name1 = randomName(), name2 = '-00002147483647'
+      assertNotFound({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'},
+        'Shard shardId-002147483647 in stream ' + name1 + ' under account ' +
+          helpers.awsAccountId + ' does not exist', done)
+    })
+
+    it('should return ResourceNotFoundException if unknown stream and shard ID too big', function(done) {
+      var name1 = randomName(), name2 = '2147483648'
+      assertNotFound({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'},
+        'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.', done)
+    })
+
+    it('should return ResourceNotFoundException if unknown stream and raw shard ID too big', function(done) {
+      var name1 = randomName(), name2 = 'shardId-002147483648'
+      assertNotFound({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'},
+        'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.', done)
+    })
+
+    it('should return InternalFailure if unknown stream and string shard ID', function(done) {
+      var name1 = randomName(), name2 = 'ABKLFD8'
+      if (helpers.awsRegion == 'us-east-1') {
+        assertInternalFailure({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'}, done)
+      } else {
+        assertNotFound({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'},
+          'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.', done)
+      }
+    })
+
+    it('should return InternalFailure if unknown stream and exponent shard ID', function(done) {
+      var name1 = randomName(), name2 = '2.14E4'
+      if (helpers.awsRegion == 'us-east-1') {
+        assertInternalFailure({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'}, done)
+      } else {
+        assertNotFound({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'},
+          'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.', done)
+      }
+    })
+
+    it('should return ResourceNotFoundException if known stream and raw shard ID does not exist', function(done) {
+      var name1 = helpers.testStream, name2 = 'shardId-5'
+      assertNotFound({StreamName: name1, ShardId: name2, ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: '5'},
+        'Shard shardId-000000000005 in stream ' + name1 + ' under account ' +
+          helpers.awsAccountId + ' does not exist', done)
+    })
+
+    it('should return InvalidArgumentException if AT_SEQUENCE_NUMBER and no StartingSequenceNumber', function(done) {
+      assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'AT_SEQUENCE_NUMBER'},
+        'Must either specify (1) AT_SEQUENCE_NUMBER or AFTER_SEQUENCE_NUMBER and StartingSequenceNumber or ' +
+        '(2) TRIM_HORIZON or LATEST and no StartingSequenceNumber. ' +
+        'Request specified AT_SEQUENCE_NUMBER and no StartingSequenceNumber.', done)
+    })
+
+    it('should return InvalidArgumentException if AFTER_SEQUENCE_NUMBER and no StartingSequenceNumber', function(done) {
+      assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'AFTER_SEQUENCE_NUMBER'},
+        'Must either specify (1) AT_SEQUENCE_NUMBER or AFTER_SEQUENCE_NUMBER and StartingSequenceNumber or ' +
+        '(2) TRIM_HORIZON or LATEST and no StartingSequenceNumber. ' +
+        'Request specified AFTER_SEQUENCE_NUMBER and no StartingSequenceNumber.', done)
+    })
+
+    it('should return InvalidArgumentException if LATEST and StartingSequenceNumber', function(done) {
+      assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'LATEST', StartingSequenceNumber: '5'},
+        'Must either specify (1) AT_SEQUENCE_NUMBER or AFTER_SEQUENCE_NUMBER and StartingSequenceNumber or ' +
+        '(2) TRIM_HORIZON or LATEST and no StartingSequenceNumber. ' +
+        'Request specified LATEST and also a StartingSequenceNumber.', done)
+    })
+
+    it('should return InvalidArgumentException if TRIM_HORIZON and StartingSequenceNumber', function(done) {
+      assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'TRIM_HORIZON', StartingSequenceNumber: '5'},
+        'Must either specify (1) AT_SEQUENCE_NUMBER or AFTER_SEQUENCE_NUMBER and StartingSequenceNumber or ' +
+        '(2) TRIM_HORIZON or LATEST and no StartingSequenceNumber. ' +
+        'Request specified TRIM_HORIZON and also a StartingSequenceNumber.', done)
+    })
+
+    it('should return InvalidArgumentException if shard mismatches simple sequence', function(done) {
+      var name1 = helpers.testStream, name2 = 'shardId-0'
+      assertInvalidArgument({StreamName: name1, ShardId: name2, ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: '5'},
+        'Invalid StartingSequenceNumber. It encodes shardId-000000000005, ' +
+          'while it was used in a call to a shard with shardId-000000000000', done)
+    })
+
+    it('should return InvalidArgumentException if using small (old?) sequence number', function(done) {
+      var name1 = helpers.testStream, name2 = 'shardId-0'
+      assertInvalidArgument({StreamName: name1, ShardId: name2, ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: '0'},
+        'StartingSequenceNumber 21267647932558653966460912964485513216 used in GetShardIterator on shard ' +
+          'shardId-000000000000 in stream ' + name1 + ' under account ' + helpers.awsAccountId +
+          ' is invalid because it did not come from this stream.', done)
+    })
+
+    it('should return InvalidArgumentException if using more complex (old?) sequence number', function(done) {
+      var name1 = helpers.testStream, name2 = 'shardId-2'
+      assertInvalidArgument({StreamName: name1, ShardId: name2, ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: '425352958651173072921826052383309826'},
+        'StartingSequenceNumber 21693000891209827039382739016868823042 used in GetShardIterator on shard ' +
+          'shardId-000000000002 in stream ' + name1 + ' under account ' + helpers.awsAccountId +
+          ' is invalid because it did not come from this stream.', done)
+    })
+
+    it('should return InvalidArgumentException if using large (old?) sequence number', function(done) {
+      var name1 = helpers.testStream, name2 = 'shardId-0', seq = BigNumber('f3bb2cc3d7ff7fffffffffffffff0000', 16).toFixed()
+      assertInvalidArgument({StreamName: name1, ShardId: name2, ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: seq},
+        'StartingSequenceNumber 26227199374821822965252748908982894592 used in GetShardIterator on shard ' +
+          'shardId-000000000000 in stream ' + name1 + ' under account ' + helpers.awsAccountId +
+          ' is invalid because it did not come from this stream.', done)
+    })
+
+    it('should return InvalidArgumentException if using sequence number with large date', function(done) {
+      var name1 = helpers.testStream, name2 = 'shardId-0', seq = BigNumber('13bb2cc3d80000000000000000000000', 16).toFixed()
+      assertInvalidArgument({StreamName: name1, ShardId: name2, ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: seq},
+        'StartingSequenceNumber 26227199374822427428162556223570313216 used in GetShardIterator on shard ' +
+        'shardId-000000000000 in stream ' + name1 + ' under account ' + helpers.awsAccountId +
+        ' is invalid.', done)
+    })
+
+    it('should return InvalidArgumentException for 8 in index in StartingSequenceNumber', function(done) {
+      var seq = BigNumber('20000000000800000000000000000000000000000000002', 16).toFixed()
+      assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: seq},
+        'StartingSequenceNumber ' + seq + ' used in GetShardIterator on shard ' +
+        'shardId-000000000000 in stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
+        ' is invalid.', done)
+    })
+
+    it('should return InvalidArgumentException for 8 near end of StartingSequenceNumber', function(done) {
+      var seq = BigNumber('20000000000000000000000000000000000000800000002', 16).toFixed()
+      assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: seq},
+        'StartingSequenceNumber ' + seq + ' used in GetShardIterator on shard ' +
+        'shardId-000000000000 in stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
+        ' is invalid.', done)
     })
 
   })
 
   describe('functionality', function() {
 
+    it('should work with random shard ID with hyphen', function(done) {
+      var shardId = randomName() + '-0'
+      request(opts({StreamName: helpers.testStream, ShardId: shardId, ShardIteratorType: 'LATEST'}), function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+        helpers.assertShardIterator(res.body.ShardIterator, helpers.testStream)
+        done()
+      })
+    })
+
   })
 
 })
-

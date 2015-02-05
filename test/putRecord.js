@@ -153,6 +153,13 @@ describe('putRecord ', function() {
         ' under account ' + helpers.awsAccountId + ' is invalid.', done)
     })
 
+    it('should return InvalidArgumentException if using sequence number with large date', function(done) {
+      var seq = BigNumber('13bb2cc3d80000000000000000000000', 16).toFixed()
+      assertInvalidArgument({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq},
+        'ExclusiveMinimumSequenceNumber 26227199374822427428162556223570313216 used in PutRecord on stream ' +
+        helpers.testStream + ' under account ' + helpers.awsAccountId + ' is invalid.', done)
+    })
+
   })
 
   describe('functionality', function() {

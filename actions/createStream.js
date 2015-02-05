@@ -39,7 +39,7 @@ module.exports = function createStream(store, data, cb) {
               EndingHashKey: (i < data.ShardCount - 1 ? shardHash.times(i + 1) : POW_128).minus(1).toFixed(),
             },
             SequenceNumberRange: {
-              StartingSequenceNumber: db.stringifySequence({streamCreateTime: createTime, shardIx: i}),
+              StartingSequenceNumber: db.stringifySequence({shardCreateTime: createTime, shardIx: i}),
               //EndingSequenceNumber: '49537279973004700513262647557344055618854783026326405121',
             },
             ShardId: 'shardId-' + ('00000000000' + i).slice(-12)
@@ -79,8 +79,13 @@ module.exports = function createStream(store, data, cb) {
 
 }
 
+// Sum shards that haven't closed yet
 function sumShards(metaDb, cb) {
   db.lazy(metaDb.createValueStream(), cb)
-    .map(function(stream) { return stream.Shards.length })
+    .map(function(stream) {
+      return stream.Shards.filter(function(shard) {
+        return shard.SequenceNumberRange.EndingSequenceNumber == null
+      }).length
+    })
     .sum(function(sum) { return cb(null, sum) })
 }
