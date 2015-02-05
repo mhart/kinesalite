@@ -59,7 +59,7 @@ describe('addTagsToStream', function() {
     })
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {
-      var name1 = helpers.randomString()
+      var name1 = randomName()
       assertNotFound({StreamName: name1, Tags: {a: 'b'}},
         'Stream ' + name1 + ' under account ' + helpers.awsAccountId + ' not found.', done)
     })

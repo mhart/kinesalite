@@ -67,7 +67,7 @@ describe('splitShard', function() {
     })
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {
-      var name1 = helpers.randomString(), name2 = helpers.randomString(), name3 = helpers.randomString()
+      var name1 = randomName(), name2 = helpers.randomString(), name3 = randomName()
       assertNotFound({StreamName: name1, NewStartingHashKey: name2, ShardToSplit: name3}, [
         'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.',
         'Could not find shard ' + name3 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.',

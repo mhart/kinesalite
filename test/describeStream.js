@@ -64,7 +64,7 @@ describe('describeStream', function() {
     })
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {
-      var name = helpers.randomString()
+      var name = randomName()
       assertNotFound({StreamName: name}, 'Stream ' + name + ' under account ' + helpers.awsAccountId + ' not found.', done)
     })
 

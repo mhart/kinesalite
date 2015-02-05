@@ -4,6 +4,7 @@ var should = require('should'),
 
 var target = 'PutRecord',
     request = helpers.request,
+    randomName = helpers.randomName,
     opts = helpers.opts.bind(null, target),
     assertType = helpers.assertType.bind(null, target),
     assertValidation = helpers.assertValidation.bind(null, target),
@@ -80,7 +81,7 @@ describe('putRecord ', function() {
     })
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {
-      var name1 = helpers.randomString(), name2 = helpers.randomString()
+      var name1 = randomName(), name2 = helpers.randomString()
       assertNotFound({StreamName: name1, PartitionKey: name2, Data: ''},
         'Stream ' + name1 + ' under account ' + helpers.awsAccountId + ' not found.', done)
     })

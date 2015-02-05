@@ -53,7 +53,7 @@ describe('getRecords', function() {
     })
 
     it('should return InvalidArgumentException if ShardIterator is incorrect format', function(done) {
-      var name = helpers.randomString()
+      var name = randomName()
       assertInvalidArgument({ShardIterator: name}, 'Invalid ShardIterator.', done)
     })
 
