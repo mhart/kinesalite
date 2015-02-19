@@ -1,7 +1,7 @@
 var BigNumber = require('bignumber.js'),
     db = require('../db')
 
-var POW_128 = BigNumber(2).pow(128),
+var POW_128 = new BigNumber(2).pow(128),
     SEQ_ADJUST_MS = 2000
 
 module.exports = function createStream(store, data, cb) {

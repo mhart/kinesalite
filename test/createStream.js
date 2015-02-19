@@ -112,9 +112,9 @@ describe('createStream', function() {
             res.body.StreamDescription.Shards[2].HashKeyRange.StartingHashKey.should.equal('226854911280625642308916404954512140970')
             res.body.StreamDescription.Shards[2].HashKeyRange.EndingHashKey.should.equal('340282366920938463463374607431768211455')
 
-            var startSeq0 = BigNumber(res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber),
-              startSeq1 = BigNumber(res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber),
-              startSeq2 = BigNumber(res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber)
+            var startSeq0 = new BigNumber(res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber),
+              startSeq1 = new BigNumber(res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber),
+              startSeq2 = new BigNumber(res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber)
 
             startSeq1.minus(startSeq0).toFixed().should.equal('22300745198530623141535718272648361505980432')
             startSeq2.minus(startSeq1).toFixed().should.equal('22300745198530623141535718272648361505980432')
@@ -131,4 +131,3 @@ describe('createStream', function() {
   })
 
 })
-
