@@ -109,13 +109,13 @@ function validationError(msg) {
   return clientError('ValidationException', msg)
 }
 
-var POW_2_124 = BigNumber(2).pow(124)
-var POW_2_124_NEXT = BigNumber(2).pow(125).times(16)
-var POW_2_185 = BigNumber(2).pow(185)
-var POW_2_185_NEXT = BigNumber(2).pow(185).times(1.5)
+var POW_2_124 = new BigNumber(2).pow(124)
+var POW_2_124_NEXT = new BigNumber(2).pow(125).times(16)
+var POW_2_185 = new BigNumber(2).pow(185)
+var POW_2_185_NEXT = new BigNumber(2).pow(185).times(1.5)
 
 function parseSequence(seq) {
-  var seqNum = BigNumber(seq)
+  var seqNum = new BigNumber(seq)
   if (seqNum.lt(POW_2_124)) {
     seqNum = seqNum.plus(POW_2_124)
   }
@@ -127,7 +127,7 @@ function parseSequence(seq) {
     if (parseInt(shardIxHex[0], 16) > 7) throw new Error('Shard index too high')
     return {
       shardCreateTime: new Date(parseInt(hex.slice(1, 10), 16) * 1000),
-      seqIx: BigNumber(seqIxHex, 16).toFixed(),
+      seqIx: new BigNumber(seqIxHex, 16).toFixed(),
       byte1: hex.slice(27, 29),
       seqTime: new Date(parseInt(hex.slice(29, 38), 16) * 1000),
       shardIx: parseInt(shardIxHex, 16),
@@ -160,18 +160,18 @@ function parseSequence(seq) {
 
 function stringifySequence(obj) {
   if (obj.version == null || obj.version == 2) {
-    return BigNumber([
+    return new BigNumber([
       '2',
       ('00000000' + Math.floor(new Date(obj.shardCreateTime) / 1000).toString(16)).slice(-9),
       (obj.shardIx || 0).toString(16).slice(-1),
-      ('0000000000000000' + BigNumber(obj.seqIx || 0).toString(16)).slice(-16),
+      ('0000000000000000' + new BigNumber(obj.seqIx || 0).toString(16)).slice(-16),
       obj.byte1 || '00', // Unsure what this is
       ('00000000' + Math.floor(new Date(obj.seqTime || obj.shardCreateTime) / 1000).toString(16)).slice(-9),
       ('0000000' + (obj.shardIx || 0).toString(16)).slice(-8),
       '2',
     ].join(''), 16).toFixed()
   } else if (obj.version == 1) {
-    return BigNumber([
+    return new BigNumber([
       '2',
       ('00000000' + Math.floor(new Date(obj.shardCreateTime) / 1000).toString(16)).slice(-9),
       (obj.shardIx || 0).toString(16).slice(-1),
@@ -183,7 +183,7 @@ function stringifySequence(obj) {
       '1',
     ].join(''), 16).toFixed()
   } else if (obj.version === 0) {
-    return BigNumber([
+    return new BigNumber([
       '1',
       ('00000000' + Math.floor(new Date(obj.shardCreateTime) / 1000).toString(16)).slice(-9),
       obj.byte1 || '00', // Unsure what this is
@@ -197,5 +197,5 @@ function stringifySequence(obj) {
 
 // Will determine ExplicitHashKey, which will determine ShardId based on stream's HashKeyRange
 function partitionKeyToHashKey(partitionKey) {
-  return BigNumber(crypto.createHash('md5').update(partitionKey, 'utf8').digest('hex'), 16)
+  return new BigNumber(crypto.createHash('md5').update(partitionKey, 'utf8').digest('hex'), 16)
 }

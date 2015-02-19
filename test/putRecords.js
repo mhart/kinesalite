@@ -128,7 +128,7 @@ describe('putRecords', function() {
     })
 
     it('should return InvalidArgumentException for out of bounds ExplicitHashKey', function(done) {
-      var hashKey = BigNumber(2).pow(128).toFixed()
+      var hashKey = new BigNumber(2).pow(128).toFixed()
       assertInvalidArgument({StreamName: helpers.testStream, Records: [
           {PartitionKey: 'a', Data: '', ExplicitHashKey: hashKey}, {PartitionKey: 'a', Data: ''}]},
         'Invalid ExplicitHashKey. ExplicitHashKey must be in the range: [0, 2^128-1]. Specified value was ' + hashKey, done)
@@ -140,9 +140,9 @@ describe('putRecords', function() {
 
     it('should work with mixed values', function(done) {
       var now = Date.now(),
-        hashKey1 = BigNumber(2).pow(128).minus(1).toFixed(),
-        hashKey2 = BigNumber(2).pow(128).div(3).floor().times(2).minus(1).toFixed(),
-        hashKey3 = BigNumber(2).pow(128).div(3).floor().times(2).toFixed(),
+        hashKey1 = new BigNumber(2).pow(128).minus(1).toFixed(),
+        hashKey2 = new BigNumber(2).pow(128).div(3).floor().times(2).minus(1).toFixed(),
+        hashKey3 = new BigNumber(2).pow(128).div(3).floor().times(2).toFixed(),
         records = [
           {PartitionKey: 'a', Data: ''},
           {PartitionKey: 'b', Data: ''},
@@ -175,7 +175,7 @@ describe('putRecords', function() {
 
         var indexOrder = [1, 3, 5, 0, 2, 4, 6], lastIx
         indexOrder.forEach(function(i) {
-          var seqIx = parseInt(BigNumber(res.body.Records[i].SequenceNumber).toString(16).slice(11, 27), 16),
+          var seqIx = parseInt(new BigNumber(res.body.Records[i].SequenceNumber).toString(16).slice(11, 27), 16),
             diff = lastIx != null ? seqIx - lastIx : 1
           diff.should.equal(1)
           lastIx = seqIx
@@ -186,4 +186,3 @@ describe('putRecords', function() {
     })
   })
 })
-

@@ -203,7 +203,7 @@ describe('getShardIterator', function() {
     })
 
     it('should return InvalidArgumentException if using large (old?) sequence number', function(done) {
-      var name1 = helpers.testStream, name2 = 'shardId-0', seq = BigNumber('f3bb2cc3d7ff7fffffffffffffff0000', 16).toFixed()
+      var name1 = helpers.testStream, name2 = 'shardId-0', seq = new BigNumber('f3bb2cc3d7ff7fffffffffffffff0000', 16).toFixed()
       assertInvalidArgument({StreamName: name1, ShardId: name2, ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: seq},
         'StartingSequenceNumber 26227199374821822965252748908982894592 used in GetShardIterator on shard ' +
           'shardId-000000000000 in stream ' + name1 + ' under account ' + helpers.awsAccountId +
@@ -211,7 +211,7 @@ describe('getShardIterator', function() {
     })
 
     it('should return InvalidArgumentException if using sequence number with large date', function(done) {
-      var name1 = helpers.testStream, name2 = 'shardId-0', seq = BigNumber('13bb2cc3d80000000000000000000000', 16).toFixed()
+      var name1 = helpers.testStream, name2 = 'shardId-0', seq = new BigNumber('13bb2cc3d80000000000000000000000', 16).toFixed()
       assertInvalidArgument({StreamName: name1, ShardId: name2, ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: seq},
         'StartingSequenceNumber 26227199374822427428162556223570313216 used in GetShardIterator on shard ' +
         'shardId-000000000000 in stream ' + name1 + ' under account ' + helpers.awsAccountId +
@@ -219,7 +219,7 @@ describe('getShardIterator', function() {
     })
 
     it('should return InvalidArgumentException for 8 in index in StartingSequenceNumber', function(done) {
-      var seq = BigNumber('20000000000800000000000000000000000000000000002', 16).toFixed()
+      var seq = new BigNumber('20000000000800000000000000000000000000000000002', 16).toFixed()
       assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: seq},
         'StartingSequenceNumber ' + seq + ' used in GetShardIterator on shard ' +
         'shardId-000000000000 in stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
@@ -227,7 +227,7 @@ describe('getShardIterator', function() {
     })
 
     it('should return InvalidArgumentException for 8 near end of StartingSequenceNumber', function(done) {
-      var seq = BigNumber('20000000000000000000000000000000000000800000002', 16).toFixed()
+      var seq = new BigNumber('20000000000000000000000000000000000000800000002', 16).toFixed()
       assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: seq},
         'StartingSequenceNumber ' + seq + ' used in GetShardIterator on shard ' +
         'shardId-000000000000 in stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +

@@ -286,7 +286,7 @@ function assertInternalFailure(target, data, done) {
 }
 
 function assertSequenceNumber(seqNum, shardIx, timestamp) {
-  var hex = BigNumber(seqNum).toString(16)
+  var hex = new BigNumber(seqNum).toString(16)
   hex.should.match(new RegExp('^20[0-9a-f]{8}' + shardIx + '[0-9a-f]{16}000[0-9a-f]{8}0000000' + shardIx + '2$'))
   parseInt(hex.slice(2, 10), 16).should.be.within(new Date('2015-01-01') / 1000, Date.now() / 1000 - 2)
   parseInt(hex.slice(11, 27), 16).should.be.greaterThan(-1)
@@ -357,4 +357,3 @@ function waitUntilDeleted(name, done) {
     setTimeout(waitUntilDeleted, 1000, name, done)
   })
 }
-

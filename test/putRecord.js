@@ -88,53 +88,53 @@ describe('putRecord ', function() {
     })
 
     it('should return InvalidArgumentException for out of bounds ExplicitHashKey', function(done) {
-      var hashKey = BigNumber(2).pow(128).toFixed()
+      var hashKey = new BigNumber(2).pow(128).toFixed()
       assertInvalidArgument({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', ExplicitHashKey: hashKey},
         'Invalid ExplicitHashKey. ExplicitHashKey must be in the range: [0, 2^128-1]. Specified value was ' + hashKey, done)
     })
 
     it('should return InvalidArgumentException for version 0 in SequenceNumberForOrdering', function(done) {
-      var seq = BigNumber('20000000000000000000000000000000000000000000000', 16).toFixed()
+      var seq = new BigNumber('20000000000000000000000000000000000000000000000', 16).toFixed()
       assertInvalidArgument({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq},
         'ExclusiveMinimumSequenceNumber ' + seq + ' used in PutRecord on stream ' + helpers.testStream +
         ' under account ' + helpers.awsAccountId + ' is invalid.', done)
     })
 
     it('should return InvalidArgumentException for version 4 in SequenceNumberForOrdering', function(done) {
-      var seq = BigNumber('20000000000000000000000000000000000000000000004', 16).toFixed()
+      var seq = new BigNumber('20000000000000000000000000000000000000000000004', 16).toFixed()
       assertInvalidArgument({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq},
         'ExclusiveMinimumSequenceNumber ' + seq + ' used in PutRecord on stream ' + helpers.testStream +
         ' under account ' + helpers.awsAccountId + ' is invalid.', done)
     })
 
     it('should return InternalFailure for version 3 in SequenceNumberForOrdering', function(done) {
-      var seq = BigNumber('20000000000000000000000000000000000000000000003', 16).toFixed()
+      var seq = new BigNumber('20000000000000000000000000000000000000000000003', 16).toFixed()
       assertInternalFailure({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}, done)
     })
 
     it('should return InvalidArgumentException for initial 3 in SequenceNumberForOrdering', function(done) {
-      var seq = BigNumber('30000000000000000000000000000000000000000000001', 16).toFixed()
+      var seq = new BigNumber('30000000000000000000000000000000000000000000001', 16).toFixed()
       assertInvalidArgument({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq},
         'ExclusiveMinimumSequenceNumber ' + seq + ' used in PutRecord on stream ' + helpers.testStream +
         ' under account ' + helpers.awsAccountId + ' is invalid.', done)
     })
 
     it('should return InvalidArgumentException for initial 1 in SequenceNumberForOrdering', function(done) {
-      var seq = BigNumber('1ffffffffff7fffffffffffffff000000000007fffffff2', 16).toFixed()
+      var seq = new BigNumber('1ffffffffff7fffffffffffffff000000000007fffffff2', 16).toFixed()
       assertInvalidArgument({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq},
         'ExclusiveMinimumSequenceNumber ' + seq + ' used in PutRecord on stream ' + helpers.testStream +
         ' under account ' + helpers.awsAccountId + ' is invalid.', done)
     })
 
     it('should return InvalidArgumentException for 8 in index in SequenceNumberForOrdering', function(done) {
-      var seq = BigNumber('20000000000800000000000000000000000000000000002', 16).toFixed()
+      var seq = new BigNumber('20000000000800000000000000000000000000000000002', 16).toFixed()
       assertInvalidArgument({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq},
         'ExclusiveMinimumSequenceNumber ' + seq + ' used in PutRecord on stream ' + helpers.testStream +
         ' under account ' + helpers.awsAccountId + ' is invalid.', done)
     })
 
     it('should return InvalidArgumentException for 8 near end of SequenceNumberForOrdering', function(done) {
-      var seq = BigNumber('20000000000000000000000000000000000000800000002', 16).toFixed()
+      var seq = new BigNumber('20000000000000000000000000000000000000800000002', 16).toFixed()
       assertInvalidArgument({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq},
         'ExclusiveMinimumSequenceNumber ' + seq + ' used in PutRecord on stream ' + helpers.testStream +
         ' under account ' + helpers.awsAccountId + ' is invalid.', done)
@@ -142,19 +142,19 @@ describe('putRecord ', function() {
 
     // Not really sure that this is necessary - seems obscure
     it.skip('should return InternalFailure for 8 and real time in SequenceNumberForOrdering', function(done) {
-      var seq = BigNumber('2ffffffffff7fffffffffffffff000' + Math.floor(Date.now() / 1000).toString(16) + '7fffffff2', 16).toFixed()
+      var seq = new BigNumber('2ffffffffff7fffffffffffffff000' + Math.floor(Date.now() / 1000).toString(16) + '7fffffff2', 16).toFixed()
       assertInternalFailure({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}, done)
     })
 
     it('should return InvalidArgumentException for future time in SequenceNumberForOrdering', function(done) {
-      var seq = BigNumber('200000000000000000000000000000' + Math.floor(Date.now() / 1000 + 2).toString(16) + '000000002', 16).toFixed()
+      var seq = new BigNumber('200000000000000000000000000000' + Math.floor(Date.now() / 1000 + 2).toString(16) + '000000002', 16).toFixed()
       assertInvalidArgument({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq},
         'ExclusiveMinimumSequenceNumber ' + seq + ' used in PutRecord on stream ' + helpers.testStream +
         ' under account ' + helpers.awsAccountId + ' is invalid.', done)
     })
 
     it('should return InvalidArgumentException if using sequence number with large date', function(done) {
-      var seq = BigNumber('13bb2cc3d80000000000000000000000', 16).toFixed()
+      var seq = new BigNumber('13bb2cc3d80000000000000000000000', 16).toFixed()
       assertInvalidArgument({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq},
         'ExclusiveMinimumSequenceNumber 26227199374822427428162556223570313216 used in PutRecord on stream ' +
         helpers.testStream + ' under account ' + helpers.awsAccountId + ' is invalid.', done)
@@ -176,7 +176,7 @@ describe('putRecord ', function() {
     })
 
     it('should work with final ExplicitHashKey', function(done) {
-      var hashKey = BigNumber(2).pow(128).minus(1).toFixed(), now = Date.now()
+      var hashKey = new BigNumber(2).pow(128).minus(1).toFixed(), now = Date.now()
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', ExplicitHashKey: hashKey}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
@@ -187,7 +187,7 @@ describe('putRecord ', function() {
     })
 
     it('should work with ExplicitHashKey just below range', function(done) {
-      var hashKey = BigNumber(2).pow(128).div(3).floor().times(2).minus(1).toString(10), now = Date.now()
+      var hashKey = new BigNumber(2).pow(128).div(3).floor().times(2).minus(1).toString(10), now = Date.now()
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', ExplicitHashKey: hashKey}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
@@ -198,7 +198,7 @@ describe('putRecord ', function() {
     })
 
     it('should work with ExplicitHashKey just above range', function(done) {
-      var hashKey = BigNumber(2).pow(128).div(3).floor().times(2).toString(10), now = Date.now()
+      var hashKey = new BigNumber(2).pow(128).div(3).floor().times(2).toString(10), now = Date.now()
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', ExplicitHashKey: hashKey}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
@@ -209,7 +209,7 @@ describe('putRecord ', function() {
     })
 
     it('should work with SequenceNumberForOrdering all f', function(done) {
-      var seq = BigNumber('2ffffffffff7fffffffffffffff000000000007fffffff2', 16).toFixed(), now = Date.now()
+      var seq = new BigNumber('2ffffffffff7fffffffffffffff000000000007fffffff2', 16).toFixed(), now = Date.now()
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
@@ -220,7 +220,7 @@ describe('putRecord ', function() {
     })
 
     it('should work with SequenceNumberForOrdering all 0', function(done) {
-      var seq = BigNumber('20000000000000000000000000000000000000000000002', 16).toFixed(), now = Date.now()
+      var seq = new BigNumber('20000000000000000000000000000000000000000000002', 16).toFixed(), now = Date.now()
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
@@ -231,7 +231,7 @@ describe('putRecord ', function() {
     })
 
     it('should work with SequenceNumberForOrdering all 0 with version 1', function(done) {
-      var seq = BigNumber('20000000000000000000000000000000000000000000001', 16).toFixed(), now = Date.now()
+      var seq = new BigNumber('20000000000000000000000000000000000000000000001', 16).toFixed(), now = Date.now()
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
@@ -242,7 +242,7 @@ describe('putRecord ', function() {
     })
 
     it('should work with SequenceNumberForOrdering if time is now', function(done) {
-      var seq = BigNumber('2ffffffffff7fffffff7fffffff000' + Math.floor(Date.now() / 1000 - 0.3).toString(16) +
+      var seq = new BigNumber('2ffffffffff7fffffff7fffffff000' + Math.floor(Date.now() / 1000 - 0.3).toString(16) +
         '7fffffff2', 16).toFixed(), now = Date.now()
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}), function(err, res) {
         if (err) return done(err)
@@ -265,7 +265,7 @@ describe('putRecord ', function() {
           res.body.ShardId.should.equal('shardId-000000000000')
           helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
 
-          seqIxs.push(parseInt(BigNumber(res.body.SequenceNumber).toString(16).slice(11, 27), 16))
+          seqIxs.push(parseInt(new BigNumber(res.body.SequenceNumber).toString(16).slice(11, 27), 16))
 
           now = Date.now()
           request(opts({StreamName: helpers.testStream, PartitionKey: 'b', Data: ''}), function(err, res) {
@@ -274,7 +274,7 @@ describe('putRecord ', function() {
             res.body.ShardId.should.equal('shardId-000000000001')
             helpers.assertSequenceNumber(res.body.SequenceNumber, 1, now)
 
-            seqIxs.push(parseInt(BigNumber(res.body.SequenceNumber).toString(16).slice(11, 27), 16))
+            seqIxs.push(parseInt(new BigNumber(res.body.SequenceNumber).toString(16).slice(11, 27), 16))
 
             if (!--remaining) checkIxs()
           })
@@ -298,4 +298,3 @@ describe('putRecord ', function() {
   })
 
 })
-

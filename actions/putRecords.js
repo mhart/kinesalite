@@ -18,9 +18,9 @@ module.exports = function putRecords(store, data, cb) {
         record = data.Records[i]
 
         if (record.ExplicitHashKey != null) {
-          hashKey = BigNumber(record.ExplicitHashKey)
+          hashKey = new BigNumber(record.ExplicitHashKey)
 
-          if (hashKey.cmp(0) < 0 || hashKey.cmp(BigNumber(2).pow(128)) >= 0) {
+          if (hashKey.cmp(0) < 0 || hashKey.cmp(new BigNumber(2).pow(128)) >= 0) {
             return cb(db.clientError('InvalidArgumentException',
               'Invalid ExplicitHashKey. ExplicitHashKey must be in the range: [0, 2^128-1]. ' +
               'Specified value was ' + record.ExplicitHashKey))
@@ -92,4 +92,3 @@ module.exports = function putRecords(store, data, cb) {
     })
   })
 }
-
