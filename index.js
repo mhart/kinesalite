@@ -1,4 +1,5 @@
 var https = require('https'),
+    http = require('http'),
     fs = require('fs'),
     crypto = require('crypto'),
     uuid = require('node-uuid'),
@@ -18,12 +19,18 @@ module.exports = kinesalite
 
 function kinesalite(options) {
   options = options || {}
+  var requestHandler = httpHandler.bind(null, db.create(options))
+
+  if (options.ssl === false) {
+    return http.createServer(requestHandler)
+  }
+
   options.key = options.key || fs.readFileSync(__dirname + '/key.pem')
   options.cert = options.cert || fs.readFileSync(__dirname + '/cert.pem')
   options.ca = options.ca || fs.readFileSync(__dirname + '/ca.pem')
   options.requestCert = true
   options.rejectUnauthorized = false
-  return https.createServer(options, httpHandler.bind(null, db.create(options)))
+  return https.createServer(options, requestHandler)
 }
 
 validOperations.forEach(function(action) {
