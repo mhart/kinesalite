@@ -9,7 +9,6 @@ var target = 'GetShardIterator',
     assertType = helpers.assertType.bind(null, target),
     assertValidation = helpers.assertValidation.bind(null, target),
     assertNotFound = helpers.assertNotFound.bind(null, target),
-    assertInternalFailure = helpers.assertInternalFailure.bind(null, target),
     assertInvalidArgument = helpers.assertInvalidArgument.bind(null, target)
 
 describe('getShardIterator', function() {
@@ -124,24 +123,16 @@ describe('getShardIterator', function() {
         'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.', done)
     })
 
-    it('should return InternalFailure if unknown stream and string shard ID', function(done) {
+    it('should return ResourceNotFoundException if unknown stream and string shard ID', function(done) {
       var name1 = randomName(), name2 = 'ABKLFD8'
-      if (helpers.awsRegion == 'us-east-1') {
-        assertInternalFailure({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'}, done)
-      } else {
-        assertNotFound({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'},
-          'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.', done)
-      }
+      assertNotFound({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'},
+        'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.', done)
     })
 
-    it('should return InternalFailure if unknown stream and exponent shard ID', function(done) {
+    it('should return ResourceNotFoundException if unknown stream and exponent shard ID', function(done) {
       var name1 = randomName(), name2 = '2.14E4'
-      if (helpers.awsRegion == 'us-east-1') {
-        assertInternalFailure({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'}, done)
-      } else {
-        assertNotFound({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'},
-          'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.', done)
-      }
+      assertNotFound({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'},
+        'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.', done)
     })
 
     it('should return ResourceNotFoundException if known stream and raw shard ID does not exist', function(done) {

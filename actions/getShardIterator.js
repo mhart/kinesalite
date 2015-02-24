@@ -8,13 +8,9 @@ module.exports = function getShardIterator(store, data, cb) {
   shardId = shardId.split('-')[1] || shardId
   shardIx = /^\d+$/.test(shardId) ? parseInt(shardId) : NaN
   if (!(shardIx >= 0 && shardIx <= 2147483647)) {
-    if (shardIx) {
-      return cb(db.clientError('ResourceNotFoundException',
-        'Could not find shard ' + data.ShardId + ' in stream ' + data.StreamName +
-        ' under account ' + metaDb.awsAccountId + '.'))
-    } else {
-      return cb(db.serverError())
-    }
+    return cb(db.clientError('ResourceNotFoundException',
+      'Could not find shard ' + data.ShardId + ' in stream ' + data.StreamName +
+      ' under account ' + metaDb.awsAccountId + '.'))
   }
   shardId = 'shardId-' + ('00000000000' + shardIx).slice(-12)
 
