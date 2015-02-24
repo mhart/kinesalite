@@ -74,11 +74,32 @@ function httpHandler(store, req, res) {
 
     // All responses after this point have a RequestId
     res.setHeader('x-amzn-RequestId', uuid.v1())
-    res.setHeader('x-amz-id-2', crypto.randomBytes(72).toString('base64'))
+    if (req.method != 'OPTIONS' || !req.headers.origin)
+      res.setHeader('x-amz-id-2', crypto.randomBytes(72).toString('base64'))
+
+    if (req.headers.origin) {
+      res.setHeader('Access-Control-Allow-Origin', '*')
+
+      if (req.method == 'OPTIONS') {
+        if (req.headers['access-control-request-headers'])
+          res.setHeader('Access-Control-Allow-Headers', req.headers['access-control-request-headers'])
+
+        if (req.headers['access-control-request-method'])
+          res.setHeader('Access-Control-Allow-Methods', req.headers['access-control-request-method'])
+
+        res.setHeader('Access-Control-Max-Age', 172800)
+        res.setHeader('Content-Length', 0)
+        req.removeAllListeners()
+        return res.end()
+      } else {
+        res.setHeader('Access-Control-Expose-Headers', ['x-amz-request-id', 'x-amz-id-2'])
+      }
+    }
 
     var contentType = req.headers['content-type']
 
-    if (contentType != 'application/x-amz-json-1.1' && contentType != 'application/json') {
+    if ((req.method != 'OPTIONS' && contentType != 'application/x-amz-json-1.1' && contentType != 'application/json') ||
+        (req.method == 'OPTIONS' && !req.headers.origin)) {
       req.removeAllListeners()
       res.statusCode = 403
       body = req.headers.authorization ?

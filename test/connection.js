@@ -72,6 +72,10 @@ describe('kinesalite connections', function() {
         '</AccessDeniedException>\n', done)
     }
 
+    it('should return MissingAuthenticationTokenException if OPTIONS with no auth', function(done) {
+      request({method: 'OPTIONS', noSign: true}, assertMissingTokenXml(done))
+    })
+
     it('should return MissingAuthenticationTokenException if GET with no auth', function(done) {
       request({method: 'GET', noSign: true}, assertMissingTokenXml(done))
     })
@@ -110,6 +114,60 @@ describe('kinesalite connections', function() {
 
     it('should return AccessDeniedException if no Content-Type', function(done) {
       request({headers: {'x-amz-target': 'Kinesis_20131202.ListStreams'}}, assertAccessDeniedXml(done))
+    })
+
+    it('should return AccessDeniedException and set CORS if using Origin', function(done) {
+      request({headers: {origin: 'whatever'}}, function (err, res) {
+        if (err) return done(err)
+        res.headers['access-control-allow-origin'].should.equal('*')
+        if (res.rawHeaders) {
+          res.headers['access-control-expose-headers'].should.equal('x-amz-request-id, x-amz-id-2')
+        } else {
+          res.headers['access-control-expose-headers'].should.equal('x-amz-request-id')
+        }
+        assertAccessDeniedXml(done)(err, res)
+      })
+    })
+
+    function assertCors(headers, done) {
+      return function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+        res.headers['x-amzn-requestid'].should.match(uuidRegex)
+        res.headers['access-control-allow-origin'].should.equal('*')
+        Object.keys(headers || {}).forEach(function(header) {
+          res.headers[header].should.equal(headers[header])
+        })
+        res.headers['access-control-max-age'].should.equal('172800')
+        res.headers['content-length'].should.equal('0')
+        res.headers.should.not.have.property('x-amz-id-2')
+        res.body.should.eql('')
+        done()
+      }
+    }
+
+    it('should set CORS if OPTIONS and Origin', function(done) {
+      request({method: 'OPTIONS', headers: {origin: 'whatever'}}, assertCors(null, done))
+    })
+
+    it('should set CORS if OPTIONS and Origin and Headers', function(done) {
+      request({method: 'OPTIONS', headers: {
+        origin: 'whatever',
+        'access-control-request-headers': 'a, b, c',
+      }}, assertCors({
+        'access-control-allow-headers': 'a, b, c',
+      }, done))
+    })
+
+    it('should set CORS if OPTIONS and Origin and Headers and Method', function(done) {
+      request({method: 'OPTIONS', headers: {
+        origin: 'whatever',
+        'access-control-request-headers': 'a, b, c',
+        'access-control-request-method': 'd',
+      }}, assertCors({
+        'access-control-allow-headers': 'a, b, c',
+        'access-control-allow-methods': 'd',
+      }, done))
     })
   })
 
