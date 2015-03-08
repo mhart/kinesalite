@@ -4,7 +4,8 @@ var crypto = require('crypto'),
 module.exports = function getRecords(store, data, cb) {
 
   var metaDb = store.metaDb, shardIx, shardId, iteratorTime, streamName, seqNo, pieces,
-    buffer = new Buffer(data.ShardIterator, 'base64'), now = Date.now()
+    buffer = new Buffer(data.ShardIterator, 'base64'), now = Date.now(),
+    decipher = crypto.createDecipher('aes-256-cbc', db.ITERATOR_PWD)
 
   if (buffer.length < 152 || buffer.length > 280 || buffer.toString('base64') != data.ShardIterator)
     return cb(invalidShardIterator())
@@ -12,12 +13,16 @@ module.exports = function getRecords(store, data, cb) {
   if (buffer.slice(0, 8).toString('hex') != '0000000000000001')
     return cb(invalidShardIterator())
 
-  pieces = crypto.createCipher('aes256', db.ITERATOR_PWD).update(buffer.slice(9)).toString('utf8').split('/')
+  try {
+    pieces = Buffer.concat([decipher.update(buffer.slice(8)), decipher.final()]).toString('utf8').split('/')
+  } catch (e) {
+    return cb(invalidShardIterator())
+  }
 
   if (pieces.length != 5)
     return cb(invalidShardIterator())
 
-  iteratorTime = pieces[0]
+  iteratorTime = +pieces[0]
   streamName = pieces[1]
   shardId = pieces[2]
   seqNo = pieces[3]
@@ -42,18 +47,18 @@ module.exports = function getRecords(store, data, cb) {
   store.getStream(streamName, false, function(err, stream) {
     if (err) {
       if (err.name == 'NotFoundError' && err.body) {
-        err.body.message = 'Shard ' + shardId + ' in stream ' + data.StreamName +
+        err.body.message = 'Shard ' + shardId + ' in stream ' + streamName +
           ' under account ' + metaDb.awsAccountId + ' does not exist'
       }
       return cb(err)
     }
     if (shardIx >= stream.Shards.length) {
       return cb(db.clientError('ResourceNotFoundException',
-        'Shard ' + shardId + ' in stream ' + data.StreamName +
+        'Shard ' + shardId + ' in stream ' + streamName +
         ' under account ' + metaDb.awsAccountId + ' does not exist'))
     }
 
-    cb()
+    cb(null, {NextShardIterator: data.ShardIterator, Records: []})
   })
 }
 

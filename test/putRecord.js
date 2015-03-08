@@ -242,7 +242,7 @@ describe('putRecord ', function() {
     })
 
     it('should work with SequenceNumberForOrdering if time is now', function(done) {
-      var seq = new BigNumber('2ffffffffff7fffffff7fffffff000' + Math.floor(Date.now() / 1000 - 0.3).toString(16) +
+      var seq = new BigNumber('2ffffffffff7fffffff7fffffff000' + Math.floor(Date.now() / 1000 - 2).toString(16) +
         '7fffffff2', 16).toFixed(), now = Date.now()
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}), function(err, res) {
         if (err) return done(err)

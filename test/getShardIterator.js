@@ -1,4 +1,5 @@
 var should = require('should'),
+    async = require('async'),
     BigNumber = require('bignumber.js'),
     helpers = require('./helpers')
 
@@ -230,15 +231,73 @@ describe('getShardIterator', function() {
   describe('functionality', function() {
 
     it('should work with random shard ID with hyphen', function(done) {
-      var shardId = randomName() + '-0'
-      request(opts({StreamName: helpers.testStream, ShardId: shardId, ShardIteratorType: 'LATEST'}), function(err, res) {
+
+      function testType(shardIteratorType, cb) {
+        request(opts({
+          StreamName: helpers.testStream,
+          ShardId: randomName() + '-0',
+          ShardIteratorType: shardIteratorType,
+        }), function(err, res) {
+          if (err) return cb(err)
+          res.statusCode.should.equal(200)
+          helpers.assertShardIterator(res.body.ShardIterator, helpers.testStream)
+          cb()
+        })
+      }
+
+      async.forEach(['LATEST', 'TRIM_HORIZON'], testType, done)
+    })
+
+    it('should work with different length stream names', function(done) {
+      this.timeout(100000)
+
+      var stream1 = (randomName() + new Array(14).join('0')).slice(0, 29),
+        stream2 = (randomName() + new Array(14).join('0')).slice(0, 30)
+
+      request(helpers.opts('CreateStream', {StreamName: stream1, ShardCount: 1}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
-        helpers.assertShardIterator(res.body.ShardIterator, helpers.testStream)
-        done()
+
+        request(helpers.opts('CreateStream', {StreamName: stream2, ShardCount: 1}), function(err, res) {
+          if (err) return done(err)
+          res.statusCode.should.equal(200)
+
+          helpers.waitUntilActive(stream1, function(err, res) {
+            if (err) return done(err)
+            res.statusCode.should.equal(200)
+
+            request(opts({
+              StreamName: stream1,
+              ShardId: 'shard-0',
+              ShardIteratorType: 'LATEST',
+            }), function(err, res) {
+              if (err) return done(err)
+              res.statusCode.should.equal(200)
+
+              helpers.assertShardIterator(res.body.ShardIterator, stream1)
+
+              helpers.waitUntilActive(stream2, function(err, res) {
+                if (err) return done(err)
+                res.statusCode.should.equal(200)
+
+                request(opts({
+                  StreamName: stream2,
+                  ShardId: 'shard-0',
+                  ShardIteratorType: 'LATEST',
+                }), function(err, res) {
+                  if (err) return done(err)
+                  res.statusCode.should.equal(200)
+
+                  helpers.assertShardIterator(res.body.ShardIterator, stream2)
+
+                  done()
+                })
+              })
+            })
+          })
+        })
       })
     })
 
   })
-
 })

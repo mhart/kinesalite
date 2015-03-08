@@ -101,12 +101,15 @@ module.exports = function getShardIterator(store, data, cb) {
       data.StreamName,
       shardId,
       iteratorSeq,
-      new Array(53).join('0'), // Not entirely sure what would be making up all this data in production
+      new Array(37).join('0'), // Not entirely sure what would be making up all this data in production
     ].join('/')
+
+    var cipher = crypto.createCipher('aes-256-cbc', db.ITERATOR_PWD)
 
     var buffer = Buffer.concat([
       new Buffer([0, 0, 0, 0, 0, 0, 0, 1]),
-      crypto.createCipher('aes256', db.ITERATOR_PWD).update(encryptStr, 'utf8'),
+      cipher.update(encryptStr, 'utf8'),
+      cipher.final(),
     ])
 
     cb(null, {ShardIterator: buffer.toString('base64')})

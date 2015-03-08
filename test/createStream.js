@@ -121,7 +121,7 @@ describe('createStream', function() {
 
             var startDiff = parseInt(startSeq0.toString(16).slice(2, 10), 16) - (createdAt / 1000)
             startDiff.should.be.lessThan(-2)
-            startDiff.should.be.greaterThan(-6)
+            startDiff.should.be.greaterThan(-7)
 
             done()
           })
