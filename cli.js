@@ -21,4 +21,7 @@ if (argv.help) {
   ].join('\n'))
 }
 
-require('./index.js')(argv).listen(argv.port || 4567)
+var port = argv.port || 4567
+require('./index.js')(argv).listen(port, function () {
+  console.log('Listening on port: %s', port)
+})
