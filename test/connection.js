@@ -1,4 +1,7 @@
-var request = require('./helpers').request,
+var https = require('https'),
+    once = require('once'),
+    kinesalite = require('..'),
+    request = require('./helpers').request,
     uuidRegex = /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/
 
 function assertBody(statusCode, contentType, body, done) {
@@ -169,6 +172,26 @@ describe('kinesalite connections', function() {
         'access-control-allow-methods': 'd',
       }, done))
     })
+
+    it('should connect to SSL', function(done) {
+      var port = 10000 + Math.round(Math.random() * 10000), kinesaliteServer = kinesalite({ssl: true})
+
+      kinesaliteServer.listen(port, function(err) {
+        if (err) return done(err)
+
+        done = once(done)
+
+        https.request({host: 'localhost', port: port, rejectUnauthorized : false}, function(res) {
+          res.on('error', done)
+          res.on('data', function() {})
+          res.on('end', function() {
+            res.statusCode.should.equal(403)
+            kinesaliteServer.close(done)
+          })
+        }).on('error', done).end()
+      })
+    })
+
   })
 
   describe('JSON', function() {

@@ -1,5 +1,4 @@
-var should = require('should'),
-    BigNumber = require('bignumber.js'),
+var BigNumber = require('bignumber.js'),
     helpers = require('./helpers')
 
 var target = 'PutRecords',

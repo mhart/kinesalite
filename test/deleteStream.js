@@ -1,5 +1,4 @@
-var should = require('should'),
-    helpers = require('./helpers')
+var helpers = require('./helpers')
 
 var target = 'DeleteStream',
     request = helpers.request,
@@ -7,8 +6,7 @@ var target = 'DeleteStream',
     opts = helpers.opts.bind(null, target),
     assertType = helpers.assertType.bind(null, target),
     assertValidation = helpers.assertValidation.bind(null, target),
-    assertNotFound = helpers.assertNotFound.bind(null, target),
-    assertInUse = helpers.assertInUse.bind(null, target)
+    assertNotFound = helpers.assertNotFound.bind(null, target)
 
 describe('deleteStream', function() {
 

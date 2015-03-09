@@ -3,19 +3,16 @@ var once = require('once'),
 
 module.exports = function listStreams(store, data, cb) {
   cb = once(cb)
-  var opts, keys
+  var opts, keys, limit = data.Limit || 10
 
   if (data.ExclusiveStartStreamName)
     opts = {start: data.ExclusiveStartStreamName + '\x00'}
 
   keys = db.lazy(store.metaDb.createKeyStream(opts), cb)
-
-  if (data.Limit) keys = keys.take(data.Limit)
+    .take(limit + 1)
 
   keys.join(function(names) {
-    var result = {StreamNames: names}
-    if (data.Limit) result.IsMoreDataAvailable = true // TODO: fix this
-    cb(null, result)
+    cb(null, {StreamNames: names.slice(0, limit), HasMoreStreams: names.length > limit})
   })
 }
 

@@ -1,5 +1,4 @@
-var should = require('should'),
-    async = require('async'),
+var async = require('async'),
     BigNumber = require('bignumber.js'),
     helpers = require('./helpers')
 

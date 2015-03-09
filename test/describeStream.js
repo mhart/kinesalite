@@ -1,5 +1,4 @@
-var should = require('should'),
-    helpers = require('./helpers')
+var helpers = require('./helpers')
 
 var target = 'DescribeStream',
     request = helpers.request,
@@ -65,12 +64,48 @@ describe('describeStream', function() {
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {
       var name = randomName()
-      assertNotFound({StreamName: name}, 'Stream ' + name + ' under account ' + helpers.awsAccountId + ' not found.', done)
+      assertNotFound({StreamName: name}, 'Stream ' + name + ' under account ' +
+        helpers.awsAccountId + ' not found.', done)
     })
 
   })
 
   describe('functionality', function() {
+
+    it('should return stream description', function(done) {
+      request(opts({StreamName: helpers.testStream}), function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+
+        res.body.StreamDescription.StreamStatus.should.equal('ACTIVE')
+        res.body.StreamDescription.StreamName.should.equal(helpers.testStream)
+        res.body.StreamDescription.StreamARN.should.equal('arn:aws:kinesis:' + helpers.awsRegion +
+          ':' + helpers.awsAccountId + ':stream/' + helpers.testStream)
+        res.body.StreamDescription.HasMoreShards.should.equal(false)
+
+        res.body.StreamDescription.Shards.should.have.length(3)
+
+        res.body.StreamDescription.Shards[0].ShardId.should.equal('shardId-000000000000')
+        res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber.should.have.length(56)
+        res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d+$/)
+        res.body.StreamDescription.Shards[0].HashKeyRange.StartingHashKey.should.equal('0')
+        res.body.StreamDescription.Shards[0].HashKeyRange.EndingHashKey.should.equal('113427455640312821154458202477256070484')
+
+        res.body.StreamDescription.Shards[1].ShardId.should.equal('shardId-000000000001')
+        res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber.should.have.length(56)
+        res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d+$/)
+        res.body.StreamDescription.Shards[1].HashKeyRange.StartingHashKey.should.equal('113427455640312821154458202477256070485')
+        res.body.StreamDescription.Shards[1].HashKeyRange.EndingHashKey.should.equal('226854911280625642308916404954512140969')
+
+        res.body.StreamDescription.Shards[2].ShardId.should.equal('shardId-000000000002')
+        res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber.should.have.length(56)
+        res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d+$/)
+        res.body.StreamDescription.Shards[2].HashKeyRange.StartingHashKey.should.equal('226854911280625642308916404954512140970')
+        res.body.StreamDescription.Shards[2].HashKeyRange.EndingHashKey.should.equal('340282366920938463463374607431768211455')
+
+        done()
+      })
+    })
 
   })
 

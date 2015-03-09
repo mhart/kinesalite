@@ -1,5 +1,4 @@
-var should = require('should'),
-    BigNumber = require('bignumber.js'),
+var BigNumber = require('bignumber.js'),
     helpers = require('./helpers')
 
 var target = 'CreateStream',
@@ -123,7 +122,15 @@ describe('createStream', function() {
             startDiff.should.be.lessThan(-2)
             startDiff.should.be.greaterThan(-7)
 
-            done()
+            request(helpers.opts('ListStreams', {Limit: 1}), function(err, res) {
+              if (err) return done(err)
+              res.statusCode.should.equal(200)
+
+              res.body.StreamNames.should.have.length(1)
+              res.body.HasMoreStreams.should.equal(true)
+
+              done()
+            })
           })
         })
       })

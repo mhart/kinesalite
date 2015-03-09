@@ -1,9 +1,7 @@
-var should = require('should'),
-    helpers = require('./helpers')
+var helpers = require('./helpers')
 
 var target = 'ListStreams',
     request = helpers.request,
-    randomName = helpers.randomName,
     opts = helpers.opts.bind(null, target),
     assertType = helpers.assertType.bind(null, target),
     assertValidation = helpers.assertValidation.bind(null, target)
@@ -43,6 +41,30 @@ describe('listStreams', function() {
         'Member must have value less than or equal to 10000; ' +
         'Value \'' + name + '\' at \'exclusiveStartStreamName\' failed to satisfy constraint: ' +
         'Member must have length less than or equal to 128', done)
+    })
+
+  })
+
+  describe('functionality', function() {
+
+    it('should return all streams', function(done) {
+      request(opts({}), function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+        res.body.HasMoreStreams.should.equal(false)
+        res.body.StreamNames.should.containEql(helpers.testStream)
+        done()
+      })
+    })
+
+    it('should return single stream', function(done) {
+      var name = helpers.testStream.slice(0, helpers.testStream.length - 1)
+      request(opts({ExclusiveStartStreamName: name, Limit: 1}), function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+        res.body.StreamNames.should.eql([helpers.testStream])
+        done()
+      })
     })
 
   })

@@ -1,11 +1,12 @@
-var https = require('https'),
+var http = require('http'),
+    https = require('https'),
     aws4 = require('aws4'),
     async = require('async'),
     once = require('once'),
     BigNumber = require('bignumber.js'),
     kinesalite = require('..')
 
-https.globalAgent.maxSockets = Infinity
+http.globalAgent.maxSockets = https.globalAgent.maxSockets = Infinity
 
 exports.awsRegion = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1'
 exports.version = 'Kinesis_20131202'
@@ -32,8 +33,8 @@ exports.testStream = randomName()
 
 var port = 10000 + Math.round(Math.random() * 10000),
     requestOpts = process.env.REMOTE ?
-      {host: 'kinesis.' + exports.awsRegion + '.amazonaws.com', method: 'POST'} :
-      {host: 'localhost', port: port, method: 'POST', rejectUnauthorized: false}
+      {host: 'kinesis.' + exports.awsRegion + '.amazonaws.com', method: 'POST', ssl: true} :
+      {host: 'localhost', port: port, method: 'POST'}
 
 var kinesaliteServer = kinesalite({path: process.env.KINESALITE_PATH})
 
@@ -68,7 +69,7 @@ function request(opts, cb) {
     opts.noSign = true // don't sign twice if calling recursively
   }
   //console.log(opts)
-  https.request(opts, function(res) {
+  (opts.ssl ? https : http).request(opts, function(res) {
     res.setEncoding('utf8')
     res.on('error', cb)
     res.body = ''

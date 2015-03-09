@@ -1,5 +1,4 @@
 var crypto = require('crypto'),
-    should = require('should'),
     BigNumber = require('bignumber.js'),
     helpers = require('./helpers')
 
