@@ -57,21 +57,10 @@ With [npm](http://npmjs.org/) do:
 $ npm install -g kinesalite
 ```
 
-Done
-----
-
-* All validations
-* CreateStream
-* DeleteStream
-* DescribeStream
-* ListStreams
-* PutRecord
-* PutRecords
-* GetShardIterator
-
 TODO
 ----
 
-* GetRecords
 * MergeShards
 * SplitShard
+* AddTagsToStream
+* RemoveTagsFromStream
