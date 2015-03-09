@@ -24,7 +24,6 @@ function create(options) {
   options.path = options.path || memdown
   if (options.createStreamMs == null) options.createStreamMs = 500
   if (options.deleteStreamMs == null) options.deleteStreamMs = 500
-  if (options.updateStreamMs == null) options.updateStreamMs = 500
 
   var db = sublevel(levelup(options.path)),
       metaDb = db.sublevel('meta', {valueEncoding: 'json'}),
@@ -79,7 +78,6 @@ function create(options) {
   return {
     createStreamMs: options.createStreamMs,
     deleteStreamMs: options.deleteStreamMs,
-    updateStreamMs: options.updateStreamMs,
     metaDb: metaDb,
     getStreamDb: getStreamDb,
     deleteStreamDb: deleteStreamDb,
