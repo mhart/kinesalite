@@ -1,9 +1,10 @@
 var crypto = require('crypto'),
+    once = require('once'),
     db = require('../db')
 
 module.exports = function getRecords(store, data, cb) {
 
-  var metaDb = store.metaDb, shardIx, shardId, iteratorTime, streamName, seqNo, pieces,
+  var metaDb = store.metaDb, shardIx, shardId, iteratorTime, streamName, seqNo, seqObj, pieces,
     buffer = new Buffer(data.ShardIterator, 'base64'), now = Date.now(),
     decipher = crypto.createDecipher('aes-256-cbc', db.ITERATOR_PWD)
 
@@ -44,6 +45,12 @@ module.exports = function getRecords(store, data, cb) {
       'tolerated delay of 300000 milliseconds.'))
   }
 
+  try {
+    seqObj = db.parseSequence(seqNo)
+  } catch (e) {
+    return cb(invalidShardIterator())
+  }
+
   store.getStream(streamName, false, function(err, stream) {
     if (err) {
       if (err.name == 'NotFoundError' && err.body) {
@@ -58,7 +65,47 @@ module.exports = function getRecords(store, data, cb) {
         ' under account ' + metaDb.awsAccountId + ' does not exist'))
     }
 
-    cb(null, {NextShardIterator: data.ShardIterator, Records: []})
+    cb = once(cb)
+
+    var streamDb = store.getStreamDb(streamName), cutoffTime = Date.now() - (24 * 60 * 60 * 1000),
+      keysToDelete = [], lastItem, opts
+
+    opts = {
+      gte: db.shardIxToHex(shardIx) + '/' + seqNo,
+      lt: db.shardIxToHex(shardIx + 1),
+    }
+
+    db.lazy(streamDb.createReadStream(opts), cb)
+      .take(data.Limit || 10000)
+      .map(function(item) {
+        lastItem = item.value
+        lastItem.SequenceNumber = item.key.split('/')[1]
+        lastItem._seqObj = db.parseSequence(lastItem.SequenceNumber)
+        lastItem._tooOld = lastItem._seqObj.seqTime < cutoffTime
+        if (lastItem._tooOld) keysToDelete.push(item.key)
+        return lastItem
+      })
+      .filter(function(item) { return !item._tooOld })
+      .join(function(items) {
+        var nextSeq = lastItem ? db.incrementSequence(lastItem._seqObj) : seqNo,
+          nextShardIterator = db.createShardIterator(streamName, shardId, nextSeq)
+
+        cb(null, {
+          NextShardIterator: nextShardIterator,
+          Records: items.map(function(item) {
+            delete item._seqObj
+            delete item._tooOld
+            return item
+          }),
+        })
+
+        if (keysToDelete.length) {
+          // Do this async
+          streamDb.batch(keysToDelete.map(function(key) { return {type: 'del', key: key} }), function(err) {
+            if (err) console.error(err)
+          })
+        }
+      })
   })
 }
 

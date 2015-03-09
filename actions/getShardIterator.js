@@ -1,5 +1,4 @@
-var crypto = require('crypto'),
-    db = require('../db')
+var db = require('../db')
 
 module.exports = function getShardIterator(store, data, cb) {
 
@@ -60,14 +59,8 @@ module.exports = function getShardIterator(store, data, cb) {
       }
       if (data.ShardIteratorType == 'AT_SEQUENCE_NUMBER') {
         iteratorSeq = data.StartingSequenceNumber
-      } else {
-        iteratorSeq = db.stringifySequence({
-          shardCreateTime: seqObj.shardCreateTime,
-          seqIx: seqObj.seqIx + 1,
-          byte1: seqObj.byte1,
-          seqTime: seqObj.seqTime,
-          shardIx: seqObj.shardIx,
-        })
+      } else { // AFTER_SEQUENCE_NUMBER
+        iteratorSeq = db.incrementSequence(seqObj)
       }
 
     } else {
@@ -77,7 +70,6 @@ module.exports = function getShardIterator(store, data, cb) {
         iteratorSeq = db.stringifySequence({
           shardCreateTime: shardSeqObj.shardCreateTime,
           seqIx: stream._seqIx[Math.floor(shardIx / 5)],
-          byte1: shardSeqObj.byte1,
           seqTime: Date.now(),
           shardIx: shardSeqObj.shardIx,
         })
@@ -89,30 +81,7 @@ module.exports = function getShardIterator(store, data, cb) {
       }
     }
 
-    // Unsure how shard iterators are encoded
-    // First eight bytes are always [0, 0, 0, 0, 0, 0, 0, 1] (perhaps version number?)
-    // Remaining bytes are 16 byte aligned – perhaps AES encrypted?
-
-    // Length depends on name length, given below calculation:
-    // 152 + (Math.floor((data.StreamName.length + 2) / 16) * 16)
-
-    var encryptStr = [
-      (new Array(14).join('0') + Date.now()).slice(-14),
-      data.StreamName,
-      shardId,
-      iteratorSeq,
-      new Array(37).join('0'), // Not entirely sure what would be making up all this data in production
-    ].join('/')
-
-    var cipher = crypto.createCipher('aes-256-cbc', db.ITERATOR_PWD)
-
-    var buffer = Buffer.concat([
-      new Buffer([0, 0, 0, 0, 0, 0, 0, 1]),
-      cipher.update(encryptStr, 'utf8'),
-      cipher.final(),
-    ])
-
-    cb(null, {ShardIterator: buffer.toString('base64')})
+    cb(null, {ShardIterator: db.createShardIterator(data.StreamName, shardId, iteratorSeq)})
   })
 }
 

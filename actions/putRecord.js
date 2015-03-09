@@ -56,12 +56,14 @@ module.exports = function putRecord(store, data, cb) {
         seqTime: Date.now(),
       })
 
+      var streamKey = db.shardIxToHex(shardIx) + '/' + seqNum
+
       stream._seqIx[seqIxIx]++
 
       metaDb.put(key, stream, function(err) {
         if (err) return cb(err)
 
-        streamDb.put(seqNum, {PartitionKey: data.PartitionKey, Data: data.Data}, function(err) {
+        streamDb.put(streamKey, {PartitionKey: data.PartitionKey, Data: data.Data}, function(err) {
           if (err) return cb(err)
           cb(null, {ShardId: shardId, SequenceNumber: seqNum})
         })

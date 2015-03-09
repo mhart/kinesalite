@@ -69,11 +69,13 @@ module.exports = function putRecords(store, data, cb) {
             seqTime: Date.now(),
           })
 
+          var streamKey = db.shardIxToHex(shardIx) + '/' + seqNum
+
           stream._seqIx[seqIxIx]++
 
           batchOps[i] = {
             type: 'put',
-            key: seqNum,
+            key: streamKey,
             value: {PartitionKey: record.PartitionKey, Data: record.Data},
           }
 
