@@ -3,7 +3,7 @@ Kinesalite
 
 [![Build Status](https://secure.travis-ci.org/mhart/kinesalite.png?branch=master)](http://travis-ci.org/mhart/kinesalite)
 
-A mock implementation of [Amazon's Kinesis](http://docs.aws.amazon.com/kinesis/latest/APIReference/),
+An implementation of [Amazon's Kinesis](http://docs.aws.amazon.com/kinesis/latest/APIReference/),
 focussed on correctness and performance, and built on LevelDB
 (well, [@rvagg](https://github.com/rvagg)'s awesome [LevelUP](https://github.com/rvagg/node-levelup) to be precise).
 
@@ -22,7 +22,7 @@ $ kinesalite --help
 
 Usage: kinesalite [--port <port>] [--path <path>] [--ssl] [options]
 
-A mock Kinesis http server, optionally backed by LevelDB
+A Kinesis http server, optionally backed by LevelDB
 
 Options:
 --help                 Display this help message and exit

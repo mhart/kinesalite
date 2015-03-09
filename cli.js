@@ -7,7 +7,7 @@ if (argv.help) {
     '',
     'Usage: kinesalite [--port <port>] [--path <path>] [--ssl] [options]',
     '',
-    'A mock Kinesis http server, optionally backed by LevelDB',
+    'A Kinesis http server, optionally backed by LevelDB',
     '',
     'Options:',
     '--help                 Display this help message and exit',
@@ -21,7 +21,7 @@ if (argv.help) {
   ].join('\n'))
 }
 
-var port = argv.port || 4567
-require('./index.js')(argv).listen(port, function () {
-  console.log('Listening on port: %s', port)
+var server = require('./index.js')(argv).listen(argv.port || 4567, function() {
+  var address = server.address(), protocol = argv.ssl ? 'https' : 'http'
+  console.log('Listening at %s://%s:%s', protocol, address.address, address.port)
 })
