@@ -222,11 +222,15 @@ validateFns.regex = function(parent, key, pattern, data, type, memberStr, errors
   validate(RegExp('^' + pattern + '$').test(data), 'Member must satisfy regular expression pattern: ' + pattern, data, type, memberStr, parent, key, errors)
 }
 validateFns.lengthGreaterThanOrEqual = function(parent, key, val, data, type, memberStr, errors) {
-  var length = (typeof data == 'object' && !Array.isArray(data)) ? Object.keys(data).length : data.length
+  if (type == 'Blob') data = new Buffer(data, 'base64')
+  var length = (typeof data == 'object' && !Array.isArray(data) && !Buffer.isBuffer(data)) ?
+    Object.keys(data).length : data.length
   validate(length >= val, 'Member must have length greater than or equal to ' + val, data, type, memberStr, parent, key, errors)
 }
 validateFns.lengthLessThanOrEqual = function(parent, key, val, data, type, memberStr, errors) {
-  var length = (typeof data == 'object' && !Array.isArray(data)) ? Object.keys(data).length : data.length
+  if (type == 'Blob') data = new Buffer(data, 'base64')
+  var length = (typeof data == 'object' && !Array.isArray(data) && !Buffer.isBuffer(data)) ?
+    Object.keys(data).length : data.length
   validate(length <= val, 'Member must have length less than or equal to ' + val, data, type, memberStr, parent, key, errors)
 }
 validateFns.enum = function(parent, key, val, data, type, memberStr, errors) {
