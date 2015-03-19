@@ -174,6 +174,17 @@ describe('putRecord ', function() {
       })
     })
 
+    it('should work with large Data', function(done) {
+      var now = Date.now(), data = new Buffer(51200).toString('base64')
+      request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: data}), function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+        res.body.ShardId.should.equal('shardId-000000000000')
+        helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
+        done()
+      })
+    })
+
     it('should work with final ExplicitHashKey', function(done) {
       var hashKey = new BigNumber(2).pow(128).minus(1).toFixed(), now = Date.now()
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', ExplicitHashKey: hashKey}), function(err, res) {

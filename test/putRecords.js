@@ -137,6 +137,19 @@ describe('putRecords', function() {
 
   describe('functionality', function() {
 
+    it('should work with large Data', function(done) {
+      var now = Date.now(), data = new Buffer(51200).toString('base64'), records = [{PartitionKey: 'a', Data: data}]
+      request(opts({StreamName: helpers.testStream, Records: records}), function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+        res.body.FailedRecordCount.should.equal(0)
+        res.body.Records.should.have.length(records.length)
+        res.body.Records[0].ShardId.should.equal('shardId-000000000000')
+        helpers.assertSequenceNumber(res.body.Records[0].SequenceNumber, 0, now)
+        done()
+      })
+    })
+
     it('should work with mixed values', function(done) {
       var now = Date.now(),
         hashKey1 = new BigNumber(2).pow(128).minus(1).toFixed(),
