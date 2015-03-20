@@ -13,7 +13,9 @@ module.exports = function createStream(store, data, cb) {
 
     metaDb.get(key, function(err) {
       if (err && err.name != 'NotFoundError') return cb(err)
-      if (!err) return cb(db.clientError('ResourceInUseException', ''))
+      if (!err)
+        return cb(db.clientError('ResourceInUseException',
+          'Stream ' + key + ' under account ' + metaDb.awsAccountId + ' already exists.'))
 
       sumShards(metaDb, function(err, shardSum) {
         if (err) return cb(err)
@@ -29,22 +31,18 @@ module.exports = function createStream(store, data, cb) {
         }
 
         var i, shards = new Array(data.ShardCount), shardHash = POW_128.div(data.ShardCount).floor(),
-          createTime = Date.now() - SEQ_ADJUST_MS, seqIx = new Array(Math.ceil(data.ShardCount / 5))
+          createTime = Date.now() - SEQ_ADJUST_MS
         for (i = 0; i < data.ShardCount; i++) {
           shards[i] = {
-            //ParentShardId: '',
-            //AdjacentParentShardId: '',
             HashKeyRange: {
               StartingHashKey: shardHash.times(i).toFixed(),
               EndingHashKey: (i < data.ShardCount - 1 ? shardHash.times(i + 1) : POW_128).minus(1).toFixed(),
             },
             SequenceNumberRange: {
               StartingSequenceNumber: db.stringifySequence({shardCreateTime: createTime, shardIx: i}),
-              //EndingSequenceNumber: '49537279973004700513262647557344055618854783026326405121',
             },
             ShardId: 'shardId-' + ('00000000000' + i).slice(-12)
           }
-          seqIx[i / 5] = 0
         }
         data = {
           HasMoreShards: false,
@@ -52,7 +50,7 @@ module.exports = function createStream(store, data, cb) {
           StreamARN: 'arn:aws:kinesis:' + metaDb.awsRegion + ':' + metaDb.awsAccountId + ':stream/' + data.StreamName,
           StreamName: data.StreamName,
           StreamStatus: 'CREATING',
-          _seqIx: seqIx, // Hidden data, remove when returning
+          _seqIx: new Array(Math.ceil(data.ShardCount / 5)), // Hidden data, remove when returning
         }
 
         metaDb.put(key, data, function(err) {

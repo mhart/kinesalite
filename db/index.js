@@ -15,6 +15,7 @@ exports.parseSequence = parseSequence
 exports.stringifySequence = stringifySequence
 exports.incrementSequence = incrementSequence
 exports.shardIxToHex = shardIxToHex
+exports.resolveShardId = resolveShardId
 exports.partitionKeyToHashKey = partitionKeyToHashKey
 exports.createShardIterator = createShardIterator
 exports.ITERATOR_PWD = 'kinesalite'
@@ -24,6 +25,7 @@ function create(options) {
   options.path = options.path || memdown
   if (options.createStreamMs == null) options.createStreamMs = 500
   if (options.deleteStreamMs == null) options.deleteStreamMs = 500
+  if (options.updateStreamMs == null) options.updateStreamMs = 500
 
   var db = sublevel(levelup(options.path)),
       metaDb = db.sublevel('meta', {valueEncoding: 'json'}),
@@ -78,6 +80,7 @@ function create(options) {
   return {
     createStreamMs: options.createStreamMs,
     deleteStreamMs: options.deleteStreamMs,
+    updateStreamMs: options.updateStreamMs,
     metaDb: metaDb,
     getStreamDb: getStreamDb,
     deleteStreamDb: deleteStreamDb,
@@ -209,6 +212,16 @@ function incrementSequence(seqObj) {
 
 function shardIxToHex(shardIx) {
   return ('0000000' + (shardIx || 0).toString(16)).slice(-8)
+}
+
+function resolveShardId(shardId) {
+  shardId = shardId.split('-')[1] || shardId
+  var shardIx = /^\d+$/.test(shardId) ? parseInt(shardId) : NaN
+  if (!(shardIx >= 0 && shardIx <= 2147483647)) throw new Error('INVALID_SHARD_ID')
+  return {
+    shardId: 'shardId-' + ('00000000000' + shardIx).slice(-12),
+    shardIx: shardIx,
+  }
 }
 
 // Will determine ExplicitHashKey, which will determine ShardId based on stream's HashKeyRange

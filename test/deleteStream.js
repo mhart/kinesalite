@@ -46,7 +46,8 @@ describe('deleteStream', function() {
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {
       var name = randomName()
-      assertNotFound({StreamName: name}, 'Stream ' + name + ' under account ' + helpers.awsAccountId + ' not found.', done)
+      assertNotFound({StreamName: name},
+        'Stream ' + name + ' under account ' + helpers.awsAccountId + ' not found.', done)
     })
 
   })

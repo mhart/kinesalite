@@ -16,6 +16,7 @@ if (argv.help) {
     '--ssl                  Enable SSL for the web server (default: false)',
     '--createStreamMs <ms>  Amount of time streams stay in CREATING state (default: 500)',
     '--deleteStreamMs <ms>  Amount of time streams stay in DELETING state (default: 500)',
+    '--updateStreamMs <ms>  Amount of time streams stay in UPDATING state (default: 500)',
     '',
     'Report bugs at github.com/mhart/kinesalite/issues',
   ].join('\n'))

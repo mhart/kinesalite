@@ -1,10 +1,118 @@
+var BigNumber = require('bignumber.js'),
+    db = require('../db')
 
 module.exports = function splitShard(store, data, cb) {
 
-  store.getStream(data.StreamName, false, function(err, stream) {
-    if (err) return cb(err)
+  var metaDb = store.metaDb, key = data.StreamName, shardInfo, shardId, shardIx
 
-    cb()
+  try {
+    shardInfo = db.resolveShardId(data.ShardToSplit)
+  } catch (e) {
+    return cb(db.clientError('ResourceNotFoundException',
+      'Could not find shard ' + data.ShardToSplit + ' in stream ' + key +
+      ' under account ' + metaDb.awsAccountId + '.'))
+  }
+  shardId = shardInfo.shardId
+  shardIx = shardInfo.shardIx
+
+  metaDb.lock(key, function(release) {
+    cb = release(cb)
+
+    store.getStream(key, false, function(err, stream) {
+      if (err) return cb(err)
+
+      if (shardIx >= stream.Shards.length) {
+        return cb(db.clientError('ResourceNotFoundException',
+          'Could not find shard ' + shardId + ' in stream ' + key +
+            ' under account ' + metaDb.awsAccountId + '.'))
+      }
+
+      var hashKey = new BigNumber(data.NewStartingHashKey), shard = stream.Shards[shardIx]
+
+      if (hashKey.lte(new BigNumber(shard.HashKeyRange.StartingHashKey).plus(1)) ||
+          hashKey.gte(shard.HashKeyRange.EndingHashKey)) {
+        return cb(db.clientError('InvalidArgumentException',
+          'NewStartingHashKey ' + data.NewStartingHashKey + ' used in SplitShard() on shard ' + shardId +
+          ' in stream ' + key + ' under account ' + metaDb.awsAccountId +
+          ' is not both greater than one plus the shard\'s StartingHashKey ' +
+          shard.HashKeyRange.StartingHashKey + ' and less than the shard\'s EndingHashKey ' +
+          shard.HashKeyRange.EndingHashKey + '.'))
+      }
+
+      if (stream.StreamStatus != 'ACTIVE') {
+        return cb(db.clientError('ResourceInUseException',
+          'Stream ' + key + ' under account ' + metaDb.awsAccountId +
+          ' not ACTIVE, instead in state ' + stream.StreamStatus))
+      }
+
+      stream.StreamStatus = 'UPDATING'
+
+      metaDb.put(key, stream, function(err) {
+        if (err) return cb(err)
+
+        setTimeout(function() {
+
+          metaDb.lock(key, function(release) {
+            cb = release(function(err) {
+              if (err) console.error(err)
+            })
+
+            store.getStream(key, false, function(err, stream) {
+              if (err && err.name == 'NotFoundError') return cb()
+              if (err) return cb(err)
+
+              var now = Date.now()
+
+              shard = stream.Shards[shardIx]
+
+              stream.StreamStatus = 'ACTIVE'
+
+              shard.SequenceNumberRange.EndingSequenceNumber = db.stringifySequence({
+                shardCreateTime: db.parseSequence(shard.SequenceNumberRange.StartingSequenceNumber).shardCreateTime,
+                shardIx: shardIx,
+                seqIx: new BigNumber('7fffffffffffffff', 16).toString(),
+                seqTime: now,
+              })
+
+              stream.Shards.push({
+                ParentShardId: shardId,
+                HashKeyRange: {
+                  StartingHashKey: shard.HashKeyRange.StartingHashKey,
+                  EndingHashKey: hashKey.minus(1).toString(),
+                },
+                SequenceNumberRange: {
+                  StartingSequenceNumber: db.stringifySequence({
+                    shardCreateTime: now + 1000,
+                    shardIx: stream.Shards.length
+                  }),
+                },
+                ShardId: 'shardId-' + ('00000000000' + stream.Shards.length).slice(-12)
+              })
+
+              stream.Shards.push({
+                ParentShardId: shardId,
+                HashKeyRange: {
+                  StartingHashKey: hashKey.toString(),
+                  EndingHashKey: shard.HashKeyRange.EndingHashKey,
+                },
+                SequenceNumberRange: {
+                  StartingSequenceNumber: db.stringifySequence({
+                    shardCreateTime: now + 1000,
+                    shardIx: stream.Shards.length
+                  }),
+                },
+                ShardId: 'shardId-' + ('00000000000' + stream.Shards.length).slice(-12)
+              })
+
+              metaDb.put(key, stream, cb)
+            })
+          })
+
+        }, store.updateStreamMs)
+
+        cb()
+      })
+    })
   })
 }
 

@@ -1,10 +1,16 @@
-var helpers = require('./helpers')
+var BigNumber = require('bignumber.js'),
+    helpers = require('./helpers'),
+    db = require('../db')
 
 var target = 'SplitShard',
+    request = helpers.request,
     randomName = helpers.randomName,
+    opts = helpers.opts.bind(null, target),
     assertType = helpers.assertType.bind(null, target),
     assertValidation = helpers.assertValidation.bind(null, target),
-    assertNotFound = helpers.assertNotFound.bind(null, target)
+    assertNotFound = helpers.assertNotFound.bind(null, target),
+    assertInvalidArgument = helpers.assertInvalidArgument.bind(null, target),
+    assertInUse = helpers.assertInUse.bind(null, target)
 
 describe('splitShard', function() {
 
@@ -38,7 +44,7 @@ describe('splitShard', function() {
     })
 
     it('should return ValidationException for empty StreamName', function(done) {
-      assertValidation({StreamName: '', NewStartingHashKey: '', ShardToSplit: ''},
+      assertValidation({StreamName: '', ShardToSplit: '', NewStartingHashKey: ''},
         '5 validation errors detected: ' +
         'Value \'\' at \'newStartingHashKey\' failed to satisfy constraint: ' +
         'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,38}); ' +
@@ -54,7 +60,7 @@ describe('splitShard', function() {
 
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a')
-      assertValidation({StreamName: name, NewStartingHashKey: '0', ShardToSplit: name},
+      assertValidation({StreamName: name, ShardToSplit: name, NewStartingHashKey: '0'},
         '2 validation errors detected: ' +
         'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
         'Member must have length less than or equal to 128; ' +
@@ -62,20 +68,220 @@ describe('splitShard', function() {
         'Member must have length less than or equal to 128', done)
     })
 
-    it('should return ResourceNotFoundException if stream does not exist', function(done) {
-      var name1 = randomName(), name2 = helpers.randomString(), name3 = randomName()
-      assertNotFound({StreamName: name1, NewStartingHashKey: name2, ShardToSplit: name3}, [
-        'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.',
-        'Could not find shard ' + name3 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.',
-        'Stream ' + name1 + ' under account ' + helpers.awsAccountId + ' not found.',
-      ], done)
+    it('should return ResourceNotFoundException if unknown stream and shard ID just small enough', function(done) {
+      var name1 = randomName(), name2 = '2147483647'
+      assertNotFound({StreamName: name1, ShardToSplit: name2, NewStartingHashKey: '0'},
+        'Stream ' + name1 + ' under account ' + helpers.awsAccountId + ' not found.', done)
+    })
+
+    it('should return ResourceNotFoundException if unknown stream and random shard name', function(done) {
+      var name1 = randomName(), name2 = randomName() + '-2147483647'
+      assertNotFound({StreamName: name1, ShardToSplit: name2, NewStartingHashKey: '0'},
+        'Stream ' + name1 + ' under account ' + helpers.awsAccountId + ' not found.', done)
+    })
+
+    it('should return ResourceNotFoundException if unknown stream and short prefix', function(done) {
+      var name1 = randomName(), name2 = 'a-00002147483647'
+      assertNotFound({StreamName: name1, ShardToSplit: name2, NewStartingHashKey: '0'},
+        'Stream ' + name1 + ' under account ' + helpers.awsAccountId + ' not found.', done)
+    })
+
+    it('should return ResourceNotFoundException if unknown stream and no prefix', function(done) {
+      var name1 = randomName(), name2 = '-00002147483647'
+      assertNotFound({StreamName: name1, ShardToSplit: name2, NewStartingHashKey: '0'},
+        'Stream ' + name1 + ' under account ' + helpers.awsAccountId + ' not found.', done)
+    })
+
+    it('should return ResourceNotFoundException if unknown stream and shard ID too big', function(done) {
+      var name1 = randomName(), name2 = '2147483648'
+      assertNotFound({StreamName: name1, ShardToSplit: name2, NewStartingHashKey: '0'},
+        'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.', done)
+    })
+
+    it('should return ResourceNotFoundException if unknown stream and raw shard ID too big', function(done) {
+      var name1 = randomName(), name2 = 'shardId-002147483648'
+      assertNotFound({StreamName: name1, ShardToSplit: name2, NewStartingHashKey: '0'},
+        'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.', done)
+    })
+
+    it('should return ResourceNotFoundException if unknown stream and string shard ID', function(done) {
+      var name1 = randomName(), name2 = 'ABKLFD8'
+      assertNotFound({StreamName: name1, ShardToSplit: name2, NewStartingHashKey: '0'},
+        'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.', done)
+    })
+
+    it('should return ResourceNotFoundException if unknown stream and exponent shard ID', function(done) {
+      var name1 = randomName(), name2 = '2.14E4'
+      assertNotFound({StreamName: name1, ShardToSplit: name2, NewStartingHashKey: '0'},
+        'Could not find shard ' + name2 + ' in stream ' + name1 + ' under account ' + helpers.awsAccountId + '.', done)
+    })
+
+    it('should return ResourceNotFoundException if known stream and raw shard ID does not exist', function(done) {
+      assertNotFound({StreamName: helpers.testStream, ShardToSplit: 'shardId-5', NewStartingHashKey: '0'},
+        'Could not find shard shardId-000000000005 in stream ' + helpers.testStream +
+          ' under account ' + helpers.awsAccountId + '.', done)
+    })
+
+    it('should return InvalidArgumentException for hash too small', function(done) {
+      assertInvalidArgument({
+        StreamName: helpers.testStream,
+        NewStartingHashKey: '1',
+        ShardToSplit: 'shard-0',
+      }, 'NewStartingHashKey 1 used in SplitShard() on shard ' +
+        'shardId-000000000000 in stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
+        ' is not both greater than one plus the shard\'s StartingHashKey 0 and less than the shard\'s ' +
+        'EndingHashKey 113427455640312821154458202477256070484.', done)
+    })
+
+    it('should return InvalidArgumentException for hash too big', function(done) {
+      assertInvalidArgument({
+        StreamName: helpers.testStream,
+        NewStartingHashKey: '113427455640312821154458202477256070484',
+        ShardToSplit: 'shard-0',
+      }, 'NewStartingHashKey 113427455640312821154458202477256070484 used in SplitShard() on shard ' +
+        'shardId-000000000000 in stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
+        ' is not both greater than one plus the shard\'s StartingHashKey 0 and less than the shard\'s ' +
+        'EndingHashKey 113427455640312821154458202477256070484.', done)
+    })
+
+    it('should return InvalidArgumentException for hash much too big', function(done) {
+      assertInvalidArgument({
+        StreamName: helpers.testStream,
+        NewStartingHashKey: '999999999999999999999999999999999999999',
+        ShardToSplit: 'shard-2',
+      }, 'NewStartingHashKey 999999999999999999999999999999999999999 used in SplitShard() on shard ' +
+        'shardId-000000000002 in stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
+        ' is not both greater than one plus the shard\'s StartingHashKey 226854911280625642308916404954512140970 ' +
+        'and less than the shard\'s EndingHashKey 340282366920938463463374607431768211455.', done)
     })
 
   })
 
   describe('functionality', function() {
 
+    // Takes 65 secs to run on production
+    it('should work with minimum hash', function(done) {
+      this.timeout(100000)
+      var stream = {StreamName: randomName(), ShardCount: 1}
+      request(helpers.opts('CreateStream', stream), function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+
+        helpers.waitUntilActive(stream.StreamName, function(err, res) {
+          if (err) return done(err)
+          res.statusCode.should.equal(200)
+
+          var splitStart = Date.now()
+
+          request(opts({
+            StreamName: stream.StreamName,
+            NewStartingHashKey: '2',
+            ShardToSplit: 'shard-0',
+          }), function(err, res) {
+            if (err) return done(err)
+            res.statusCode.should.equal(200)
+
+            res.body.should.equal('')
+
+            request(helpers.opts('DescribeStream', stream), function(err, res) {
+              if (err) return done(err)
+              res.statusCode.should.equal(200)
+
+              res.body.StreamDescription.StreamStatus.should.equal('UPDATING')
+              res.body.StreamDescription.Shards.should.have.length(1)
+
+              assertInUse({StreamName: stream.StreamName, NewStartingHashKey: '2', ShardToSplit: 'shard-0'},
+                  'Stream ' + stream.StreamName + ' under account ' + helpers.awsAccountId +
+                  ' not ACTIVE, instead in state UPDATING', function(err) {
+                if (err) return done(err)
+
+                helpers.waitUntilActive(stream.StreamName, function(err, res) {
+                  if (err) return done(err)
+                  res.statusCode.should.equal(200)
+
+                  var splitEnd = Date.now()
+
+                  var shards = res.body.StreamDescription.Shards
+
+                  shards.should.have.length(3)
+
+                  shards[1].ShardId.should.equal('shardId-000000000001')
+                  shards[2].ShardId.should.equal('shardId-000000000002')
+
+                  shards[1].ParentShardId.should.equal('shardId-000000000000')
+                  shards[2].ParentShardId.should.equal('shardId-000000000000')
+
+                  shards[1].HashKeyRange.StartingHashKey.should.equal('0')
+                  shards[1].HashKeyRange.EndingHashKey.should.equal('1')
+
+                  shards[2].HashKeyRange.StartingHashKey.should.equal('2')
+                  shards[2].HashKeyRange.EndingHashKey.should.equal('340282366920938463463374607431768211455')
+
+                  var seq0Start = db.parseSequence(shards[0].SequenceNumberRange.StartingSequenceNumber)
+                  var seq0End = db.parseSequence(shards[0].SequenceNumberRange.EndingSequenceNumber)
+                  var seq1Start = db.parseSequence(shards[1].SequenceNumberRange.StartingSequenceNumber)
+                  var seq2Start = db.parseSequence(shards[2].SequenceNumberRange.StartingSequenceNumber)
+
+                  seq0End.shardIx.should.equal(0)
+                  seq0End.shardCreateTime.should.equal(seq0Start.shardCreateTime)
+                  new BigNumber(seq0End.seqIx).toString(16).should.equal('7fffffffffffffff')
+                  seq0End.seqTime.should.be.above(splitStart - 1000)
+                  seq0End.seqTime.should.be.below(splitEnd + 1000)
+
+                  seq1Start.shardIx.should.equal(1)
+                  seq1Start.shardCreateTime.should.equal(seq1Start.seqTime)
+
+                  seq2Start.shardIx.should.equal(2)
+                  seq2Start.shardCreateTime.should.equal(seq2Start.seqTime)
+
+                  seq1Start.shardCreateTime.should.equal(seq2Start.shardCreateTime)
+
+                  var diff = seq1Start.shardCreateTime - seq0End.seqTime
+                  diff.should.equal(1000)
+
+                  seq1Start.seqIx.should.equal('0')
+                  seq2Start.seqIx.should.equal('0')
+
+                  putRecord(done)
+
+                  function putRecord(cb) {
+                    request(helpers.opts('PutRecord', {
+                      StreamName: stream.StreamName,
+                      PartitionKey: 'a',
+                      Data: '',
+                      ExplicitHashKey: '1'
+                    }), function(err, res) {
+                      if (err) return cb(err)
+                      res.statusCode.should.equal(200)
+
+                      var putSeq = db.parseSequence(res.body.SequenceNumber)
+
+                      // Kinesis will continue to put records in the "closed" shard
+                      // until the time has clocked over to the new shard's create time
+                      if (res.body.ShardId == 'shardId-000000000000') {
+                        helpers.assertSequenceNumber(res.body.SequenceNumber, 0, splitEnd)
+                        putSeq.shardCreateTime.should.equal(seq0End.shardCreateTime)
+                        putSeq.seqTime.should.be.below(seq0End.seqTime + 1)
+                        return putRecord(cb)
+                      }
+
+                      res.body.ShardId.should.equal('shardId-000000000001')
+                      helpers.assertSequenceNumber(res.body.SequenceNumber, 1, splitEnd)
+
+                      putSeq.shardCreateTime.should.equal(seq1Start.shardCreateTime)
+                      putSeq.seqTime.should.be.above(putSeq.shardCreateTime - 1)
+
+                      cb()
+                    })
+                  }
+                })
+              })
+            })
+          })
+        })
+      })
+    })
+
   })
 
 })
-

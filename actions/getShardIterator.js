@@ -2,16 +2,17 @@ var db = require('../db')
 
 module.exports = function getShardIterator(store, data, cb) {
 
-  var metaDb = store.metaDb, shardId = data.ShardId, shardIx
+  var metaDb = store.metaDb, shardInfo, shardId, shardIx
 
-  shardId = shardId.split('-')[1] || shardId
-  shardIx = /^\d+$/.test(shardId) ? parseInt(shardId) : NaN
-  if (!(shardIx >= 0 && shardIx <= 2147483647)) {
+  try {
+    shardInfo = db.resolveShardId(data.ShardId)
+  } catch (e) {
     return cb(db.clientError('ResourceNotFoundException',
       'Could not find shard ' + data.ShardId + ' in stream ' + data.StreamName +
       ' under account ' + metaDb.awsAccountId + '.'))
   }
-  shardId = 'shardId-' + ('00000000000' + shardIx).slice(-12)
+  shardId = shardInfo.shardId
+  shardIx = shardInfo.shardIx
 
   store.getStream(data.StreamName, false, function(err, stream) {
     if (err) {

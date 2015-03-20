@@ -37,7 +37,8 @@ module.exports = function putRecord(store, data, cb) {
       }
 
       for (var i = 0; i < stream.Shards.length; i++) {
-        if (hashKey.cmp(stream.Shards[i].HashKeyRange.StartingHashKey) >= 0 &&
+        if (stream.Shards[i].SequenceNumberRange.EndingSequenceNumber == null &&
+            hashKey.cmp(stream.Shards[i].HashKeyRange.StartingHashKey) >= 0 &&
             hashKey.cmp(stream.Shards[i].HashKeyRange.EndingHashKey) <= 0) {
           shardIx = i
           shardId = stream.Shards[i].ShardId
@@ -47,13 +48,17 @@ module.exports = function putRecord(store, data, cb) {
         }
       }
 
-      var seqIxIx = Math.floor(shardIx / 5)
+      var seqIxIx = Math.floor(shardIx / 5), now = Math.max(Date.now(), shardCreateTime)
+
+      // Ensure that the first record will always be above the stream start sequence
+      if (!stream._seqIx[seqIxIx])
+        stream._seqIx[seqIxIx] = shardCreateTime == now ? 1 : 0
 
       var seqNum = db.stringifySequence({
         shardCreateTime: shardCreateTime,
         shardIx: shardIx,
         seqIx: stream._seqIx[seqIxIx],
-        seqTime: Date.now(),
+        seqTime: now,
       })
 
       var streamKey = db.shardIxToHex(shardIx) + '/' + seqNum

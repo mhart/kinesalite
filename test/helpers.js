@@ -289,9 +289,9 @@ function assertInternalFailure(target, data, done) {
 function assertSequenceNumber(seqNum, shardIx, timestamp) {
   var hex = new BigNumber(seqNum).toString(16)
   hex.should.match(new RegExp('^20[0-9a-f]{8}' + shardIx + '[0-9a-f]{16}000[0-9a-f]{8}0000000' + shardIx + '2$'))
-  parseInt(hex.slice(2, 10), 16).should.be.within(new Date('2015-01-01') / 1000, Date.now() / 1000 - 2)
-  parseInt(hex.slice(11, 27), 16).should.be.greaterThan(-1)
-  parseInt(hex.slice(30, 38), 16).should.be.within(Math.floor(timestamp / 1000) - 4, Date.now() / 1000)
+  parseInt(hex.slice(2, 10), 16).should.be.within(new Date('2015-01-01') / 1000, Date.now() / 1000 + 1)
+  parseInt(hex.slice(11, 27), 16).should.be.above(-1)
+  parseInt(hex.slice(30, 38), 16).should.be.within(Math.floor(timestamp / 1000) - 4, Date.now() / 1000 + 1)
 }
 
 function assertShardIterator(shardIterator, streamName) {

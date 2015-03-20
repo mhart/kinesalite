@@ -289,7 +289,12 @@ describe('getShardIterator', function() {
 
                   helpers.assertShardIterator(res.body.ShardIterator, stream2)
 
-                  done()
+                  request(helpers.opts('DeleteStream', {StreamName: stream1}), function(err, res) {
+                    if (err) return done(err)
+                    res.statusCode.should.equal(200)
+
+                    request(helpers.opts('DeleteStream', {StreamName: stream2}), done)
+                  })
                 })
               })
             })

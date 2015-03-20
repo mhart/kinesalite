@@ -157,7 +157,7 @@ describe('getRecords', function() {
                               res.body.Records.should.eql([])
                               helpers.assertShardIterator(res.body.NextShardIterator, stream.StreamName)
 
-                              done()
+                              request(helpers.opts('DeleteStream', {StreamName: stream.StreamName}), done)
                             })
                           })
                         })
@@ -455,7 +455,7 @@ describe('getRecords', function() {
                           res.body.Records.should.eql([])
                           helpers.assertShardIterator(res.body.NextShardIterator, stream.StreamName)
 
-                          done()
+                          request(helpers.opts('DeleteStream', {StreamName: stream.StreamName}), done)
                         })
                       })
                     })

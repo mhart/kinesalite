@@ -7,7 +7,8 @@ var target = 'CreateStream',
     opts = helpers.opts.bind(null, target),
     assertType = helpers.assertType.bind(null, target),
     assertValidation = helpers.assertValidation.bind(null, target),
-    assertLimitExceeded = helpers.assertLimitExceeded.bind(null, target)
+    assertLimitExceeded = helpers.assertLimitExceeded.bind(null, target),
+    assertInUse = helpers.assertInUse.bind(null, target)
 
 describe('createStream', function() {
 
@@ -62,6 +63,11 @@ describe('createStream', function() {
         'for current limits and how to request higher limits.', done)
     })
 
+    it('should return ResourceInUseException if stream already exists', function(done) {
+      assertInUse({StreamName: helpers.testStream, ShardCount: 1},
+        'Stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId + ' already exists.', done)
+    })
+
   })
 
   describe('functionality', function() {
@@ -94,20 +100,17 @@ describe('createStream', function() {
             res.body.StreamDescription.Shards.should.have.length(3)
 
             res.body.StreamDescription.Shards[0].ShardId.should.equal('shardId-000000000000')
-            res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber.should.have.length(56)
-            res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d+$/)
+            res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
             res.body.StreamDescription.Shards[0].HashKeyRange.StartingHashKey.should.equal('0')
             res.body.StreamDescription.Shards[0].HashKeyRange.EndingHashKey.should.equal('113427455640312821154458202477256070484')
 
             res.body.StreamDescription.Shards[1].ShardId.should.equal('shardId-000000000001')
-            res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber.should.have.length(56)
-            res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d+$/)
+            res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
             res.body.StreamDescription.Shards[1].HashKeyRange.StartingHashKey.should.equal('113427455640312821154458202477256070485')
             res.body.StreamDescription.Shards[1].HashKeyRange.EndingHashKey.should.equal('226854911280625642308916404954512140969')
 
             res.body.StreamDescription.Shards[2].ShardId.should.equal('shardId-000000000002')
-            res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber.should.have.length(56)
-            res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d+$/)
+            res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
             res.body.StreamDescription.Shards[2].HashKeyRange.StartingHashKey.should.equal('226854911280625642308916404954512140970')
             res.body.StreamDescription.Shards[2].HashKeyRange.EndingHashKey.should.equal('340282366920938463463374607431768211455')
 
@@ -119,8 +122,8 @@ describe('createStream', function() {
             startSeq2.minus(startSeq1).toFixed().should.equal('22300745198530623141535718272648361505980432')
 
             var startDiff = parseInt(startSeq0.toString(16).slice(2, 10), 16) - (createdAt / 1000)
-            startDiff.should.be.lessThan(-2)
-            startDiff.should.be.greaterThan(-7)
+            startDiff.should.be.below(-2)
+            startDiff.should.be.above(-7)
 
             request(helpers.opts('ListStreams', {Limit: 1}), function(err, res) {
               if (err) return done(err)
@@ -129,7 +132,7 @@ describe('createStream', function() {
               res.body.StreamNames.should.have.length(1)
               res.body.HasMoreStreams.should.equal(true)
 
-              done()
+              request(helpers.opts('DeleteStream', {StreamName: stream.StreamName}), done)
             })
           })
         })
