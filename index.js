@@ -1,6 +1,7 @@
 var https = require('https'),
     http = require('http'),
     fs = require('fs'),
+    url = require('url'),
     crypto = require('crypto'),
     uuid = require('node-uuid'),
     validations = require('./validations'),
@@ -154,33 +155,52 @@ function httpHandler(store, req, res) {
       }, 200)
     }
 
-    var auth = req.headers.authorization
+    var authHeader = req.headers.authorization
+    var query = url.parse(req.url, true).query
+    var authQuery = 'X-Amz-Algorithm' in query
 
-    if (!auth)
+    if (authHeader && authQuery)
+      return sendData(req, res, {
+        __type: 'InvalidSignatureException',
+        message: 'Found both \'X-Amz-Algorithm\' as a query-string param and \'Authorization\' as HTTP header.',
+      }, 400)
+
+    if (!authHeader && !authQuery)
       return sendData(req, res, {
         __type: 'MissingAuthenticationTokenException',
         message: 'Missing Authentication Token',
       }, 400)
 
-    var authParams = auth.split(' ').slice(1).join('').split(',').reduce(function(obj, x) {
-          var keyVal = x.trim().split('=')
-          obj[keyVal[0]] = keyVal[1]
-          return obj
-        }, {}),
-        date = req.headers['x-amz-date'] || req.headers.date
+    var msg = '', params
 
-    var headers = ['Credential', 'Signature', 'SignedHeaders']
-    var msg = ''
-    headers.forEach(function(header) {
-      if (!authParams[header])
-        msg += 'Authorization header requires \'' + header + '\' parameter. '
-    })
-    if (!date)
-      msg += 'Authorization header requires existence of either a \'X-Amz-Date\' or a \'Date\' header. '
+    if (authHeader) {
+      params = ['Credential', 'Signature', 'SignedHeaders']
+      var authParams = authHeader.split(/,| /).slice(1).filter(Boolean).reduce(function(obj, x) {
+        var keyVal = x.trim().split('=')
+        obj[keyVal[0]] = keyVal[1]
+        return obj
+      }, {})
+      params.forEach(function(param) {
+        if (!authParams[param])
+          msg += 'Authorization header requires \'' + param + '\' parameter. '
+      })
+      if (!req.headers['x-amz-date'] && !req.headers.date)
+        msg += 'Authorization header requires existence of either a \'X-Amz-Date\' or a \'Date\' header. '
+      if (msg) msg += 'Authorization=' + authHeader
+
+    } else {
+      params = ['X-Amz-Algorithm', 'X-Amz-Credential', 'X-Amz-Signature', 'X-Amz-SignedHeaders', 'X-Amz-Date']
+      params.forEach(function(param) {
+        if (!query[param])
+          msg += 'AWS query-string parameters must include \'' + param + '\'. '
+      })
+      if (msg) msg += 'Re-examine the query-string parameters.'
+    }
+
     if (msg) {
       return sendData(req, res, {
         __type: 'IncompleteSignatureException',
-        message: msg + 'Authorization=' + auth,
+        message: msg,
       }, 400)
     }
 

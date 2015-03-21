@@ -196,11 +196,11 @@ describe('kinesalite connections', function() {
 
   describe('JSON', function() {
 
-    function assertUnknownOperation(done) {
+    function assertUnknown(done) {
       return assertBody(400, 'application/x-amz-json-1.1', {__type: 'UnknownOperationException'}, done)
     }
 
-    function assertUnknownOperationDeprecated(done) {
+    function assertUnknownDeprecated(done) {
       return assertBody(200, 'application/json', {
         Output: {__type: 'com.amazon.coral.service#UnknownOperationException', message: null},
         Version: '1.0',
@@ -218,41 +218,44 @@ describe('kinesalite connections', function() {
       }, done)
     }
 
-    function assertMissingAuthenticationToken(done) {
+    function assertMissing(done) {
       return assertBody(400, 'application/x-amz-json-1.1', {
         __type: 'MissingAuthenticationTokenException',
         message: 'Missing Authentication Token',
       }, done)
     }
 
-    function assertIncompleteSignature(str, done) {
+    function assertIncomplete(msg, done) {
       return assertBody(400, 'application/x-amz-json-1.1', {
         __type: 'IncompleteSignatureException',
-        message: 'Authorization header requires \'Credential\' parameter. ' +
-          'Authorization header requires \'Signature\' parameter. ' +
-          'Authorization header requires \'SignedHeaders\' parameter. ' +
-          'Authorization header requires existence of either a \'X-Amz-Date\' or a \'Date\' header. ' +
-          'Authorization=' + str,
+        message: msg,
+      }, done)
+    }
+
+    function assertInvalid(done) {
+      return assertBody(400, 'application/x-amz-json-1.1', {
+        __type: 'InvalidSignatureException',
+        message: 'Found both \'X-Amz-Algorithm\' as a query-string param and \'Authorization\' as HTTP header.',
       }, done)
     }
 
     it('should return UnknownOperationException if no target', function(done) {
-      request({headers: {'content-type': 'application/x-amz-json-1.1'}}, assertUnknownOperation(done))
+      request({headers: {'content-type': 'application/x-amz-json-1.1'}}, assertUnknown(done))
     })
 
     it('should return UnknownOperationException if no target and no auth', function(done) {
-      request({headers: {'content-type': 'application/x-amz-json-1.1'}, noSign: true}, assertUnknownOperation(done))
+      request({headers: {'content-type': 'application/x-amz-json-1.1'}, noSign: true}, assertUnknown(done))
     })
 
     it('should return UnknownOperationException if no target and application/json', function(done) {
-      request({headers: {'content-type': 'application/json'}}, assertUnknownOperationDeprecated(done))
+      request({headers: {'content-type': 'application/json'}}, assertUnknownDeprecated(done))
     })
 
     it('should return UnknownOperationException if valid target and application/json', function(done) {
       request({headers: {
         'content-type': 'application/json',
         'x-amz-target': 'Kinesis_20131202.ListStreams',
-      }}, assertUnknownOperationDeprecated(done))
+      }}, assertUnknownDeprecated(done))
     })
 
     it('should return SerializationException if no body', function(done) {
@@ -280,7 +283,7 @@ describe('kinesalite connections', function() {
       request({headers: {
         'content-type': 'application/json',
         'x-amz-target': 'Kinesis_20131202.ListStreams',
-      }, body: '{}', noSign: true}, assertUnknownOperationDeprecated(done))
+      }, body: '{}', noSign: true}, assertUnknownDeprecated(done))
     })
 
     it('should return SerializationException if non-JSON body and application/json', function(done) {
@@ -294,7 +297,7 @@ describe('kinesalite connections', function() {
       request({headers: {
         'content-type': 'application/x-amz-json-1.1',
         'x-amz-target': 'Kinesis_20131202.ListStreams',
-      }, body: '{}', noSign: true}, assertMissingAuthenticationToken(done))
+      }, body: '{}', noSign: true}, assertMissing(done))
     })
 
     it('should return IncompleteSignatureException if invalid auth', function(done) {
@@ -302,7 +305,126 @@ describe('kinesalite connections', function() {
         'content-type': 'application/x-amz-json-1.1',
         'x-amz-target': 'Kinesis_20131202.ListStreams',
         'Authorization': 'X',
-      }, body: '{}', noSign: true}, assertIncompleteSignature('X', done))
+      }, body: '{}', noSign: true},
+        assertIncomplete('Authorization header requires \'Credential\' parameter. ' +
+          'Authorization header requires \'Signature\' parameter. ' +
+          'Authorization header requires \'SignedHeaders\' parameter. ' +
+          'Authorization header requires existence of either a \'X-Amz-Date\' or a \'Date\' header. ' +
+          'Authorization=X', done))
+    })
+
+    it('should return IncompleteSignatureException if incomplete auth header and query', function(done) {
+      request({
+        path: '/?X-Amz-Algorith',
+        headers: {
+          'content-type': 'application/x-amz-json-1.1',
+          'x-amz-target': 'Kinesis_20131202.ListStreams',
+          'Authorization': 'X'
+        },
+        body: '{}',
+        noSign: true
+      }, assertIncomplete('Authorization header requires \'Credential\' parameter. ' +
+        'Authorization header requires \'Signature\' parameter. ' +
+        'Authorization header requires \'SignedHeaders\' parameter. ' +
+        'Authorization header requires existence of either a \'X-Amz-Date\' or a \'Date\' header. ' +
+        'Authorization=X', done))
+    })
+
+    it('should return MissingAuthenticationTokenException if all query params except X-Amz-Algorithm', function(done) {
+      request({
+        path: '/?X-Amz-Credential=a&X-Amz-Signature=b&X-Amz-SignedHeaders=c&X-Amz-Date=d',
+        headers: {
+          'content-type': 'application/x-amz-json-1.1',
+          'x-amz-target': 'Kinesis_20131202.ListStreams',
+        },
+        body: '{}',
+        noSign: true
+      }, assertMissing(done))
+    })
+
+    it('should return InvalidSignatureException if both auth header and query', function(done) {
+      request({
+        path: '/?X-Amz-Algorithm',
+        headers: {
+          'content-type': 'application/x-amz-json-1.1',
+          'x-amz-target': 'Kinesis_20131202.ListStreams',
+          'Authorization': 'X',
+        },
+        body: '{}',
+        noSign: true
+      }, assertInvalid(done))
+    })
+
+    it('should return IncompleteSignatureException if header is "AWS4- Signature=b Credential=a"', function(done) {
+      request({
+        headers: {
+          'content-type': 'application/x-amz-json-1.1',
+          'x-amz-target': 'Kinesis_20131202.ListStreams',
+          'Authorization': 'AWS4- Signature=b Credential=a',
+          'Date': 'a',
+        },
+        body: '{}',
+        noSign: true,
+      }, assertIncomplete('Authorization header requires \'SignedHeaders\' parameter. ' +
+        'Authorization=AWS4- Signature=b Credential=a', done))
+    })
+
+    it('should return IncompleteSignatureException if header is "AWS4- Signature=b,Credential=a"', function(done) {
+      request({
+        headers: {
+          'content-type': 'application/x-amz-json-1.1',
+          'x-amz-target': 'Kinesis_20131202.ListStreams',
+          'Authorization': 'AWS4- Signature=b,Credential=a',
+          'Date': 'a',
+        },
+        body: '{}',
+        noSign: true,
+      }, assertIncomplete('Authorization header requires \'SignedHeaders\' parameter. ' +
+        'Authorization=AWS4- Signature=b,Credential=a', done))
+    })
+
+    it('should return IncompleteSignatureException if header is "AWS4- Signature=b, Credential=a"', function(done) {
+      request({
+        headers: {
+          'content-type': 'application/x-amz-json-1.1',
+          'x-amz-target': 'Kinesis_20131202.ListStreams',
+          'Authorization': 'AWS4- Signature=b, Credential=a',
+          'Date': 'a',
+        },
+        body: '{}',
+        noSign: true,
+      }, assertIncomplete('Authorization header requires \'SignedHeaders\' parameter. ' +
+        'Authorization=AWS4- Signature=b, Credential=a', done))
+    })
+
+    it('should return IncompleteSignatureException if empty X-Amz-Algorithm query', function(done) {
+      request({
+        path: '/?X-Amz-Algorithm',
+        headers: {
+          'content-type': 'application/x-amz-json-1.1',
+          'x-amz-target': 'Kinesis_20131202.ListStreams',
+        },
+        body: '{}',
+        noSign: true,
+      }, assertIncomplete('AWS query-string parameters must include \'X-Amz-Algorithm\'. ' +
+        'AWS query-string parameters must include \'X-Amz-Credential\'. ' +
+        'AWS query-string parameters must include \'X-Amz-Signature\'. ' +
+        'AWS query-string parameters must include \'X-Amz-SignedHeaders\'. ' +
+        'AWS query-string parameters must include \'X-Amz-Date\'. ' +
+        'Re-examine the query-string parameters.', done))
+    })
+
+    it('should return IncompleteSignatureException if missing X-Amz-SignedHeaders query', function(done) {
+      request({
+        path: '/?X-Amz-Algorithm=a&X-Amz-Credential=b&X-Amz-Signature=c&X-Amz-Date=d',
+        headers: {
+          'content-type': 'application/x-amz-json-1.1',
+          'x-amz-target': 'Kinesis_20131202.ListStreams',
+        },
+        body: '{}',
+        noSign: true,
+      }, assertIncomplete('AWS query-string parameters must include \'X-Amz-SignedHeaders\'. ' +
+        'Re-examine the query-string parameters.', done))
     })
 
   })
