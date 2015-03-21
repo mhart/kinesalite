@@ -80,5 +80,6 @@ $ npm install -g kinesalite
 TODO
 ----
 
+* ListTagsForStream
 * AddTagsToStream
 * RemoveTagsFromStream
