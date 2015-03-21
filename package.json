@@ -1,6 +1,6 @@
 {
   "name": "kinesalite",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "An implementation of Amazon's Kinesis built on LevelDB",
   "main": "index.js",
   "bin": "cli.js",
