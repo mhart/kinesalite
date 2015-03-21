@@ -18,6 +18,7 @@ exports.shardIxToHex = shardIxToHex
 exports.resolveShardId = resolveShardId
 exports.partitionKeyToHashKey = partitionKeyToHashKey
 exports.createShardIterator = createShardIterator
+exports.sumShards = sumShards
 exports.ITERATOR_PWD = 'kinesalite'
 
 function create(options) {
@@ -250,4 +251,15 @@ function createShardIterator(streamName, shardId, seq) {
       cipher.final(),
     ])
   return buffer.toString('base64')
+}
+
+// Sum shards that haven't closed yet
+function sumShards(store, cb) {
+  exports.lazy(store.metaDb.createValueStream(), cb)
+    .map(function(stream) {
+      return stream.Shards.filter(function(shard) {
+        return shard.SequenceNumberRange.EndingSequenceNumber == null
+      }).length
+    })
+    .sum(function(sum) { return cb(null, sum) })
 }

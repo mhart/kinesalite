@@ -10,7 +10,8 @@ var target = 'SplitShard',
     assertValidation = helpers.assertValidation.bind(null, target),
     assertNotFound = helpers.assertNotFound.bind(null, target),
     assertInvalidArgument = helpers.assertInvalidArgument.bind(null, target),
-    assertInUse = helpers.assertInUse.bind(null, target)
+    assertInUse = helpers.assertInUse.bind(null, target),
+    assertLimitExceeded = helpers.assertLimitExceeded.bind(null, target)
 
 describe('splitShard', function() {
 
@@ -155,6 +156,33 @@ describe('splitShard', function() {
         'and less than the shard\'s EndingHashKey 340282366920938463463374607431768211455.', done)
     })
 
+    // Is a bit too fragile to run with everything else – just run alone
+    it.skip('should return LimitExceededException if splitting over limit', function(done) {
+      this.timeout(100000)
+      var stream = {StreamName: randomName(), ShardCount: 7}
+      request(helpers.opts('CreateStream', stream), function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+
+        helpers.waitUntilActive(stream.StreamName, function(err, res) {
+          if (err) return done(err)
+          res.statusCode.should.equal(200)
+
+          assertLimitExceeded({StreamName: stream.StreamName, NewStartingHashKey: '2', ShardToSplit: 'shard-0'},
+              'This request would exceed the shard limit for the account ' + helpers.awsAccountId + ' in ' +
+              helpers.awsRegion + '. Current shard count for the account: 10. Limit: 10. ' +
+              'Number of additional shards that would have resulted from this request: 1. ' +
+              'Refer to the AWS Service Limits page ' +
+              '(http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) ' +
+              'for current limits and how to request higher limits.', function(err) {
+            if (err) return done(err)
+
+            request(helpers.opts('DeleteStream', {StreamName: stream.StreamName}), done)
+          })
+        })
+      })
+    })
+
   })
 
   describe('functionality', function() {
@@ -176,7 +204,7 @@ describe('splitShard', function() {
           request(opts({
             StreamName: stream.StreamName,
             NewStartingHashKey: '2',
-            ShardToSplit: 'shard-0',
+            ShardToSplit: randomName() + '-0',
           }), function(err, res) {
             if (err) return done(err)
             res.statusCode.should.equal(200)
@@ -195,85 +223,97 @@ describe('splitShard', function() {
                   ' not ACTIVE, instead in state UPDATING', function(err) {
                 if (err) return done(err)
 
-                helpers.waitUntilActive(stream.StreamName, function(err, res) {
+                request(helpers.opts('PutRecord', {
+                  StreamName: stream.StreamName,
+                  PartitionKey: 'a',
+                  Data: '',
+                  ExplicitHashKey: '1'
+                }), function(err, res) {
                   if (err) return done(err)
                   res.statusCode.should.equal(200)
 
-                  var splitEnd = Date.now()
+                  res.body.ShardId.should.equal('shardId-000000000000')
 
-                  var shards = res.body.StreamDescription.Shards
+                  helpers.waitUntilActive(stream.StreamName, function(err, res) {
+                    if (err) return done(err)
+                    res.statusCode.should.equal(200)
 
-                  shards.should.have.length(3)
+                    var splitEnd = Date.now()
 
-                  shards[1].ShardId.should.equal('shardId-000000000001')
-                  shards[2].ShardId.should.equal('shardId-000000000002')
+                    var shards = res.body.StreamDescription.Shards
 
-                  shards[1].ParentShardId.should.equal('shardId-000000000000')
-                  shards[2].ParentShardId.should.equal('shardId-000000000000')
+                    shards.should.have.length(3)
 
-                  shards[1].HashKeyRange.StartingHashKey.should.equal('0')
-                  shards[1].HashKeyRange.EndingHashKey.should.equal('1')
+                    shards[1].ShardId.should.equal('shardId-000000000001')
+                    shards[2].ShardId.should.equal('shardId-000000000002')
 
-                  shards[2].HashKeyRange.StartingHashKey.should.equal('2')
-                  shards[2].HashKeyRange.EndingHashKey.should.equal('340282366920938463463374607431768211455')
+                    shards[1].ParentShardId.should.equal('shardId-000000000000')
+                    shards[2].ParentShardId.should.equal('shardId-000000000000')
 
-                  var seq0Start = db.parseSequence(shards[0].SequenceNumberRange.StartingSequenceNumber)
-                  var seq0End = db.parseSequence(shards[0].SequenceNumberRange.EndingSequenceNumber)
-                  var seq1Start = db.parseSequence(shards[1].SequenceNumberRange.StartingSequenceNumber)
-                  var seq2Start = db.parseSequence(shards[2].SequenceNumberRange.StartingSequenceNumber)
+                    shards[1].HashKeyRange.StartingHashKey.should.equal('0')
+                    shards[1].HashKeyRange.EndingHashKey.should.equal('1')
 
-                  seq0End.shardIx.should.equal(0)
-                  seq0End.shardCreateTime.should.equal(seq0Start.shardCreateTime)
-                  new BigNumber(seq0End.seqIx).toString(16).should.equal('7fffffffffffffff')
-                  seq0End.seqTime.should.be.above(splitStart - 1000)
-                  seq0End.seqTime.should.be.below(splitEnd + 1000)
+                    shards[2].HashKeyRange.StartingHashKey.should.equal('2')
+                    shards[2].HashKeyRange.EndingHashKey.should.equal('340282366920938463463374607431768211455')
 
-                  seq1Start.shardIx.should.equal(1)
-                  seq1Start.shardCreateTime.should.equal(seq1Start.seqTime)
+                    var seq0Start = db.parseSequence(shards[0].SequenceNumberRange.StartingSequenceNumber)
+                    var seq0End = db.parseSequence(shards[0].SequenceNumberRange.EndingSequenceNumber)
+                    var seq1Start = db.parseSequence(shards[1].SequenceNumberRange.StartingSequenceNumber)
+                    var seq2Start = db.parseSequence(shards[2].SequenceNumberRange.StartingSequenceNumber)
 
-                  seq2Start.shardIx.should.equal(2)
-                  seq2Start.shardCreateTime.should.equal(seq2Start.seqTime)
+                    seq0End.shardIx.should.equal(0)
+                    seq0End.shardCreateTime.should.equal(seq0Start.shardCreateTime)
+                    new BigNumber(seq0End.seqIx).toString(16).should.equal('7fffffffffffffff')
+                    seq0End.seqTime.should.be.above(splitStart - 1000)
+                    seq0End.seqTime.should.be.below(splitEnd + 1000)
 
-                  seq1Start.shardCreateTime.should.equal(seq2Start.shardCreateTime)
+                    seq1Start.shardIx.should.equal(1)
+                    seq1Start.shardCreateTime.should.equal(seq1Start.seqTime)
 
-                  var diff = seq1Start.shardCreateTime - seq0End.seqTime
-                  diff.should.equal(1000)
+                    seq2Start.shardIx.should.equal(2)
+                    seq2Start.shardCreateTime.should.equal(seq2Start.seqTime)
 
-                  seq1Start.seqIx.should.equal('0')
-                  seq2Start.seqIx.should.equal('0')
+                    seq1Start.shardCreateTime.should.equal(seq2Start.shardCreateTime)
 
-                  putRecord(done)
+                    var diff = seq1Start.shardCreateTime - seq0End.seqTime
+                    diff.should.equal(1000)
 
-                  function putRecord(cb) {
-                    request(helpers.opts('PutRecord', {
-                      StreamName: stream.StreamName,
-                      PartitionKey: 'a',
-                      Data: '',
-                      ExplicitHashKey: '1'
-                    }), function(err, res) {
-                      if (err) return cb(err)
-                      res.statusCode.should.equal(200)
+                    seq1Start.seqIx.should.equal('0')
+                    seq2Start.seqIx.should.equal('0')
 
-                      var putSeq = db.parseSequence(res.body.SequenceNumber)
+                    putRecord(done)
 
-                      // Kinesis will continue to put records in the "closed" shard
-                      // until the time has clocked over to the new shard's create time
-                      if (res.body.ShardId == 'shardId-000000000000') {
-                        helpers.assertSequenceNumber(res.body.SequenceNumber, 0, splitEnd)
-                        putSeq.shardCreateTime.should.equal(seq0End.shardCreateTime)
-                        putSeq.seqTime.should.be.below(seq0End.seqTime + 1)
-                        return putRecord(cb)
-                      }
+                    function putRecord(cb) {
+                      request(helpers.opts('PutRecord', {
+                        StreamName: stream.StreamName,
+                        PartitionKey: 'a',
+                        Data: '',
+                        ExplicitHashKey: '1'
+                      }), function(err, res) {
+                        if (err) return cb(err)
+                        res.statusCode.should.equal(200)
 
-                      res.body.ShardId.should.equal('shardId-000000000001')
-                      helpers.assertSequenceNumber(res.body.SequenceNumber, 1, splitEnd)
+                        var putSeq = db.parseSequence(res.body.SequenceNumber)
 
-                      putSeq.shardCreateTime.should.equal(seq1Start.shardCreateTime)
-                      putSeq.seqTime.should.be.above(putSeq.shardCreateTime - 1)
+                        // Kinesis will continue to put records in the "closed" shard
+                        // until the time has clocked over to the new shard's create time
+                        if (res.body.ShardId == 'shardId-000000000000') {
+                          helpers.assertSequenceNumber(res.body.SequenceNumber, 0, splitEnd)
+                          putSeq.shardCreateTime.should.equal(seq0End.shardCreateTime)
+                          putSeq.seqTime.should.be.below(seq0End.seqTime + 1)
+                          return putRecord(cb)
+                        }
 
-                      cb()
-                    })
-                  }
+                        res.body.ShardId.should.equal('shardId-000000000001')
+                        helpers.assertSequenceNumber(res.body.SequenceNumber, 1, splitEnd)
+
+                        putSeq.shardCreateTime.should.equal(seq1Start.shardCreateTime)
+                        putSeq.seqTime.should.be.above(putSeq.shardCreateTime - 1)
+
+                        request(helpers.opts('DeleteStream', {StreamName: stream.StreamName}), cb)
+                      })
+                    }
+                  })
                 })
               })
             })

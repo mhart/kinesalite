@@ -17,7 +17,7 @@ module.exports = function createStream(store, data, cb) {
         return cb(db.clientError('ResourceInUseException',
           'Stream ' + key + ' under account ' + metaDb.awsAccountId + ' already exists.'))
 
-      sumShards(metaDb, function(err, shardSum) {
+      db.sumShards(store, function(err, shardSum) {
         if (err) return cb(err)
 
         if (shardSum + data.ShardCount > 10) {
@@ -75,15 +75,4 @@ module.exports = function createStream(store, data, cb) {
     })
   })
 
-}
-
-// Sum shards that haven't closed yet
-function sumShards(metaDb, cb) {
-  db.lazy(metaDb.createValueStream(), cb)
-    .map(function(stream) {
-      return stream.Shards.filter(function(shard) {
-        return shard.SequenceNumberRange.EndingSequenceNumber == null
-      }).length
-    })
-    .sum(function(sum) { return cb(null, sum) })
 }
