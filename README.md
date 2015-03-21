@@ -80,6 +80,5 @@ $ npm install -g kinesalite
 TODO
 ----
 
-* MergeShards
 * AddTagsToStream
 * RemoveTagsFromStream
