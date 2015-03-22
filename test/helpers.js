@@ -9,6 +9,7 @@ var http = require('http'),
 http.globalAgent.maxSockets = https.globalAgent.maxSockets = Infinity
 
 exports.awsRegion = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1'
+exports.awsAccountId = (process.env.AWS_ACCOUNT_ID || '0000-0000-0000').replace(/[^\d]/g, '') // also resolved below
 exports.version = 'Kinesis_20131202'
 exports.prefix = '__kinesalite_test_'
 exports.request = request
@@ -42,11 +43,12 @@ before(function(done) {
   this.timeout(200000)
   kinesaliteServer.listen(port, function(err) {
     if (err) return done(err)
-    createTestStreams(done)
-    //done()
+    resolveAccountId(function(err) {
+      if (err) return done(err)
+      createTestStreams(done)
+      //done()
+    })
   })
-  // TODO: Resolve account ID - can be found from a DeleteStream request with bogus name
-  exports.awsAccountId = (process.env.AWS_ACCOUNT_ID || '0000-0000-0000').replace(/[^\d]/g, '')
 })
 
 after(function(done) {
@@ -356,5 +358,16 @@ function waitUntilDeleted(name, done) {
     else if (res.body.__type)
       return done(new Error(res.body.__type + ': ' + res.body.message))
     setTimeout(waitUntilDeleted, 1000, name, done)
+  })
+}
+
+function resolveAccountId(done) {
+  request(opts('DeleteStream', {StreamName: randomName()}), function(err, res) {
+    if (err) return done(err)
+    if (res.statusCode == 400 && res.body.__type == 'ResourceNotFoundException') {
+      var match = res.body.message.match(/account (.+) not found/)
+      if (match) exports.awsAccountId = match[1]
+    }
+    done()
   })
 }
