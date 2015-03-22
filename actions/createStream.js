@@ -31,7 +31,7 @@ module.exports = function createStream(store, data, cb) {
         }
 
         var i, shards = new Array(data.ShardCount), shardHash = POW_128.div(data.ShardCount).floor(),
-          createTime = Date.now() - SEQ_ADJUST_MS
+          createTime = Date.now() - SEQ_ADJUST_MS, stream
         for (i = 0; i < data.ShardCount; i++) {
           shards[i] = {
             HashKeyRange: {
@@ -44,7 +44,7 @@ module.exports = function createStream(store, data, cb) {
             ShardId: 'shardId-' + ('00000000000' + i).slice(-12)
           }
         }
-        data = {
+        stream = {
           HasMoreShards: false,
           Shards: [],
           StreamARN: 'arn:aws:kinesis:' + metaDb.awsRegion + ':' + metaDb.awsAccountId + ':stream/' + data.StreamName,
@@ -53,16 +53,16 @@ module.exports = function createStream(store, data, cb) {
           _seqIx: new Array(Math.ceil(data.ShardCount / 5)), // Hidden data, remove when returning
         }
 
-        metaDb.put(key, data, function(err) {
+        metaDb.put(key, stream, function(err) {
           if (err) return cb(err)
 
           setTimeout(function() {
 
             // Shouldn't need to lock/fetch as nothing should have changed
-            data.StreamStatus = 'ACTIVE'
-            data.Shards = shards
+            stream.StreamStatus = 'ACTIVE'
+            stream.Shards = shards
 
-            metaDb.put(key, data, function(err) {
+            metaDb.put(key, stream, function(err) {
               // TODO: Need to check this
               if (err) console.error(err)
             })

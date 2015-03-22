@@ -77,28 +77,45 @@ describe('describeStream', function() {
         if (err) return done(err)
         res.statusCode.should.equal(200)
 
-        res.body.StreamDescription.StreamStatus.should.equal('ACTIVE')
-        res.body.StreamDescription.StreamName.should.equal(helpers.testStream)
-        res.body.StreamDescription.StreamARN.should.equal('arn:aws:kinesis:' + helpers.awsRegion +
-          ':' + helpers.awsAccountId + ':stream/' + helpers.testStream)
-        res.body.StreamDescription.HasMoreShards.should.equal(false)
-
-        res.body.StreamDescription.Shards.should.have.length(3)
-
-        res.body.StreamDescription.Shards[0].ShardId.should.equal('shardId-000000000000')
         res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
-        res.body.StreamDescription.Shards[0].HashKeyRange.StartingHashKey.should.equal('0')
-        res.body.StreamDescription.Shards[0].HashKeyRange.EndingHashKey.should.equal('113427455640312821154458202477256070484')
-
-        res.body.StreamDescription.Shards[1].ShardId.should.equal('shardId-000000000001')
         res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
-        res.body.StreamDescription.Shards[1].HashKeyRange.StartingHashKey.should.equal('113427455640312821154458202477256070485')
-        res.body.StreamDescription.Shards[1].HashKeyRange.EndingHashKey.should.equal('226854911280625642308916404954512140969')
-
-        res.body.StreamDescription.Shards[2].ShardId.should.equal('shardId-000000000002')
         res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
-        res.body.StreamDescription.Shards[2].HashKeyRange.StartingHashKey.should.equal('226854911280625642308916404954512140970')
-        res.body.StreamDescription.Shards[2].HashKeyRange.EndingHashKey.should.equal('340282366920938463463374607431768211455')
+
+        delete res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber
+        delete res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber
+        delete res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber
+
+        res.body.should.eql({
+          StreamDescription: {
+            StreamStatus: 'ACTIVE',
+            StreamName: helpers.testStream,
+            StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
+              ':stream/' + helpers.testStream,
+            HasMoreShards: false,
+            Shards: [{
+              ShardId: 'shardId-000000000000',
+              SequenceNumberRange: {},
+              HashKeyRange: {
+                StartingHashKey: '0',
+                EndingHashKey: '113427455640312821154458202477256070484',
+              },
+            }, {
+              ShardId: 'shardId-000000000001',
+              SequenceNumberRange: {},
+              HashKeyRange: {
+                StartingHashKey: '113427455640312821154458202477256070485',
+                EndingHashKey: '226854911280625642308916404954512140969',
+              },
+            }, {
+              ShardId: 'shardId-000000000002',
+              SequenceNumberRange: {},
+              HashKeyRange: {
+                StartingHashKey: '226854911280625642308916404954512140970',
+                EndingHashKey: '340282366920938463463374607431768211455',
+              },
+            }],
+          },
+        })
 
         done()
       })

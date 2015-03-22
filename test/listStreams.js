@@ -51,6 +51,7 @@ describe('listStreams', function() {
       request(opts({}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
+        Object.keys(res.body).sort().should.eql(['HasMoreStreams', 'StreamNames'])
         res.body.HasMoreStreams.should.equal(false)
         res.body.StreamNames.should.containEql(helpers.testStream)
         done()
@@ -62,6 +63,7 @@ describe('listStreams', function() {
       request(opts({ExclusiveStartStreamName: name, Limit: 1}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
+        Object.keys(res.body).sort().should.eql(['HasMoreStreams', 'StreamNames'])
         res.body.StreamNames.should.eql([helpers.testStream])
         done()
       })

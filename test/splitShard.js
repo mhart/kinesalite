@@ -215,8 +215,25 @@ describe('splitShard', function() {
               if (err) return done(err)
               res.statusCode.should.equal(200)
 
-              res.body.StreamDescription.StreamStatus.should.equal('UPDATING')
-              res.body.StreamDescription.Shards.should.have.length(1)
+              delete res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber
+
+              res.body.should.eql({
+                StreamDescription: {
+                  StreamStatus: 'UPDATING',
+                  StreamName: stream.StreamName,
+                  StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
+                    ':stream/' + stream.StreamName,
+                  HasMoreShards: false,
+                  Shards: [{
+                    ShardId: 'shardId-000000000000',
+                    SequenceNumberRange: {},
+                    HashKeyRange: {
+                      StartingHashKey: '0',
+                      EndingHashKey: '340282366920938463463374607431768211455',
+                    },
+                  }],
+                },
+              })
 
               assertInUse({StreamName: stream.StreamName, NewStartingHashKey: '2', ShardToSplit: 'shard-0'},
                   'Stream ' + stream.StreamName + ' under account ' + helpers.awsAccountId +
@@ -244,18 +261,6 @@ describe('splitShard', function() {
 
                     shards.should.have.length(3)
 
-                    shards[1].ShardId.should.equal('shardId-000000000001')
-                    shards[2].ShardId.should.equal('shardId-000000000002')
-
-                    shards[1].ParentShardId.should.equal('shardId-000000000000')
-                    shards[2].ParentShardId.should.equal('shardId-000000000000')
-
-                    shards[1].HashKeyRange.StartingHashKey.should.equal('0')
-                    shards[1].HashKeyRange.EndingHashKey.should.equal('1')
-
-                    shards[2].HashKeyRange.StartingHashKey.should.equal('2')
-                    shards[2].HashKeyRange.EndingHashKey.should.equal('340282366920938463463374607431768211455')
-
                     var seq0Start = db.parseSequence(shards[0].SequenceNumberRange.StartingSequenceNumber)
                     var seq0End = db.parseSequence(shards[0].SequenceNumberRange.EndingSequenceNumber)
                     var seq1Start = db.parseSequence(shards[1].SequenceNumberRange.StartingSequenceNumber)
@@ -280,6 +285,45 @@ describe('splitShard', function() {
 
                     seq1Start.seqIx.should.equal('0')
                     seq2Start.seqIx.should.equal('0')
+
+                    delete res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber
+                    delete res.body.StreamDescription.Shards[0].SequenceNumberRange.EndingSequenceNumber
+                    delete res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber
+                    delete res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber
+
+                    res.body.should.eql({
+                      StreamDescription: {
+                        StreamStatus: 'ACTIVE',
+                        StreamName: stream.StreamName,
+                        StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
+                          ':stream/' + stream.StreamName,
+                        HasMoreShards: false,
+                        Shards: [{
+                          ShardId: 'shardId-000000000000',
+                          SequenceNumberRange: {},
+                          HashKeyRange: {
+                            StartingHashKey: '0',
+                            EndingHashKey: '340282366920938463463374607431768211455',
+                          },
+                        },{
+                          ShardId: 'shardId-000000000001',
+                          ParentShardId: 'shardId-000000000000',
+                          SequenceNumberRange: {},
+                          HashKeyRange: {
+                            StartingHashKey: '0',
+                            EndingHashKey: '1',
+                          },
+                        },{
+                          ShardId: 'shardId-000000000002',
+                          ParentShardId: 'shardId-000000000000',
+                          SequenceNumberRange: {},
+                          HashKeyRange: {
+                            StartingHashKey: '2',
+                            EndingHashKey: '340282366920938463463374607431768211455',
+                          },
+                        }],
+                      },
+                    })
 
                     putRecord(done)
 

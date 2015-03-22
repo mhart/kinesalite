@@ -77,8 +77,16 @@ describe('deleteStream', function() {
               if (err) return done(err)
               res.statusCode.should.equal(200)
 
-              res.body.StreamDescription.StreamStatus.should.equal('DELETING')
-              res.body.StreamDescription.Shards.should.be.empty
+              res.body.should.eql({
+                StreamDescription: {
+                  StreamStatus: 'DELETING',
+                  StreamName: stream.StreamName,
+                  StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
+                    ':stream/' + stream.StreamName,
+                  HasMoreShards: false,
+                  Shards: [],
+                },
+              })
 
               helpers.waitUntilDeleted(stream.StreamName, function(err, res) {
                 if (err) return done(err)

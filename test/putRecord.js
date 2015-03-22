@@ -168,8 +168,9 @@ describe('putRecord ', function() {
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: ''}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
-        res.body.ShardId.should.equal('shardId-000000000000')
         helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
+        delete res.body.SequenceNumber
+        res.body.should.eql({ShardId: 'shardId-000000000000'})
         done()
       })
     })
@@ -179,8 +180,9 @@ describe('putRecord ', function() {
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: data}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
-        res.body.ShardId.should.equal('shardId-000000000000')
         helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
+        delete res.body.SequenceNumber
+        res.body.should.eql({ShardId: 'shardId-000000000000'})
         done()
       })
     })
@@ -190,8 +192,9 @@ describe('putRecord ', function() {
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', ExplicitHashKey: hashKey}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
-        res.body.ShardId.should.equal('shardId-000000000002')
         helpers.assertSequenceNumber(res.body.SequenceNumber, 2, now)
+        delete res.body.SequenceNumber
+        res.body.should.eql({ShardId: 'shardId-000000000002'})
         done()
       })
     })
@@ -201,8 +204,9 @@ describe('putRecord ', function() {
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', ExplicitHashKey: hashKey}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
-        res.body.ShardId.should.equal('shardId-000000000001')
         helpers.assertSequenceNumber(res.body.SequenceNumber, 1, now)
+        delete res.body.SequenceNumber
+        res.body.should.eql({ShardId: 'shardId-000000000001'})
         done()
       })
     })
@@ -212,8 +216,9 @@ describe('putRecord ', function() {
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', ExplicitHashKey: hashKey}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
-        res.body.ShardId.should.equal('shardId-000000000002')
         helpers.assertSequenceNumber(res.body.SequenceNumber, 2, now)
+        delete res.body.SequenceNumber
+        res.body.should.eql({ShardId: 'shardId-000000000002'})
         done()
       })
     })
@@ -223,8 +228,9 @@ describe('putRecord ', function() {
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
-        res.body.ShardId.should.equal('shardId-000000000000')
         helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
+        delete res.body.SequenceNumber
+        res.body.should.eql({ShardId: 'shardId-000000000000'})
         done()
       })
     })
@@ -234,8 +240,9 @@ describe('putRecord ', function() {
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
-        res.body.ShardId.should.equal('shardId-000000000000')
         helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
+        delete res.body.SequenceNumber
+        res.body.should.eql({ShardId: 'shardId-000000000000'})
         done()
       })
     })
@@ -245,8 +252,9 @@ describe('putRecord ', function() {
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
-        res.body.ShardId.should.equal('shardId-000000000000')
         helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
+        delete res.body.SequenceNumber
+        res.body.should.eql({ShardId: 'shardId-000000000000'})
         done()
       })
     })
@@ -257,8 +265,9 @@ describe('putRecord ', function() {
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
-        res.body.ShardId.should.equal('shardId-000000000000')
         helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
+        delete res.body.SequenceNumber
+        res.body.should.eql({ShardId: 'shardId-000000000000'})
         done()
       })
     })
@@ -272,19 +281,23 @@ describe('putRecord ', function() {
         request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: ''}), function(err, res) {
           if (err) return done(err)
           res.statusCode.should.equal(200)
-          res.body.ShardId.should.equal('shardId-000000000000')
-          helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
 
           seqIxs.push(parseInt(new BigNumber(res.body.SequenceNumber).toString(16).slice(11, 27), 16))
+
+          helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
+          delete res.body.SequenceNumber
+          res.body.should.eql({ShardId: 'shardId-000000000000'})
 
           now = Date.now()
           request(opts({StreamName: helpers.testStream, PartitionKey: 'b', Data: ''}), function(err, res) {
             if (err) return done(err)
             res.statusCode.should.equal(200)
-            res.body.ShardId.should.equal('shardId-000000000001')
-            helpers.assertSequenceNumber(res.body.SequenceNumber, 1, now)
 
             seqIxs.push(parseInt(new BigNumber(res.body.SequenceNumber).toString(16).slice(11, 27), 16))
+
+            helpers.assertSequenceNumber(res.body.SequenceNumber, 1, now)
+            delete res.body.SequenceNumber
+            res.body.should.eql({ShardId: 'shardId-000000000001'})
 
             if (!--remaining) checkIxs()
           })

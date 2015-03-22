@@ -142,10 +142,17 @@ describe('putRecords', function() {
       request(opts({StreamName: helpers.testStream, Records: records}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
-        res.body.FailedRecordCount.should.equal(0)
-        res.body.Records.should.have.length(records.length)
-        res.body.Records[0].ShardId.should.equal('shardId-000000000000')
+
         helpers.assertSequenceNumber(res.body.Records[0].SequenceNumber, 0, now)
+        delete res.body.Records[0].SequenceNumber
+
+        res.body.should.eql({
+          FailedRecordCount: 0,
+          Records: [{
+            ShardId: 'shardId-000000000000',
+          }],
+        })
+
         done()
       })
     })
@@ -167,22 +174,13 @@ describe('putRecords', function() {
       request(opts({StreamName: helpers.testStream, Records: records}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
-        res.body.FailedRecordCount.should.equal(0)
-        res.body.Records.should.have.length(records.length)
 
-        res.body.Records[0].ShardId.should.equal('shardId-000000000000')
         helpers.assertSequenceNumber(res.body.Records[0].SequenceNumber, 0, now)
-        res.body.Records[1].ShardId.should.equal('shardId-000000000001')
         helpers.assertSequenceNumber(res.body.Records[1].SequenceNumber, 1, now)
-        res.body.Records[2].ShardId.should.equal('shardId-000000000002')
         helpers.assertSequenceNumber(res.body.Records[2].SequenceNumber, 2, now)
-        res.body.Records[3].ShardId.should.equal('shardId-000000000001')
         helpers.assertSequenceNumber(res.body.Records[3].SequenceNumber, 1, now)
-        res.body.Records[4].ShardId.should.equal('shardId-000000000002')
         helpers.assertSequenceNumber(res.body.Records[4].SequenceNumber, 2, now)
-        res.body.Records[5].ShardId.should.equal('shardId-000000000001')
         helpers.assertSequenceNumber(res.body.Records[5].SequenceNumber, 1, now)
-        res.body.Records[6].ShardId.should.equal('shardId-000000000002')
         helpers.assertSequenceNumber(res.body.Records[6].SequenceNumber, 2, now)
 
         var indexOrder = [1, 3, 5, 0, 2, 4, 6], lastIx
@@ -191,6 +189,33 @@ describe('putRecords', function() {
             diff = lastIx != null ? seqIx - lastIx : 1
           diff.should.equal(1)
           lastIx = seqIx
+        })
+
+        delete res.body.Records[0].SequenceNumber
+        delete res.body.Records[1].SequenceNumber
+        delete res.body.Records[2].SequenceNumber
+        delete res.body.Records[3].SequenceNumber
+        delete res.body.Records[4].SequenceNumber
+        delete res.body.Records[5].SequenceNumber
+        delete res.body.Records[6].SequenceNumber
+
+        res.body.should.eql({
+          FailedRecordCount: 0,
+          Records: [{
+            ShardId: 'shardId-000000000000',
+          },{
+            ShardId: 'shardId-000000000001',
+          },{
+            ShardId: 'shardId-000000000002',
+          },{
+            ShardId: 'shardId-000000000001',
+          },{
+            ShardId: 'shardId-000000000002',
+          },{
+            ShardId: 'shardId-000000000001',
+          },{
+            ShardId: 'shardId-000000000002',
+          }],
         })
 
         done()

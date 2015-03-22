@@ -239,6 +239,7 @@ describe('getShardIterator', function() {
         }), function(err, res) {
           if (err) return cb(err)
           res.statusCode.should.equal(200)
+          Object.keys(res.body).should.eql(['ShardIterator'])
           helpers.assertShardIterator(res.body.ShardIterator, helpers.testStream)
           cb()
         })
@@ -273,6 +274,7 @@ describe('getShardIterator', function() {
               if (err) return done(err)
               res.statusCode.should.equal(200)
 
+              Object.keys(res.body).should.eql(['ShardIterator'])
               helpers.assertShardIterator(res.body.ShardIterator, stream1)
 
               helpers.waitUntilActive(stream2, function(err, res) {
@@ -287,6 +289,7 @@ describe('getShardIterator', function() {
                   if (err) return done(err)
                   res.statusCode.should.equal(200)
 
+                  Object.keys(res.body).should.eql(['ShardIterator'])
                   helpers.assertShardIterator(res.body.ShardIterator, stream2)
 
                   request(helpers.opts('DeleteStream', {StreamName: stream1}), function(err, res) {

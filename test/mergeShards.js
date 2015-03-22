@@ -236,8 +236,41 @@ describe('mergeShards', function() {
               if (err) return done(err)
               res.statusCode.should.equal(200)
 
-              res.body.StreamDescription.StreamStatus.should.equal('UPDATING')
-              res.body.StreamDescription.Shards.should.have.length(3)
+              delete res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber
+              delete res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber
+              delete res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber
+
+              res.body.should.eql({
+                StreamDescription: {
+                  StreamStatus: 'UPDATING',
+                  StreamName: stream.StreamName,
+                  StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
+                    ':stream/' + stream.StreamName,
+                  HasMoreShards: false,
+                  Shards: [{
+                    ShardId: 'shardId-000000000000',
+                    SequenceNumberRange: {},
+                    HashKeyRange: {
+                      StartingHashKey: '0',
+                      EndingHashKey: '113427455640312821154458202477256070484',
+                    },
+                  }, {
+                    ShardId: 'shardId-000000000001',
+                    SequenceNumberRange: {},
+                    HashKeyRange: {
+                      StartingHashKey: '113427455640312821154458202477256070485',
+                      EndingHashKey: '226854911280625642308916404954512140969',
+                    },
+                  }, {
+                    ShardId: 'shardId-000000000002',
+                    SequenceNumberRange: {},
+                    HashKeyRange: {
+                      StartingHashKey: '226854911280625642308916404954512140970',
+                      EndingHashKey: '340282366920938463463374607431768211455',
+                    },
+                  }],
+                },
+              })
 
               assertInUse({StreamName: stream.StreamName, ShardToMerge: 'shard-1', AdjacentShardToMerge: 'shard-2'},
                   'Stream ' + stream.StreamName + ' under account ' + helpers.awsAccountId +
@@ -264,14 +297,6 @@ describe('mergeShards', function() {
                     var shards = res.body.StreamDescription.Shards
 
                     shards.should.have.length(4)
-
-                    shards[3].ShardId.should.equal('shardId-000000000003')
-
-                    shards[3].ParentShardId.should.equal('shardId-000000000000')
-                    shards[3].AdjacentParentShardId.should.equal('shardId-000000000001')
-
-                    shards[3].HashKeyRange.StartingHashKey.should.equal('0')
-                    shards[3].HashKeyRange.EndingHashKey.should.equal('226854911280625642308916404954512140969')
 
                     var seq0Start = db.parseSequence(shards[0].SequenceNumberRange.StartingSequenceNumber)
                     var seq0End = db.parseSequence(shards[0].SequenceNumberRange.EndingSequenceNumber)
@@ -300,6 +325,54 @@ describe('mergeShards', function() {
                     diff.should.equal(1000)
 
                     seq3Start.seqIx.should.equal('0')
+
+                    delete res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber
+                    delete res.body.StreamDescription.Shards[0].SequenceNumberRange.EndingSequenceNumber
+                    delete res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber
+                    delete res.body.StreamDescription.Shards[1].SequenceNumberRange.EndingSequenceNumber
+                    delete res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber
+                    delete res.body.StreamDescription.Shards[3].SequenceNumberRange.StartingSequenceNumber
+
+                    res.body.should.eql({
+                      StreamDescription: {
+                        StreamStatus: 'ACTIVE',
+                        StreamName: stream.StreamName,
+                        StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
+                          ':stream/' + stream.StreamName,
+                        HasMoreShards: false,
+                        Shards: [{
+                          ShardId: 'shardId-000000000000',
+                          SequenceNumberRange: {},
+                          HashKeyRange: {
+                            StartingHashKey: '0',
+                            EndingHashKey: '113427455640312821154458202477256070484',
+                          },
+                        }, {
+                          ShardId: 'shardId-000000000001',
+                          SequenceNumberRange: {},
+                          HashKeyRange: {
+                            StartingHashKey: '113427455640312821154458202477256070485',
+                            EndingHashKey: '226854911280625642308916404954512140969',
+                          },
+                        }, {
+                          ShardId: 'shardId-000000000002',
+                          SequenceNumberRange: {},
+                          HashKeyRange: {
+                            StartingHashKey: '226854911280625642308916404954512140970',
+                            EndingHashKey: '340282366920938463463374607431768211455',
+                          },
+                        }, {
+                          ShardId: 'shardId-000000000003',
+                          ParentShardId: 'shardId-000000000000',
+                          AdjacentParentShardId: 'shardId-000000000001',
+                          SequenceNumberRange: {},
+                          HashKeyRange: {
+                            StartingHashKey: '0',
+                            EndingHashKey: '226854911280625642308916404954512140969',
+                          },
+                        }],
+                      },
+                    })
 
                     putRecord(done)
 

@@ -207,24 +207,28 @@ describe('getRecords', function() {
             if (err) return done(err)
             res.statusCode.should.equal(200)
 
-            res.body.Records.should.eql([
-              {
-                PartitionKey: records[1].PartitionKey,
-                Data: records[1].Data,
-                SequenceNumber: recordsPut[1].SequenceNumber,
-              },
-              {
-                PartitionKey: records[3].PartitionKey,
-                Data: records[3].Data,
-                SequenceNumber: recordsPut[3].SequenceNumber,
-              },
-              {
-                PartitionKey: records[5].PartitionKey,
-                Data: records[5].Data,
-                SequenceNumber: recordsPut[5].SequenceNumber,
-              },
-            ])
             helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+            delete res.body.NextShardIterator
+
+            res.body.should.eql({
+              Records: [
+                {
+                  PartitionKey: records[1].PartitionKey,
+                  Data: records[1].Data,
+                  SequenceNumber: recordsPut[1].SequenceNumber,
+                },
+                {
+                  PartitionKey: records[3].PartitionKey,
+                  Data: records[3].Data,
+                  SequenceNumber: recordsPut[3].SequenceNumber,
+                },
+                {
+                  PartitionKey: records[5].PartitionKey,
+                  Data: records[5].Data,
+                  SequenceNumber: recordsPut[5].SequenceNumber,
+                },
+              ],
+            })
 
             request(helpers.opts('GetShardIterator', {
               StreamName: helpers.testStream,
@@ -239,19 +243,23 @@ describe('getRecords', function() {
                 if (err) return done(err)
                 res.statusCode.should.equal(200)
 
-                res.body.Records.should.eql([
-                  {
-                    PartitionKey: records[3].PartitionKey,
-                    Data: records[3].Data,
-                    SequenceNumber: recordsPut[3].SequenceNumber,
-                  },
-                  {
-                    PartitionKey: records[5].PartitionKey,
-                    Data: records[5].Data,
-                    SequenceNumber: recordsPut[5].SequenceNumber,
-                  },
-                ])
                 helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+                delete res.body.NextShardIterator
+
+                res.body.should.eql({
+                  Records: [
+                    {
+                      PartitionKey: records[3].PartitionKey,
+                      Data: records[3].Data,
+                      SequenceNumber: recordsPut[3].SequenceNumber,
+                    },
+                    {
+                      PartitionKey: records[5].PartitionKey,
+                      Data: records[5].Data,
+                      SequenceNumber: recordsPut[5].SequenceNumber,
+                    },
+                  ],
+                })
 
                 done()
               })
@@ -276,10 +284,11 @@ describe('getRecords', function() {
           if (err) return done(err)
           res.statusCode.should.equal(200)
 
-          res.body.Records.should.eql([])
-          helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
-
           var nextIterator = res.body.NextShardIterator
+          helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+          delete res.body.NextShardIterator
+
+          res.body.should.eql({Records: []})
 
           var hashKey1 = new BigNumber(2).pow(128).minus(1).toFixed(),
             hashKey2 = new BigNumber(2).pow(128).div(3).floor().times(2).minus(1).toFixed(),
@@ -303,30 +312,11 @@ describe('getRecords', function() {
               if (err) return done(err)
               res.statusCode.should.equal(200)
 
-              res.body.Records.should.eql([
-                {
-                  PartitionKey: records[2].PartitionKey,
-                  Data: records[2].Data,
-                  SequenceNumber: recordsPut[2].SequenceNumber,
-                },
-                {
-                  PartitionKey: records[4].PartitionKey,
-                  Data: records[4].Data,
-                  SequenceNumber: recordsPut[4].SequenceNumber,
-                },
-                {
-                  PartitionKey: records[6].PartitionKey,
-                  Data: records[6].Data,
-                  SequenceNumber: recordsPut[6].SequenceNumber,
-                },
-              ])
               helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+              delete res.body.NextShardIterator
 
-              request(opts({ShardIterator: nextIterator}), function(err, res) {
-                if (err) return done(err)
-                res.statusCode.should.equal(200)
-
-                res.body.Records.should.eql([
+              res.body.should.eql({
+                Records: [
                   {
                     PartitionKey: records[2].PartitionKey,
                     Data: records[2].Data,
@@ -342,8 +332,35 @@ describe('getRecords', function() {
                     Data: records[6].Data,
                     SequenceNumber: recordsPut[6].SequenceNumber,
                   },
-                ])
+                ],
+              })
+
+              request(opts({ShardIterator: nextIterator}), function(err, res) {
+                if (err) return done(err)
+                res.statusCode.should.equal(200)
+
                 helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+                delete res.body.NextShardIterator
+
+                res.body.should.eql({
+                  Records: [
+                    {
+                      PartitionKey: records[2].PartitionKey,
+                      Data: records[2].Data,
+                      SequenceNumber: recordsPut[2].SequenceNumber,
+                    },
+                    {
+                      PartitionKey: records[4].PartitionKey,
+                      Data: records[4].Data,
+                      SequenceNumber: recordsPut[4].SequenceNumber,
+                    },
+                    {
+                      PartitionKey: records[6].PartitionKey,
+                      Data: records[6].Data,
+                      SequenceNumber: recordsPut[6].SequenceNumber,
+                    },
+                  ],
+                })
 
                 done()
               })
@@ -379,10 +396,11 @@ describe('getRecords', function() {
               if (err) return done(err)
               res.statusCode.should.equal(200)
 
-              res.body.Records.should.eql([])
-              helpers.assertShardIterator(res.body.NextShardIterator, stream.StreamName)
-
               var nextIterator = res.body.NextShardIterator
+              helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+              delete res.body.NextShardIterator
+
+              res.body.should.eql({Records: []})
 
               var record = {
                 StreamName: stream.StreamName,
@@ -401,27 +419,35 @@ describe('getRecords', function() {
                   if (err) return done(err)
                   res.statusCode.should.equal(200)
 
-                  res.body.Records.should.eql([
-                    {
-                      PartitionKey: record.PartitionKey,
-                      Data: record.Data,
-                      SequenceNumber: seqNo,
-                    },
-                  ])
-                  helpers.assertShardIterator(res.body.NextShardIterator, stream.StreamName)
+                  helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+                  delete res.body.NextShardIterator
 
-                  request(opts({ShardIterator: nextIterator}), function(err, res) {
-                    if (err) return done(err)
-                    res.statusCode.should.equal(200)
-
-                    res.body.Records.should.eql([
+                  res.body.should.eql({
+                    Records: [
                       {
                         PartitionKey: record.PartitionKey,
                         Data: record.Data,
                         SequenceNumber: seqNo,
                       },
-                    ])
-                    helpers.assertShardIterator(res.body.NextShardIterator, stream.StreamName)
+                    ],
+                  })
+
+                  request(opts({ShardIterator: nextIterator}), function(err, res) {
+                    if (err) return done(err)
+                    res.statusCode.should.equal(200)
+
+                    helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+                    delete res.body.NextShardIterator
+
+                    res.body.should.eql({
+                      Records: [
+                        {
+                          PartitionKey: record.PartitionKey,
+                          Data: record.Data,
+                          SequenceNumber: seqNo,
+                        },
+                      ],
+                    })
 
                     request(helpers.opts('GetShardIterator', {
                       StreamName: stream.StreamName,
@@ -437,23 +463,28 @@ describe('getRecords', function() {
                         if (err) return done(err)
                         res.statusCode.should.equal(200)
 
-                        res.body.Records.should.eql([
-                          {
-                            PartitionKey: record.PartitionKey,
-                            Data: record.Data,
-                            SequenceNumber: seqNo,
-                          },
-                        ])
-                        helpers.assertShardIterator(res.body.NextShardIterator, stream.StreamName)
-
                         var nextIterator = res.body.NextShardIterator
+                        helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+                        delete res.body.NextShardIterator
+
+                        res.body.should.eql({
+                          Records: [
+                            {
+                              PartitionKey: record.PartitionKey,
+                              Data: record.Data,
+                              SequenceNumber: seqNo,
+                            },
+                          ],
+                        })
 
                         request(opts({ShardIterator: nextIterator}), function(err, res) {
                           if (err) return done(err)
                           res.statusCode.should.equal(200)
 
-                          res.body.Records.should.eql([])
-                          helpers.assertShardIterator(res.body.NextShardIterator, stream.StreamName)
+                          helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+                          delete res.body.NextShardIterator
+
+                          res.body.should.eql({Records: []})
 
                           request(helpers.opts('DeleteStream', {StreamName: stream.StreamName}), done)
                         })
@@ -495,70 +526,85 @@ describe('getRecords', function() {
             if (err) return done(err)
             res.statusCode.should.equal(200)
 
-            res.body.Records.should.eql([
-              {
-                PartitionKey: records[1].PartitionKey,
-                Data: records[1].Data,
-                SequenceNumber: recordsPut[1].SequenceNumber,
-              },
-              {
-                PartitionKey: records[2].PartitionKey,
-                Data: records[2].Data,
-                SequenceNumber: recordsPut[2].SequenceNumber,
-              },
-            ])
-            helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
-
             var nextIterator = res.body.NextShardIterator
+            helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+            delete res.body.NextShardIterator
+
+            res.body.should.eql({
+              Records: [
+                {
+                  PartitionKey: records[1].PartitionKey,
+                  Data: records[1].Data,
+                  SequenceNumber: recordsPut[1].SequenceNumber,
+                },
+                {
+                  PartitionKey: records[2].PartitionKey,
+                  Data: records[2].Data,
+                  SequenceNumber: recordsPut[2].SequenceNumber,
+                },
+              ],
+            })
 
             request(opts({ShardIterator: nextIterator, Limit: 3}), function(err, res) {
               if (err) return done(err)
               res.statusCode.should.equal(200)
 
-              res.body.Records.should.eql([
-                {
-                  PartitionKey: records[3].PartitionKey,
-                  Data: records[3].Data,
-                  SequenceNumber: recordsPut[3].SequenceNumber,
-                },
-                {
-                  PartitionKey: records[4].PartitionKey,
-                  Data: records[4].Data,
-                  SequenceNumber: recordsPut[4].SequenceNumber,
-                },
-              ])
               helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+              delete res.body.NextShardIterator
 
-              request(opts({ShardIterator: nextIterator, Limit: 1}), function(err, res) {
-                if (err) return done(err)
-                res.statusCode.should.equal(200)
-
-                res.body.Records.should.eql([
+              res.body.should.eql({
+                Records: [
                   {
                     PartitionKey: records[3].PartitionKey,
                     Data: records[3].Data,
                     SequenceNumber: recordsPut[3].SequenceNumber,
                   },
-                ])
+                  {
+                    PartitionKey: records[4].PartitionKey,
+                    Data: records[4].Data,
+                    SequenceNumber: recordsPut[4].SequenceNumber,
+                  },
+                ],
+              })
+
+              request(opts({ShardIterator: nextIterator, Limit: 1}), function(err, res) {
+                if (err) return done(err)
+                res.statusCode.should.equal(200)
+
                 helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+                delete res.body.NextShardIterator
 
-                request(opts({ShardIterator: nextIterator}), function(err, res) {
-                  if (err) return done(err)
-                  res.statusCode.should.equal(200)
-
-                  res.body.Records.should.eql([
+                res.body.should.eql({
+                  Records: [
                     {
                       PartitionKey: records[3].PartitionKey,
                       Data: records[3].Data,
                       SequenceNumber: recordsPut[3].SequenceNumber,
                     },
-                    {
-                      PartitionKey: records[4].PartitionKey,
-                      Data: records[4].Data,
-                      SequenceNumber: recordsPut[4].SequenceNumber,
-                    },
-                  ])
+                  ],
+                })
+
+                request(opts({ShardIterator: nextIterator}), function(err, res) {
+                  if (err) return done(err)
+                  res.statusCode.should.equal(200)
+
                   helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+                  delete res.body.NextShardIterator
+
+                  res.body.should.eql({
+                    Records: [
+                      {
+                        PartitionKey: records[3].PartitionKey,
+                        Data: records[3].Data,
+                        SequenceNumber: recordsPut[3].SequenceNumber,
+                      },
+                      {
+                        PartitionKey: records[4].PartitionKey,
+                        Data: records[4].Data,
+                        SequenceNumber: recordsPut[4].SequenceNumber,
+                      },
+                    ],
+                  })
 
                   done()
                 })
