@@ -10,6 +10,7 @@ http.globalAgent.maxSockets = https.globalAgent.maxSockets = Infinity
 
 exports.awsRegion = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1'
 exports.awsAccountId = (process.env.AWS_ACCOUNT_ID || '0000-0000-0000').replace(/[^\d]/g, '') // also resolved below
+exports.shardLimit = 10 // also resolved below
 exports.version = 'Kinesis_20131202'
 exports.prefix = '__kinesalite_test_'
 exports.request = request
@@ -43,11 +44,11 @@ before(function(done) {
   this.timeout(200000)
   kinesaliteServer.listen(port, function(err) {
     if (err) return done(err)
-    resolveAccountId(function(err) {
-      if (err) return done(err)
-      createTestStreams(done)
-      //done()
-    })
+    async.parallel([
+      resolveAccountId,
+      resolveShardLimit,
+      createTestStreams,
+    ], done)
   })
 })
 
@@ -367,6 +368,20 @@ function resolveAccountId(done) {
     if (res.statusCode == 400 && res.body.__type == 'ResourceNotFoundException') {
       var match = res.body.message.match(/account (.+) not found/)
       if (match) exports.awsAccountId = match[1]
+    }
+    done()
+  })
+}
+
+function resolveShardLimit(done) {
+  request(opts('CreateStream', {StreamName: randomName(), ShardCount: 100000}), function(err, res) {
+    if (err) return done(err)
+    if (res.statusCode == 400 && res.body.__type == 'LimitExceededException') {
+      var match = res.body.message.match(/Limit: (\d+). Number of additional/)
+      if (match) exports.shardLimit = +match[1]
+    } else if (res.statusCode == 200) {
+      console.error('WHOOPS, JUST CREATED A HUGE SHARDED STREAM, DELETE DELETE')
+      process.exit(1)
     }
     done()
   })

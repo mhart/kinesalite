@@ -57,7 +57,7 @@ describe('createStream', function() {
     it('should return LimitExceededException for large ShardCount', function(done) {
       assertLimitExceeded({StreamName: randomName(), ShardCount: 1000},
         'This request would exceed the shard limit for the account ' + helpers.awsAccountId + ' in ' +
-        helpers.awsRegion + '. Current shard count for the account: 3. Limit: 10. ' +
+        helpers.awsRegion + '. Current shard count for the account: 3. Limit: ' + helpers.shardLimit + '. ' +
         'Number of additional shards that would have resulted from this request: 1000. ' +
         'Refer to the AWS Service Limits page (http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) ' +
         'for current limits and how to request higher limits.', done)

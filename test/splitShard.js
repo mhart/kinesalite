@@ -170,7 +170,7 @@ describe('splitShard', function() {
 
           assertLimitExceeded({StreamName: stream.StreamName, NewStartingHashKey: '2', ShardToSplit: 'shard-0'},
               'This request would exceed the shard limit for the account ' + helpers.awsAccountId + ' in ' +
-              helpers.awsRegion + '. Current shard count for the account: 10. Limit: 10. ' +
+              helpers.awsRegion + '. Current shard count for the account: 10. Limit: ' + helpers.shardLimit + '. ' +
               'Number of additional shards that would have resulted from this request: 1. ' +
               'Refer to the AWS Service Limits page ' +
               '(http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) ' +
