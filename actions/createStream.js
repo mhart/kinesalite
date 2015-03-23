@@ -51,6 +51,7 @@ module.exports = function createStream(store, data, cb) {
           StreamName: data.StreamName,
           StreamStatus: 'CREATING',
           _seqIx: new Array(Math.ceil(data.ShardCount / 5)), // Hidden data, remove when returning
+          _tags: Object.create(null), // Hidden data, remove when returning
         }
 
         metaDb.put(key, stream, function(err) {

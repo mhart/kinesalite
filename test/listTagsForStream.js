@@ -1,6 +1,8 @@
 var helpers = require('./helpers')
 
 var target = 'ListTagsForStream',
+    request = helpers.request,
+    opts = helpers.opts.bind(null, target),
     randomName = helpers.randomName,
     assertType = helpers.assertType.bind(null, target),
     assertValidation = helpers.assertValidation.bind(null, target),
@@ -68,7 +70,122 @@ describe('listTagsForStream', function() {
 
   describe('functionality', function() {
 
+    it('should return empty list by default', function(done) {
+      request(opts({StreamName: helpers.testStream}), function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+        res.body.should.eql({
+          Tags: [],
+          HasMoreTags: false,
+        })
+        done()
+      })
+    })
+
+    it('should return empty list with limit and start key', function(done) {
+      request(opts({StreamName: helpers.testStream, ExclusiveStartTagKey: 'a', Limit: 1}), function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+        res.body.should.eql({
+          Tags: [],
+          HasMoreTags: false,
+        })
+        done()
+      })
+    })
+
+    it('should list in alphabetical order', function(done) {
+      request(helpers.opts('AddTagsToStream', {
+        StreamName: helpers.testStream,
+        Tags: {a: 'b', ' ': 'a', 'ÿ': 'a', '_': 'a', '/': 'a', '=': 'a', '+': 'a', Zb: 'z', 0: 'a', '@': 'a'}, // can't do '%' or '\t'
+      }), function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+
+        request(opts({StreamName: helpers.testStream}), function(err, res) {
+          if (err) return done(err)
+          res.statusCode.should.equal(200)
+          res.body.should.eql({
+            Tags: [
+              {Key: ' ', Value: 'a'},
+              {Key: '+', Value: 'a'},
+              {Key: '/', Value: 'a'},
+              {Key: '0', Value: 'a'},
+              {Key: '=', Value: 'a'},
+              {Key: '@', Value: 'a'},
+              {Key: 'Zb', Value: 'z'},
+              {Key: '_', Value: 'a'},
+              {Key: 'a', Value: 'b'},
+              {Key: 'ÿ', Value: 'a'},
+            ],
+            HasMoreTags: false,
+          })
+
+          request(opts({
+            StreamName: helpers.testStream,
+            ExclusiveStartTagKey: '@',
+            Limit: 2,
+          }), function(err, res) {
+            if (err) return done(err)
+            res.statusCode.should.equal(200)
+            res.body.should.eql({
+              Tags: [
+                {Key: 'Zb', Value: 'z'},
+                {Key: '_', Value: 'a'},
+              ],
+              HasMoreTags: true,
+            })
+
+            request(opts({
+              StreamName: helpers.testStream,
+              ExclusiveStartTagKey: '$Z%*(*&@,,.,,ZAC',
+            }), function(err, res) {
+              if (err) return done(err)
+              res.statusCode.should.equal(200)
+              res.body.should.eql({
+                Tags: [
+                  {Key: '+', Value: 'a'},
+                  {Key: '/', Value: 'a'},
+                  {Key: '0', Value: 'a'},
+                  {Key: '=', Value: 'a'},
+                  {Key: '@', Value: 'a'},
+                  {Key: 'Zb', Value: 'z'},
+                  {Key: '_', Value: 'a'},
+                  {Key: 'a', Value: 'b'},
+                  {Key: 'ÿ', Value: 'a'},
+                ],
+                HasMoreTags: false,
+              })
+
+              request(opts({
+                StreamName: helpers.testStream,
+                ExclusiveStartTagKey: 'Za$Z%*(*&@,,.,,',
+              }), function(err, res) {
+                if (err) return done(err)
+                res.statusCode.should.equal(200)
+                res.body.should.eql({
+                  Tags: [
+                    {Key: 'Zb', Value: 'z'},
+                    {Key: '_', Value: 'a'},
+                    {Key: 'a', Value: 'b'},
+                    {Key: 'ÿ', Value: 'a'},
+                  ],
+                  HasMoreTags: false,
+                })
+
+                request(helpers.opts('RemoveTagsFromStream', {
+                  StreamName: helpers.testStream,
+                  TagKeys: ['a', ' ', 'ÿ', '_', '/', '=', '+', 'Zb', '0', '@'],
+                }), done)
+              })
+            })
+          })
+        })
+      })
+    })
+
   })
 
 })
+
 

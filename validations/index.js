@@ -236,6 +236,24 @@ validateFns.lengthLessThanOrEqual = function(parent, key, val, data, type, membe
 validateFns.enum = function(parent, key, val, data, type, memberStr, errors) {
   validate(~val.indexOf(data), 'Member must satisfy enum value set: [' + val.join(', ') + ']', data, type, memberStr, parent, key, errors)
 }
+validateFns.childLengths = function(parent, key, val, data, type, memberStr, errors) {
+  validate(data.every(function(x) { return x.length >= val[0] && x.length <= val[1] }),
+    'Member must satisfy constraint: [Member must have length less than or equal to ' + val[1] +
+    ', Member must have length greater than or equal to ' + val[0] + ']',
+    data, type, memberStr, parent, key, errors)
+}
+validateFns.childKeyLengths = function(parent, key, val, data, type, memberStr, errors) {
+  validate(Object.keys(data).every(function(x) { return x.length >= val[0] && x.length <= val[1] }),
+    'Map keys must satisfy constraint: [Member must have length less than or equal to ' + val[1] +
+    ', Member must have length greater than or equal to ' + val[0] + ']',
+    data, type, memberStr, parent, key, errors)
+}
+validateFns.childValueLengths = function(parent, key, val, data, type, memberStr, errors) {
+  validate(Object.keys(data).every(function(x) { return data[x].length >= val[0] && data[x].length <= val[1] }),
+    'Map value must satisfy constraint: [Member must have length less than or equal to ' + val[1] +
+    ', Member must have length greater than or equal to ' + val[0] + ']',
+    data, type, memberStr, parent, key, errors)
+}
 
 function validate(predicate, msg, data, type, memberStr, parent, key, errors) {
   if (predicate) return
@@ -245,20 +263,22 @@ function validate(predicate, msg, data, type, memberStr, parent, key, errors) {
   errors.push('Value ' + value + ' at \'' + parent + toLowerFirst(key) + '\' failed to satisfy constraint: ' + msg)
 }
 
-function validateStreamName(key, val) {
-  if (val == null) return
-  if (val.length < 1 || val.length > 128)
-    return key + ' must be at least 1 characters long and at most 128 characters long'
-}
-
 function toLowerFirst(str) {
   return str[0].toLowerCase() + str.slice(1)
 }
 
 function valueStr(data, type, memberStr) {
-  return data == null ? 'null' : type == 'Blob' ?
-    'java.nio.HeapByteBuffer[pos=0 lim=' + new Buffer(data, 'base64').length + ' cap=' + new Buffer(data, 'base64').length + ']' :
-      Array.isArray(data) ? '[' + data.map(function(item) { return memberStr || item }).join(', ') + ']' :
-        typeof data == 'object' ? JSON.stringify(data) : data
+  if (data == null) return 'null'
+  switch (type) {
+    case 'Blob':
+      var length = new Buffer(data, 'base64').length
+      return 'java.nio.HeapByteBuffer[pos=0 lim=' + length + ' cap=' + length + ']'
+    case 'List':
+      return '[' + data.map(function(item) { return memberStr || item }).join(', ') + ']'
+    case 'Map':
+      return '{' + Object.keys(data).map(function(key) { return key + '=' + (memberStr || data[key]) }).join(', ') + '}'
+    default:
+      return typeof data == 'object' ? JSON.stringify(data) : data
+  }
 }
 

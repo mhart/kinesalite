@@ -4,6 +4,7 @@ exports.types = {
     notNull: true,
     lengthGreaterThanOrEqual: 1,
     lengthLessThanOrEqual: 10,
+    childLengths: [1, 128],
     children: {
       type: 'String',
     },

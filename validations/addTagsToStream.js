@@ -4,6 +4,8 @@ exports.types = {
     notNull: true,
     lengthGreaterThanOrEqual: 1,
     lengthLessThanOrEqual: 10,
+    childKeyLengths: [1, 128],
+    childValueLengths: [0, 256],
     children: {
       type: 'String',
     },
