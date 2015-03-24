@@ -18,7 +18,7 @@ module.exports = function splitShard(store, data, cb) {
   metaDb.lock(key, function(release) {
     cb = release(cb)
 
-    store.getStream(key, false, function(err, stream) {
+    store.getStream(key, function(err, stream) {
       if (err) return cb(err)
 
       if (shardIx >= stream.Shards.length) {
@@ -70,7 +70,7 @@ module.exports = function splitShard(store, data, cb) {
                 if (err) console.error(err)
               })
 
-              store.getStream(key, false, function(err, stream) {
+              store.getStream(key, function(err, stream) {
                 if (err && err.name == 'NotFoundError') return cb()
                 if (err) return cb(err)
 

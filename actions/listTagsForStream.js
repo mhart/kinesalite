@@ -1,7 +1,7 @@
 
 module.exports = function listTagsForStream(store, data, cb) {
 
-  store.getStream(data.StreamName, false, function(err, stream) {
+  store.getStream(data.StreamName, function(err, stream) {
     if (err) return cb(err)
 
     var hasMoreTags, limit = data.Limit || 100, keys = Object.keys(stream._tags).sort(), tags

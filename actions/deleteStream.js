@@ -3,7 +3,7 @@ module.exports = function deleteStream(store, data, cb) {
 
   var key = data.StreamName, metaDb = store.metaDb
 
-  store.getStream(key, false, function(err, stream) {
+  store.getStream(key, function(err, stream) {
     if (err) return cb(err)
 
     stream.StreamStatus = 'DELETING'

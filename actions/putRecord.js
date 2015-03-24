@@ -8,7 +8,7 @@ module.exports = function putRecord(store, data, cb) {
   metaDb.lock(key, function(release) {
     cb = release(cb)
 
-    store.getStream(data.StreamName, false, function(err, stream) {
+    store.getStream(data.StreamName, function(err, stream) {
       if (err) return cb(err)
 
       var hashKey, shardIx, shardId, shardCreateTime

@@ -14,7 +14,7 @@ module.exports = function getShardIterator(store, data, cb) {
   shardId = shardInfo.shardId
   shardIx = shardInfo.shardIx
 
-  store.getStream(data.StreamName, false, function(err, stream) {
+  store.getStream(data.StreamName, function(err, stream) {
     if (err) {
       if (err.name == 'NotFoundError' && err.body) {
         err.body.message = 'Shard ' + shardId + ' in stream ' + data.StreamName +

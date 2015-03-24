@@ -10,7 +10,6 @@ exports.create = create
 exports.lazy = lazyStream
 exports.clientError = clientError
 exports.serverError = serverError
-exports.validationError = validationError
 exports.parseSequence = parseSequence
 exports.stringifySequence = stringifySequence
 exports.incrementSequence = incrementSequence
@@ -55,14 +54,8 @@ function create(options) {
     })
   }
 
-  function getStream(name, checkStatus, cb) {
-    if (typeof checkStatus == 'function') cb = checkStatus
-
+  function getStream(name, cb) {
     metaDb.get(name, function(err, stream) {
-      if (!err && checkStatus && (stream.StreamStatus == 'CREATING' || stream.StreamStatus == 'DELETING')) {
-        err = new Error('NotFoundError')
-        err.name = 'NotFoundError'
-      }
       if (err) {
         if (err.name == 'NotFoundError') {
           err.statusCode = 400
@@ -70,7 +63,6 @@ function create(options) {
             __type: 'ResourceNotFoundException',
             message: 'Stream ' + name + ' under account ' + metaDb.awsAccountId + ' not found.',
           }
-          //if (!checkStatus) err.body.message += ': Stream: ' + name + ' not found'
         }
         return cb(err)
       }
@@ -109,11 +101,6 @@ function clientError(type, msg, statusCode) {
 
 function serverError(type, msg, statusCode) {
   return clientError(type || 'InternalFailure', msg, statusCode || 500)
-}
-
-function validationError(msg) {
-  if (msg == null) msg = 'The provided key element does not match the schema'
-  return clientError('ValidationException', msg)
 }
 
 var POW_2_124 = new BigNumber(2).pow(124)

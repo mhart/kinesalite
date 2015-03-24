@@ -51,7 +51,7 @@ module.exports = function getRecords(store, data, cb) {
     return cb(invalidShardIterator())
   }
 
-  store.getStream(streamName, false, function(err, stream) {
+  store.getStream(streamName, function(err, stream) {
     if (err) {
       if (err.name == 'NotFoundError' && err.body) {
         err.body.message = 'Shard ' + shardId + ' in stream ' + streamName +

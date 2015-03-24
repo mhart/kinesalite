@@ -5,7 +5,8 @@
   "main": "index.js",
   "bin": "cli.js",
   "scripts": {
-    "test": "mocha --require should --reporter spec -t $([ $REMOTE ] && echo 30s || echo 4s)"
+    "test": "mocha --require should --reporter spec -t $([ $REMOTE ] && echo 30s || echo 4s)",
+    "coverage": "istanbul cover ./node_modules/.bin/_mocha -- --require should -t 4s"
   },
   "repository": "mhart/kinesalite",
   "keywords": [
@@ -41,6 +42,7 @@
   },
   "devDependencies": {
     "aws4": "^1.0.0",
+    "istanbul": "^0.3.10",
     "mocha": "^2.2.1",
     "should": "^5.2.0"
   }

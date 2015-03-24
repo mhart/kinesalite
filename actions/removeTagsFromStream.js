@@ -7,7 +7,7 @@ module.exports = function removeTagsFromStream(store, data, cb) {
   metaDb.lock(data.StreamName, function(release) {
     cb = release(cb)
 
-    store.getStream(data.StreamName, false, function(err, stream) {
+    store.getStream(data.StreamName, function(err, stream) {
       if (err) return cb(err)
 
       if (data.TagKeys.some(function(key) { return /[^\u00C0-\u1FFF\u2C00-\uD7FF\w\.\/\-=+_ @%]/.test(key) }))

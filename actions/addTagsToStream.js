@@ -7,7 +7,7 @@ module.exports = function addTagsToStream(store, data, cb) {
   metaDb.lock(data.StreamName, function(release) {
     cb = release(cb)
 
-    store.getStream(data.StreamName, false, function(err, stream) {
+    store.getStream(data.StreamName, function(err, stream) {
       if (err) return cb(err)
 
       var keys = Object.keys(data.Tags), values = keys.map(function(key) { return data.Tags[key] }),

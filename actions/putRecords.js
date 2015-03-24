@@ -8,7 +8,7 @@ module.exports = function putRecords(store, data, cb) {
   metaDb.lock(key, function(release) {
     cb = release(cb)
 
-    store.getStream(data.StreamName, false, function(err, stream) {
+    store.getStream(data.StreamName, function(err, stream) {
       if (err) return cb(err)
 
       var batchOps = new Array(data.Records.length), returnRecords = new Array(data.Records.length),
