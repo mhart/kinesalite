@@ -36,7 +36,7 @@ exports.testStream = randomName()
 var port = 10000 + Math.round(Math.random() * 10000),
     requestOpts = process.env.REMOTE ?
       {host: 'kinesis.' + exports.awsRegion + '.amazonaws.com', method: 'POST', ssl: true} :
-      {host: 'localhost', port: port, method: 'POST'}
+      {host: '127.0.0.1', port: port, method: 'POST'}
 
 var kinesaliteServer = kinesalite({path: process.env.KINESALITE_PATH})
 
@@ -119,6 +119,7 @@ function assertType(target, property, type, done) {
   switch(type) {
     case 'Boolean':
       msgs = [
+        ['23', '\'23\' can not be converted to an Boolean'],
         [23, 'class java.lang.Short can not be converted to an Boolean'],
         [-2147483648, 'class java.lang.Integer can not be converted to an Boolean'],
         [2147483648, 'class java.lang.Long can not be converted to an Boolean'],
@@ -171,6 +172,7 @@ function assertType(target, property, type, done) {
       break
     case 'List':
       msgs = [
+        ['23', 'Expected list or null'],
         [true, 'Expected list or null'],
         [23, 'Expected list or null'],
         [-2147483648, 'Expected list or null'],
@@ -181,6 +183,7 @@ function assertType(target, property, type, done) {
       break
     case 'Map':
       msgs = [
+        ['23', 'Expected map or null'],
         [true, 'Expected map or null'],
         [23, 'Expected map or null'],
         [-2147483648, 'Expected map or null'],
@@ -191,6 +194,7 @@ function assertType(target, property, type, done) {
       break
     case 'Structure':
       msgs = [
+        ['23', 'Expected null'],
         [true, 'Expected null'],
         [23, 'Expected null'],
         [-2147483648, 'Expected null'],

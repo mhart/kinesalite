@@ -28,8 +28,9 @@ function create(options) {
   if (options.updateStreamMs == null) options.updateStreamMs = 500
   if (options.shardLimit == null) options.shardLimit = 10
 
-  var db = sublevel(levelup(options.path)),
-      metaDb = db.sublevel('meta', {valueEncoding: 'json'}),
+  var db = levelup(options.path),
+      sublevelDb = sublevel(db),
+      metaDb = sublevelDb.sublevel('meta', {valueEncoding: 'json'}),
       streamDbs = []
 
   metaDb.lock = new Lock()
@@ -40,7 +41,7 @@ function create(options) {
 
   function getStreamDb(name) {
     if (!streamDbs[name]) {
-      streamDbs[name] = db.sublevel('stream-' + name, {valueEncoding: 'json'})
+      streamDbs[name] = sublevelDb.sublevel('stream-' + name, {valueEncoding: 'json'})
       streamDbs[name].lock = new Lock()
     }
     return streamDbs[name]
@@ -76,6 +77,7 @@ function create(options) {
     deleteStreamMs: options.deleteStreamMs,
     updateStreamMs: options.updateStreamMs,
     shardLimit: options.shardLimit,
+    db: db,
     metaDb: metaDb,
     getStreamDb: getStreamDb,
     deleteStreamDb: deleteStreamDb,
