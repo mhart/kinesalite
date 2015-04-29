@@ -64,8 +64,7 @@ module.exports = function createStream(store, data, cb) {
             stream.Shards = shards
 
             metaDb.put(key, stream, function(err) {
-              // TODO: Need to check this
-              if (err) console.error(err)
+              if (err && !/Database is not open/.test(err)) console.error(err.stack || err)
             })
 
           }, store.createStreamMs)

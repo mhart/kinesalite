@@ -72,6 +72,13 @@ function create(options) {
     })
   }
 
+  function recreate() {
+    var store = this, newStore = create(options)
+    Object.keys(newStore).forEach(function(key) {
+      store[key] = newStore[key]
+    })
+  }
+
   return {
     createStreamMs: options.createStreamMs,
     deleteStreamMs: options.deleteStreamMs,
@@ -82,6 +89,7 @@ function create(options) {
     getStreamDb: getStreamDb,
     deleteStreamDb: deleteStreamDb,
     getStream: getStream,
+    recreate: recreate,
   }
 }
 

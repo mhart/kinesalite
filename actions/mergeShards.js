@@ -55,7 +55,7 @@ module.exports = function mergeShards(store, data, cb) {
 
           metaDb.lock(key, function(release) {
             cb = release(function(err) {
-              if (err) console.error(err)
+              if (err && !/Database is not open/.test(err)) console.error(err.stack || err)
             })
 
             store.getStream(key, function(err, stream) {

@@ -102,7 +102,7 @@ module.exports = function getRecords(store, data, cb) {
         if (keysToDelete.length) {
           // Do this async
           streamDb.batch(keysToDelete.map(function(key) { return {type: 'del', key: key} }), function(err) {
-            if (err) console.error(err)
+            if (err && !/Database is not open/.test(err)) console.error(err.stack || err)
           })
         }
       })
