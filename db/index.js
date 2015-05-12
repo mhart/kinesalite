@@ -22,13 +22,12 @@ exports.ITERATOR_PWD = 'kinesalite'
 
 function create(options) {
   options = options || {}
-  options.path = options.path || memdown
   if (options.createStreamMs == null) options.createStreamMs = 500
   if (options.deleteStreamMs == null) options.deleteStreamMs = 500
   if (options.updateStreamMs == null) options.updateStreamMs = 500
   if (options.shardLimit == null) options.shardLimit = 10
 
-  var db = levelup(options.path),
+  var db = levelup(options.path || '/does/not/matter', options.path ? {} : {db: memdown}),
       sublevelDb = sublevel(db),
       metaDb = sublevelDb.sublevel('meta', {valueEncoding: 'json'}),
       streamDbs = []
