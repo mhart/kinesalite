@@ -27,23 +27,23 @@
   "license": "MIT",
   "dependencies": {
     "async": "^0.9.0",
-    "bignumber.js": "^2.0.0",
+    "bignumber.js": "^2.0.7",
     "lazy": "^1.0.11",
     "level-sublevel": "^6.4.6",
-    "levelup": "^0.19.0",
-    "lock": "^0.1.0",
+    "levelup": "^1.0.0-5",
+    "lock": "^0.1.2",
     "memdown": "^1.0.0",
     "minimist": "^1.1.1",
     "node-uuid": "^1.4.3",
-    "once": "^1.3.1"
+    "once": "^1.3.2"
   },
   "optionalDependencies": {
-    "leveldown": "^0.10.2"
+    "leveldown": "^1.0.6"
   },
   "devDependencies": {
-    "aws4": "^1.0.0",
-    "istanbul": "^0.3.10",
-    "mocha": "^2.2.1",
-    "should": "^5.2.0"
+    "aws4": "^1.0.1",
+    "istanbul": "^0.3.14",
+    "mocha": "^2.2.4",
+    "should": "^6.0.1"
   }
 }
