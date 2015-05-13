@@ -78,7 +78,9 @@ function request(opts, cb) {
     res.body = ''
     res.on('data', function(chunk) { res.body += chunk })
     res.on('end', function() {
-      try { res.body = JSON.parse(res.body) } catch (e) {}
+      try { res.body = JSON.parse(res.body) } catch (e) {} // eslint-disable-line no-empty
+      if (res.body.__type == 'LimitExceededException' && /^Rate exceeded/.test(res.body.message))
+        return setTimeout(request, Math.floor(Math.random() * 1000), opts, cb)
       cb(null, res)
     })
   }).on('error', cb).end(opts.body)
