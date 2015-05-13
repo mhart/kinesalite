@@ -96,10 +96,10 @@ module.exports = function splitShard(store, data, cb) {
                   SequenceNumberRange: {
                     StartingSequenceNumber: db.stringifySequence({
                       shardCreateTime: now + 1000,
-                      shardIx: stream.Shards.length
+                      shardIx: stream.Shards.length,
                     }),
                   },
-                  ShardId: 'shardId-' + ('00000000000' + stream.Shards.length).slice(-12)
+                  ShardId: 'shardId-' + ('00000000000' + stream.Shards.length).slice(-12),
                 })
 
                 stream.Shards.push({
@@ -111,10 +111,10 @@ module.exports = function splitShard(store, data, cb) {
                   SequenceNumberRange: {
                     StartingSequenceNumber: db.stringifySequence({
                       shardCreateTime: now + 1000,
-                      shardIx: stream.Shards.length
+                      shardIx: stream.Shards.length,
                     }),
                   },
-                  ShardId: 'shardId-' + ('00000000000' + stream.Shards.length).slice(-12)
+                  ShardId: 'shardId-' + ('00000000000' + stream.Shards.length).slice(-12),
                 })
 
                 metaDb.put(key, stream, cb)

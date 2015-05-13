@@ -457,13 +457,13 @@ describe('getRecords', function() {
                       if (err) return done(err)
                       res.statusCode.should.equal(200)
 
-                      var shardIterator = res.body.ShardIterator
+                      shardIterator = res.body.ShardIterator
 
                       request(opts({ShardIterator: shardIterator}), function(err, res) {
                         if (err) return done(err)
                         res.statusCode.should.equal(200)
 
-                        var nextIterator = res.body.NextShardIterator
+                        nextIterator = res.body.NextShardIterator
                         helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
                         delete res.body.NextShardIterator
 

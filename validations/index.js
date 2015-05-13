@@ -33,7 +33,7 @@ function checkTypes(data, types) {
   }
 
   function checkType(val, type) {
-    if (val == null) return
+    if (val == null) return null
     var actualType = type.type || type
     switch (actualType) {
       case 'Boolean':
@@ -46,7 +46,7 @@ function checkTypes(data, types) {
             val = Math.abs(val) >= 1
             break
           case 'string':
-            //"\'HELLOWTF\' can not be converted to an Boolean"
+            // "\'HELLOWTF\' can not be converted to an Boolean"
             // seems to convert to uppercase
             // 'true'/'false'/'1'/'0'/'no'/'yes' seem to convert fine
             val = val.toUpperCase()
@@ -145,7 +145,9 @@ function checkTypes(data, types) {
   }
 }
 
-function checkValidations(data, validations, custom, target) {
+var validateFns = {}
+
+function checkValidations(data, validations, custom) {
   var attr, msg, errors = []
   function validationError(msg) {
     var err = new Error(msg)
@@ -164,7 +166,7 @@ function checkValidations(data, validations, custom, target) {
   }
 
   function checkNonRequireds(data, types, parent) {
-    for (var attr in types) {
+    for (attr in types) {
       checkNonRequired(attr, data[attr], types[attr], parent)
     }
   }
@@ -186,7 +188,7 @@ function checkValidations(data, validations, custom, target) {
           continue
         } else if (validations.type == 'Map') {
           // TODO: Always reverse?
-          Object.keys(data).reverse().forEach(function(key) {
+          Object.keys(data).reverse().forEach(function(key) { // eslint-disable-line no-loop-func
             checkNonRequired('member', data[key], validations.children,
               (parent ? parent + '.' : '') + toLowerFirst(attr) + '.' + key)
           })
@@ -208,7 +210,6 @@ function checkValidations(data, validations, custom, target) {
   }
 }
 
-var validateFns = {}
 validateFns.notNull = function(parent, key, val, data, type, memberStr, errors) {
   validate(data != null, 'Member must not be null', data, type, memberStr, parent, key, errors)
 }

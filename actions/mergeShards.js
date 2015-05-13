@@ -64,7 +64,7 @@ module.exports = function mergeShards(store, data, cb) {
 
               var now = Date.now()
 
-              var shards = [stream.Shards[shardIxs[0]], stream.Shards[shardIxs[1]]]
+              shards = [stream.Shards[shardIxs[0]], stream.Shards[shardIxs[1]]]
 
               stream.StreamStatus = 'ACTIVE'
 
@@ -92,10 +92,10 @@ module.exports = function mergeShards(store, data, cb) {
                 SequenceNumberRange: {
                   StartingSequenceNumber: db.stringifySequence({
                     shardCreateTime: now + 1000,
-                    shardIx: stream.Shards.length
+                    shardIx: stream.Shards.length,
                   }),
                 },
-                ShardId: 'shardId-' + ('00000000000' + stream.Shards.length).slice(-12)
+                ShardId: 'shardId-' + ('00000000000' + stream.Shards.length).slice(-12),
               })
 
               metaDb.put(key, stream, cb)

@@ -244,7 +244,7 @@ describe('splitShard', function() {
                   StreamName: stream.StreamName,
                   PartitionKey: 'a',
                   Data: '',
-                  ExplicitHashKey: '1'
+                  ExplicitHashKey: '1',
                 }), function(err, res) {
                   if (err) return done(err)
                   res.statusCode.should.equal(200)
@@ -305,7 +305,7 @@ describe('splitShard', function() {
                             StartingHashKey: '0',
                             EndingHashKey: '340282366920938463463374607431768211455',
                           },
-                        },{
+                        }, {
                           ShardId: 'shardId-000000000001',
                           ParentShardId: 'shardId-000000000000',
                           SequenceNumberRange: {},
@@ -313,7 +313,7 @@ describe('splitShard', function() {
                             StartingHashKey: '0',
                             EndingHashKey: '1',
                           },
-                        },{
+                        }, {
                           ShardId: 'shardId-000000000002',
                           ParentShardId: 'shardId-000000000000',
                           SequenceNumberRange: {},
@@ -332,7 +332,7 @@ describe('splitShard', function() {
                         StreamName: stream.StreamName,
                         PartitionKey: 'a',
                         Data: '',
-                        ExplicitHashKey: '1'
+                        ExplicitHashKey: '1',
                       }), function(err, res) {
                         if (err) return cb(err)
                         res.statusCode.should.equal(200)

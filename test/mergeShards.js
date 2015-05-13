@@ -281,7 +281,7 @@ describe('mergeShards', function() {
                   StreamName: stream.StreamName,
                   PartitionKey: 'a',
                   Data: '',
-                  ExplicitHashKey: '113427455640312821154458202477256070485'
+                  ExplicitHashKey: '113427455640312821154458202477256070485',
                 }), function(err, res) {
                   if (err) return done(err)
                   res.statusCode.should.equal(200)
@@ -381,7 +381,7 @@ describe('mergeShards', function() {
                         StreamName: stream.StreamName,
                         PartitionKey: 'a',
                         Data: '',
-                        ExplicitHashKey: '113427455640312821154458202477256070485'
+                        ExplicitHashKey: '113427455640312821154458202477256070485',
                       }), function(err, res) {
                         if (err) return cb(err)
                         res.statusCode.should.equal(200)

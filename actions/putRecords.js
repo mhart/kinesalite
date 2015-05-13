@@ -12,9 +12,9 @@ module.exports = function putRecords(store, data, cb) {
       if (err) return cb(err)
 
       var batchOps = new Array(data.Records.length), returnRecords = new Array(data.Records.length),
-        seqPieces = new Array(data.Records.length), record, hashKey, seqPiece
+        seqPieces = new Array(data.Records.length), record, hashKey, seqPiece, i
 
-      for (var i = 0; i < data.Records.length; i++) {
+      for (i = 0; i < data.Records.length; i++) {
         record = data.Records[i]
 
         if (record.ExplicitHashKey != null) {
@@ -37,7 +37,7 @@ module.exports = function putRecords(store, data, cb) {
               shardIx: j,
               shardId: stream.Shards[j].ShardId,
               shardCreateTime: db.parseSequence(
-                stream.Shards[j].SequenceNumberRange.StartingSequenceNumber).shardCreateTime
+                stream.Shards[j].SequenceNumberRange.StartingSequenceNumber).shardCreateTime,
             }
             break
           }
@@ -55,7 +55,7 @@ module.exports = function putRecords(store, data, cb) {
       shardOrder.forEach(function(shardIx) {
         if (shardIx >= stream.Shards.length) return
 
-        for (var i = 0; i < data.Records.length; i++) {
+        for (i = 0; i < data.Records.length; i++) {
           record = data.Records[i]
           seqPiece = seqPieces[i]
 

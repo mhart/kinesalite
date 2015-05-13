@@ -311,8 +311,8 @@ describe('putRecord ', function() {
 
       function checkIxs() {
         seqIxs.sort(function(a, b) { return a - b })
-        for (var i = 1; i < seqIxs.length; i++) {
-          var diff = seqIxs[i] - seqIxs[i - 1]
+        for (var j = 1; j < seqIxs.length; j++) {
+          var diff = seqIxs[j] - seqIxs[j - 1]
           diff.should.equal(1)
         }
         done()

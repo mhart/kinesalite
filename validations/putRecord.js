@@ -26,7 +26,3 @@ exports.types = {
     lengthLessThanOrEqual: 128,
   },
 }
-
-exports.custom = function(data) {
-}
-

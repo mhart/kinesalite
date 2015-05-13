@@ -203,17 +203,17 @@ describe('putRecords', function() {
           FailedRecordCount: 0,
           Records: [{
             ShardId: 'shardId-000000000000',
-          },{
+          }, {
             ShardId: 'shardId-000000000001',
-          },{
+          }, {
             ShardId: 'shardId-000000000002',
-          },{
+          }, {
             ShardId: 'shardId-000000000001',
-          },{
+          }, {
             ShardId: 'shardId-000000000002',
-          },{
+          }, {
             ShardId: 'shardId-000000000001',
-          },{
+          }, {
             ShardId: 'shardId-000000000002',
           }],
         })

@@ -47,7 +47,7 @@ describe('kinesalite connections', function() {
         body[i] = 'a'
 
       request({body: body.join(''), noSign: true}, function(err, res) {
-        if (err && err.code == 'HPE_INVALID_CONSTANT') return
+        if (err && err.code == 'HPE_INVALID_CONSTANT') return done()
         if (err) return done(err)
         res.statusCode.should.equal(403)
         done()
@@ -120,7 +120,7 @@ describe('kinesalite connections', function() {
     })
 
     it('should return AccessDeniedException and set CORS if using Origin', function(done) {
-      request({headers: {origin: 'whatever'}}, function (err, res) {
+      request({headers: {origin: 'whatever'}}, function(err, res) {
         if (err) return done(err)
         res.headers['access-control-allow-origin'].should.equal('*')
         if (res.rawHeaders) {
@@ -181,7 +181,7 @@ describe('kinesalite connections', function() {
 
         done = once(done)
 
-        https.request({host: '127.0.0.1', port: port, rejectUnauthorized : false}, function(res) {
+        https.request({host: '127.0.0.1', port: port, rejectUnauthorized: false}, function(res) {
           res.on('error', done)
           res.on('data', function() {})
           res.on('end', function() {
@@ -319,10 +319,10 @@ describe('kinesalite connections', function() {
         headers: {
           'content-type': 'application/x-amz-json-1.1',
           'x-amz-target': 'Kinesis_20131202.ListStreams',
-          'Authorization': 'X'
+          'Authorization': 'X',
         },
         body: '{}',
-        noSign: true
+        noSign: true,
       }, assertIncomplete('Authorization header requires \'Credential\' parameter. ' +
         'Authorization header requires \'Signature\' parameter. ' +
         'Authorization header requires \'SignedHeaders\' parameter. ' +
@@ -338,7 +338,7 @@ describe('kinesalite connections', function() {
           'x-amz-target': 'Kinesis_20131202.ListStreams',
         },
         body: '{}',
-        noSign: true
+        noSign: true,
       }, assertMissing(done))
     })
 
@@ -351,7 +351,7 @@ describe('kinesalite connections', function() {
           'Authorization': 'X',
         },
         body: '{}',
-        noSign: true
+        noSign: true,
       }, assertInvalid(done))
     })
 

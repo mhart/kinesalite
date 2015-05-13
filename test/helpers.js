@@ -31,7 +31,7 @@ exports.waitUntilActive = waitUntilActive
 exports.waitUntilDeleted = waitUntilDeleted
 exports.testStream = randomName()
 // For testing:
-//exports.testStream = '__kinesalite_test_1'
+// exports.testStream = '__kinesalite_test_1'
 
 var port = 10000 + Math.round(Math.random() * 10000),
     requestOpts = process.env.REMOTE ?
@@ -60,19 +60,19 @@ after(function(done) {
   })
 })
 
-function request(opts, cb) {
-  if (typeof opts === 'function') { cb = opts; opts = {} }
+function request(options, cb) {
+  if (typeof options === 'function') { cb = options; options = {} }
   cb = once(cb)
   for (var key in requestOpts) {
-    if (opts[key] === undefined)
-      opts[key] = requestOpts[key]
+    if (options[key] === undefined)
+      options[key] = requestOpts[key]
   }
-  if (!opts.noSign) {
-    aws4.sign(opts)
-    opts.noSign = true // don't sign twice if calling recursively
+  if (!options.noSign) {
+    aws4.sign(options)
+    options.noSign = true // don't sign twice if calling recursively
   }
-  //console.log(opts)
-  (opts.ssl ? https : http).request(opts, function(res) {
+  // console.log(options)
+  (options.ssl ? https : http).request(options, function(res) {
     res.setEncoding('utf8')
     res.on('error', cb)
     res.body = ''
@@ -80,10 +80,10 @@ function request(opts, cb) {
     res.on('end', function() {
       try { res.body = JSON.parse(res.body) } catch (e) {} // eslint-disable-line no-empty
       if (res.body.__type == 'LimitExceededException' && /^Rate exceeded/.test(res.body.message))
-        return setTimeout(request, Math.floor(Math.random() * 1000), opts, cb)
+        return setTimeout(request, Math.floor(Math.random() * 1000), options, cb)
       cb(null, res)
     })
-  }).on('error', cb).end(opts.body)
+  }).on('error', cb).end(options.body)
 }
 
 function opts(target, data) {
@@ -118,7 +118,7 @@ function assertSerialization(target, data, msg, done) {
 
 function assertType(target, property, type, done) {
   var msgs = [], pieces = property.split('.')
-  switch(type) {
+  switch (type) {
     case 'Boolean':
       msgs = [
         ['23', '\'23\' can not be converted to an Boolean'],
@@ -126,7 +126,7 @@ function assertType(target, property, type, done) {
         [-2147483648, 'class java.lang.Integer can not be converted to an Boolean'],
         [2147483648, 'class java.lang.Long can not be converted to an Boolean'],
         // For some reason, doubles are fine
-        //[34.56, 'class java.lang.Double can not be converted to an Boolean'],
+        // [34.56, 'class java.lang.Double can not be converted to an Boolean'],
         [[], 'Start of list found where not expected'],
         [{}, 'Start of structure or map found where not expected.'],
       ]
@@ -289,7 +289,7 @@ function assertInternalFailure(target, data, done) {
     if (err) return done(err)
     res.statusCode.should.equal(500)
     res.body.should.eql({
-      __type: 'InternalFailure'
+      __type: 'InternalFailure',
     })
     done()
   })
@@ -386,8 +386,7 @@ function resolveShardLimit(done) {
       var match = res.body.message.match(/Limit: (\d+). Number of additional/)
       if (match) exports.shardLimit = +match[1]
     } else if (res.statusCode == 200) {
-      console.error('WHOOPS, JUST CREATED A HUGE SHARDED STREAM, DELETE DELETE')
-      process.exit(1)
+      throw new Error('WHOOPS, JUST CREATED A HUGE SHARDED STREAM, DELETE DELETE')
     }
     done()
   })
