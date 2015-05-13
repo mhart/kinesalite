@@ -220,9 +220,8 @@ describe('getShardIterator', function() {
     it('should return InvalidArgumentException for 8 near end of StartingSequenceNumber', function(done) {
       var seq = new BigNumber('20000000000000000000000000000000000000800000002', 16).toFixed()
       assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: seq},
-        'StartingSequenceNumber ' + seq + ' used in GetShardIterator on shard ' +
-        'shardId-000000000000 in stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
-        ' is invalid.', done)
+        'Invalid StartingSequenceNumber. It encodes shardId--02147483648, ' +
+        'while it was used in a call to a shard with shardId-000000000000', done)
     })
 
   })

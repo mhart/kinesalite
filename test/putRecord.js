@@ -132,13 +132,6 @@ describe('putRecord ', function() {
         ' under account ' + helpers.awsAccountId + ' is invalid.', done)
     })
 
-    it('should return InvalidArgumentException for 8 near end of SequenceNumberForOrdering', function(done) {
-      var seq = new BigNumber('20000000000000000000000000000000000000800000002', 16).toFixed()
-      assertInvalidArgument({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq},
-        'ExclusiveMinimumSequenceNumber ' + seq + ' used in PutRecord on stream ' + helpers.testStream +
-        ' under account ' + helpers.awsAccountId + ' is invalid.', done)
-    })
-
     // Not really sure that this is necessary - seems obscure
     it.skip('should return InternalFailure for 8 and real time in SequenceNumberForOrdering', function(done) {
       var seq = new BigNumber('2ffffffffff7fffffffffffffff000' + Math.floor(Date.now() / 1000).toString(16) + '7fffffff2', 16).toFixed()
@@ -266,6 +259,18 @@ describe('putRecord ', function() {
         if (err) return done(err)
         res.statusCode.should.equal(200)
         helpers.assertSequenceNumber(res.body.SequenceNumber, 0, now)
+        delete res.body.SequenceNumber
+        res.body.should.eql({ShardId: 'shardId-000000000000'})
+        done()
+      })
+    })
+
+    it('should work with SequenceNumberForOrdering if 8 near end', function(done) {
+      var seq = new BigNumber('20000000000000000000000000000000000000800000002', 16).toFixed()
+      request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}), function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+        helpers.assertSequenceNumber(res.body.SequenceNumber, 0, 0)
         delete res.body.SequenceNumber
         res.body.should.eql({ShardId: 'shardId-000000000000'})
         done()

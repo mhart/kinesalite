@@ -159,7 +159,7 @@ describe('splitShard', function() {
     // Is a bit too fragile to run with everything else – just run alone
     it.skip('should return LimitExceededException if splitting over limit', function(done) {
       this.timeout(100000)
-      var stream = {StreamName: randomName(), ShardCount: 7}
+      var stream = {StreamName: randomName(), ShardCount: helpers.shardLimit - 3}
       request(helpers.opts('CreateStream', stream), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
@@ -170,8 +170,8 @@ describe('splitShard', function() {
 
           assertLimitExceeded({StreamName: stream.StreamName, NewStartingHashKey: '2', ShardToSplit: 'shard-0'},
               'This request would exceed the shard limit for the account ' + helpers.awsAccountId + ' in ' +
-              helpers.awsRegion + '. Current shard count for the account: 10. Limit: ' + helpers.shardLimit + '. ' +
-              'Number of additional shards that would have resulted from this request: 1. ' +
+              helpers.awsRegion + '. Current shard count for the account: ' + helpers.shardLimit + '. Limit: ' +
+              helpers.shardLimit + '. Number of additional shards that would have resulted from this request: 1. ' +
               'Refer to the AWS Service Limits page ' +
               '(http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html) ' +
               'for current limits and how to request higher limits.', function(err) {
