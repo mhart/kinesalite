@@ -99,7 +99,7 @@ module.exports = function splitShard(store, data, cb) {
                       shardIx: stream.Shards.length,
                     }),
                   },
-                  ShardId: 'shardId-' + ('00000000000' + stream.Shards.length).slice(-12),
+                  ShardId: db.shardIdName(stream.Shards.length),
                 })
 
                 stream.Shards.push({
@@ -114,7 +114,7 @@ module.exports = function splitShard(store, data, cb) {
                       shardIx: stream.Shards.length,
                     }),
                   },
-                  ShardId: 'shardId-' + ('00000000000' + stream.Shards.length).slice(-12),
+                  ShardId: db.shardIdName(stream.Shards.length),
                 })
 
                 metaDb.put(key, stream, cb)

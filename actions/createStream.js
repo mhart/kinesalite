@@ -41,7 +41,7 @@ module.exports = function createStream(store, data, cb) {
             SequenceNumberRange: {
               StartingSequenceNumber: db.stringifySequence({shardCreateTime: createTime, shardIx: i}),
             },
-            ShardId: 'shardId-' + ('00000000000' + i).slice(-12),
+            ShardId: db.shardIdName(i),
           }
         }
         stream = {

@@ -95,7 +95,7 @@ module.exports = function mergeShards(store, data, cb) {
                     shardIx: stream.Shards.length,
                   }),
                 },
-                ShardId: 'shardId-' + ('00000000000' + stream.Shards.length).slice(-12),
+                ShardId: db.shardIdName(stream.Shards.length),
               })
 
               metaDb.put(key, stream, cb)

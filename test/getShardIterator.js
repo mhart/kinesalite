@@ -86,7 +86,7 @@ describe('getShardIterator', function() {
     it('should return ResourceNotFoundException if unknown stream and shard ID just small enough', function(done) {
       var name1 = randomName(), name2 = '2147483647'
       assertNotFound({StreamName: name1, ShardId: name2, ShardIteratorType: 'LATEST'},
-        'Shard shardId-' + ('000000000000' + name2).slice(-12) + ' in stream ' + name1 + ' under account ' +
+        'Shard shardId-002147483647 in stream ' + name1 + ' under account ' +
           helpers.awsAccountId + ' does not exist', done)
     })
 

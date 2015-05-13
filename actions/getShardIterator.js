@@ -48,7 +48,7 @@ module.exports = function getShardIterator(store, data, cb) {
       }
       if (seqObj.shardIx != shardIx) {
         return cb(db.clientError('InvalidArgumentException',
-          'Invalid StartingSequenceNumber. It encodes shardId-' + ('00000000000' + seqObj.shardIx).slice(-12) +
+          'Invalid StartingSequenceNumber. It encodes ' + db.shardIdName(seqObj.shardIx) +
           ', while it was used in a call to a shard with ' + shardId))
       }
       if (seqObj.version != shardSeqObj.version || seqObj.shardCreateTime != shardSeqObj.shardCreateTime) {

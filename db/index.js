@@ -14,6 +14,7 @@ exports.parseSequence = parseSequence
 exports.stringifySequence = stringifySequence
 exports.incrementSequence = incrementSequence
 exports.shardIxToHex = shardIxToHex
+exports.shardIdName = shardIdName
 exports.resolveShardId = resolveShardId
 exports.partitionKeyToHashKey = partitionKeyToHashKey
 exports.createShardIterator = createShardIterator
@@ -127,7 +128,7 @@ function parseSequence(seq) {
   if (version == 2) {
     var seqIxHex = hex.slice(11, 27), shardIxHex = hex.slice(38, 46)
     if (parseInt(seqIxHex[0], 16) > 7) throw new Error('Sequence index too high')
-    if (parseInt(shardIxHex[0], 16) > 7) throw new Error('Shard index too high')
+    if (parseInt(shardIxHex[0], 16) > 7) shardIxHex = '-' + shardIxHex
     return {
       shardCreateTime: parseInt(hex.slice(1, 10), 16) * 1000,
       seqIx: new BigNumber(seqIxHex, 16).toFixed(),
@@ -213,12 +214,16 @@ function shardIxToHex(shardIx) {
   return ('0000000' + (shardIx || 0).toString(16)).slice(-8)
 }
 
+function shardIdName(shardIx) {
+  return 'shardId-' + (shardIx < 0 ? '-' : '') + ('00000000000' + Math.abs(shardIx)).slice(shardIx < 0 ? -11 : -12)
+}
+
 function resolveShardId(shardId) {
   shardId = shardId.split('-')[1] || shardId
   var shardIx = /^\d+$/.test(shardId) ? parseInt(shardId) : NaN
   if (!(shardIx >= 0 && shardIx <= 2147483647)) throw new Error('INVALID_SHARD_ID')
   return {
-    shardId: 'shardId-' + ('00000000000' + shardIx).slice(-12),
+    shardId: shardIdName(shardIx),
     shardIx: shardIx,
   }
 }
