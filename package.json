@@ -30,7 +30,7 @@
     "bignumber.js": "^2.0.7",
     "lazy": "^1.0.11",
     "level-sublevel": "^6.4.6",
-    "levelup": "^1.0.0-5",
+    "levelup": "^1.1.0",
     "lock": "^0.1.2",
     "memdown": "^1.0.0",
     "minimist": "^1.1.1",
@@ -43,7 +43,7 @@
   "devDependencies": {
     "aws4": "^1.0.1",
     "istanbul": "^0.3.14",
-    "mocha": "^2.2.4",
+    "mocha": "^2.2.5",
     "should": "^6.0.1"
   }
 }
