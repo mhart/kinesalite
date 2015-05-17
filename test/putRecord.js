@@ -278,6 +278,7 @@ describe('putRecord ', function() {
     })
 
     it('should safely put concurrent, sequential records', function(done) {
+      this.timeout(100000)
 
       var remaining = 100, seqIxs = []
 
