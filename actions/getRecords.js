@@ -91,6 +91,7 @@ module.exports = function getRecords(store, data, cb) {
           nextShardIterator = db.createShardIterator(streamName, shardId, nextSeq)
 
         cb(null, {
+          MillisBehindLatest: 0,
           NextShardIterator: nextShardIterator,
           Records: items.map(function(item) {
             delete item._seqObj

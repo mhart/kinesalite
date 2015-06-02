@@ -68,10 +68,6 @@ function sendData(req, res, data, statusCode) {
 }
 
 function httpHandler(store, req, res) {
-  if (req.method == 'DELETE') {
-    req.destroy()
-    return res.destroy()
-  }
   var body
   req.on('error', function(err) { throw err })
   req.on('data', function(data) {

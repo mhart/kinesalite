@@ -16,7 +16,7 @@ exports.types = {
   Data: {
     type: 'Blob',
     notNull: true,
-    lengthLessThanOrEqual: 51200,
+    lengthLessThanOrEqual: 1048576,
   },
   StreamName: {
     type: 'String',
