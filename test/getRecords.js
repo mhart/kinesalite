@@ -210,6 +210,9 @@ describe('getRecords', function() {
             helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
             delete res.body.NextShardIterator
 
+            res.body.MillisBehindLatest.should.be.within(0, 5000)
+            delete res.body.MillisBehindLatest
+
             res.body.should.eql({
               Records: [
                 {
@@ -245,6 +248,9 @@ describe('getRecords', function() {
 
                 helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
                 delete res.body.NextShardIterator
+
+                res.body.MillisBehindLatest.should.be.within(0, 5000)
+                delete res.body.MillisBehindLatest
 
                 res.body.should.eql({
                   Records: [
@@ -288,6 +294,9 @@ describe('getRecords', function() {
           helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
           delete res.body.NextShardIterator
 
+          res.body.MillisBehindLatest.should.be.within(0, 5000)
+          delete res.body.MillisBehindLatest
+
           res.body.should.eql({Records: []})
 
           var hashKey1 = new BigNumber(2).pow(128).minus(1).toFixed(),
@@ -315,6 +324,9 @@ describe('getRecords', function() {
               helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
               delete res.body.NextShardIterator
 
+              res.body.MillisBehindLatest.should.be.within(0, 5000)
+              delete res.body.MillisBehindLatest
+
               res.body.should.eql({
                 Records: [
                   {
@@ -341,6 +353,9 @@ describe('getRecords', function() {
 
                 helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
                 delete res.body.NextShardIterator
+
+                res.body.MillisBehindLatest.should.be.within(0, 5000)
+                delete res.body.MillisBehindLatest
 
                 res.body.should.eql({
                   Records: [
@@ -400,6 +415,9 @@ describe('getRecords', function() {
               helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
               delete res.body.NextShardIterator
 
+              res.body.MillisBehindLatest.should.be.within(0, 5000)
+              delete res.body.MillisBehindLatest
+
               res.body.should.eql({Records: []})
 
               var record = {
@@ -422,6 +440,9 @@ describe('getRecords', function() {
                   helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
                   delete res.body.NextShardIterator
 
+                  res.body.MillisBehindLatest.should.be.within(0, 5000)
+                  delete res.body.MillisBehindLatest
+
                   res.body.should.eql({
                     Records: [
                       {
@@ -438,6 +459,9 @@ describe('getRecords', function() {
 
                     helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
                     delete res.body.NextShardIterator
+
+                    res.body.MillisBehindLatest.should.be.within(0, 5000)
+                    delete res.body.MillisBehindLatest
 
                     res.body.should.eql({
                       Records: [
@@ -467,6 +491,9 @@ describe('getRecords', function() {
                         helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
                         delete res.body.NextShardIterator
 
+                        res.body.MillisBehindLatest.should.be.within(0, 5000)
+                        delete res.body.MillisBehindLatest
+
                         res.body.should.eql({
                           Records: [
                             {
@@ -483,6 +510,9 @@ describe('getRecords', function() {
 
                           helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
                           delete res.body.NextShardIterator
+
+                          res.body.MillisBehindLatest.should.be.within(0, 5000)
+                          delete res.body.MillisBehindLatest
 
                           res.body.should.eql({Records: []})
 
@@ -530,6 +560,9 @@ describe('getRecords', function() {
             helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
             delete res.body.NextShardIterator
 
+            res.body.MillisBehindLatest.should.be.within(0, 5000)
+            delete res.body.MillisBehindLatest
+
             res.body.should.eql({
               Records: [
                 {
@@ -551,6 +584,9 @@ describe('getRecords', function() {
 
               helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
               delete res.body.NextShardIterator
+
+              res.body.MillisBehindLatest.should.be.within(0, 5000)
+              delete res.body.MillisBehindLatest
 
               res.body.should.eql({
                 Records: [
@@ -574,6 +610,9 @@ describe('getRecords', function() {
                 helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
                 delete res.body.NextShardIterator
 
+                res.body.MillisBehindLatest.should.be.within(0, 5000)
+                delete res.body.MillisBehindLatest
+
                 res.body.should.eql({
                   Records: [
                     {
@@ -590,6 +629,9 @@ describe('getRecords', function() {
 
                   helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
                   delete res.body.NextShardIterator
+
+                  res.body.MillisBehindLatest.should.be.within(0, 5000)
+                  delete res.body.MillisBehindLatest
 
                   res.body.should.eql({
                     Records: [

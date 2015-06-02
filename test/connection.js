@@ -54,13 +54,6 @@ describe('kinesalite connections', function() {
       })
     })
 
-    it('should hang up socket if a DELETE', function(done) {
-      request({method: 'DELETE', noSign: true}, function(err) {
-        err.code.should.equal('ECONNRESET')
-        done()
-      })
-    })
-
     function assertMissingTokenXml(done) {
       return assertBody(403, null,
         '<MissingAuthenticationTokenException>\n' +
@@ -87,6 +80,10 @@ describe('kinesalite connections', function() {
       request({method: 'PUT', noSign: true}, assertMissingTokenXml(done))
     })
 
+    it('should return MissingAuthenticationTokenException if DELETE with no auth', function(done) {
+      request({method: 'DELETE', noSign: true}, assertMissingTokenXml(done))
+    })
+
     it('should return MissingAuthenticationTokenException if POST with no auth', function(done) {
       request({noSign: true}, assertMissingTokenXml(done))
     })
@@ -97,6 +94,10 @@ describe('kinesalite connections', function() {
 
     it('should return AccessDeniedException if PUT', function(done) {
       request({method: 'PUT'}, assertAccessDeniedXml(done))
+    })
+
+    it('should return AccessDeniedException if DELETE', function(done) {
+      request({method: 'DELETE'}, assertAccessDeniedXml(done))
     })
 
     it('should return AccessDeniedException if POST with no body', function(done) {

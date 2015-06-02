@@ -77,15 +77,15 @@ describe('putRecords', function() {
 
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a'), name2 = new Array(257 + 1).join('a'),
-        data = new Buffer(51201).toString('base64')
+        data = new Buffer(1048577).toString('base64')
       assertValidation({StreamName: name, Records: [{PartitionKey: name2, Data: data, ExplicitHashKey: ''}]},
         '4 validation errors detected: ' +
         'Value \'' + name2 + '\' at \'records.1.member.partitionKey\' failed to satisfy constraint: ' +
         'Member must have length less than or equal to 256; ' +
         'Value \'\' at \'records.1.member.explicitHashKey\' failed to satisfy constraint: ' +
         'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,38}); ' +
-        'Value \'java.nio.HeapByteBuffer[pos=0 lim=51201 cap=51201]\' at \'records.1.member.data\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 51200; ' +
+        'Value \'java.nio.HeapByteBuffer[pos=0 lim=1048577 cap=1048577]\' at \'records.1.member.data\' failed to satisfy constraint: ' +
+        'Member must have length less than or equal to 1048576; ' +
         'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
         'Member must have length less than or equal to 128', done)
     })
