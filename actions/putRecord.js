@@ -11,6 +11,11 @@ module.exports = function putRecord(store, data, cb) {
     store.getStream(data.StreamName, function(err, stream) {
       if (err) return cb(err)
 
+      if (!~['ACTIVE', 'UPDATING'].indexOf(stream.StreamStatus)) {
+        return cb(db.clientError('ResourceNotFoundException',
+          'Stream ' + data.StreamName + ' under account ' + metaDb.awsAccountId + ' not found.'))
+      }
+
       var hashKey, shardIx, shardId, shardCreateTime
 
       if (data.ExplicitHashKey != null) {

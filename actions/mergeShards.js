@@ -24,6 +24,12 @@ module.exports = function mergeShards(store, data, cb) {
     store.getStream(key, function(err, stream) {
       if (err) return cb(err)
 
+      if (stream.StreamStatus != 'ACTIVE') {
+        return cb(db.clientError('ResourceInUseException',
+          'Stream ' + data.StreamName + ' under account ' + metaDb.awsAccountId +
+          ' not ACTIVE, instead in state ' + stream.StreamStatus))
+      }
+
       for (i = 0; i < shardIxs.length; i++) {
         if (shardIxs[i] >= stream.Shards.length) {
           return cb(db.clientError('ResourceNotFoundException',

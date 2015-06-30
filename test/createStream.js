@@ -1,4 +1,5 @@
-var BigNumber = require('bignumber.js'),
+var async = require('async'),
+    BigNumber = require('bignumber.js'),
     helpers = require('./helpers')
 
 var target = 'CreateStream',
@@ -98,68 +99,88 @@ describe('createStream', function() {
             },
           })
 
-          helpers.waitUntilActive(stream.StreamName, function(err, res) {
+          async.parallel([
+            helpers.assertNotFound.bind(helpers, 'GetShardIterator',
+              {StreamName: stream.StreamName, ShardId: 'shardId-0', ShardIteratorType: 'LATEST'},
+              'Shard shardId-000000000000 in stream ' + stream.StreamName + ' under account ' + helpers.awsAccountId + ' does not exist'),
+            helpers.assertInUse.bind(helpers, 'MergeShards',
+              {StreamName: stream.StreamName, ShardToMerge: 'shardId-0', AdjacentShardToMerge: 'shardId-1'},
+              'Stream ' + stream.StreamName + ' under account ' + helpers.awsAccountId + ' not ACTIVE, instead in state CREATING'),
+            helpers.assertNotFound.bind(helpers, 'PutRecord',
+              {StreamName: stream.StreamName, PartitionKey: 'a', Data: ''},
+              'Stream ' + stream.StreamName + ' under account ' + helpers.awsAccountId + ' not found.'),
+            helpers.assertNotFound.bind(helpers, 'PutRecords',
+              {StreamName: stream.StreamName, Records: [{PartitionKey: 'a', Data: ''}]},
+              'Stream ' + stream.StreamName + ' under account ' + helpers.awsAccountId + ' not found.'),
+            helpers.assertInUse.bind(helpers, 'SplitShard',
+              {StreamName: stream.StreamName, ShardToSplit: 'shardId-0', NewStartingHashKey: '2'},
+              'Stream ' + stream.StreamName + ' under account ' + helpers.awsAccountId + ' not ACTIVE, instead in state CREATING'),
+          ], function(err) {
             if (err) return done(err)
 
-            res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
-            res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
-            res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
-
-            var startSeq0 = new BigNumber(res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber),
-              startSeq1 = new BigNumber(res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber),
-              startSeq2 = new BigNumber(res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber)
-
-            startSeq1.minus(startSeq0).toFixed().should.equal('22300745198530623141535718272648361505980432')
-            startSeq2.minus(startSeq1).toFixed().should.equal('22300745198530623141535718272648361505980432')
-
-            var startDiff = parseInt(startSeq0.toString(16).slice(2, 10), 16) - (createdAt / 1000)
-            startDiff.should.be.below(-2)
-            startDiff.should.be.above(-7)
-
-            delete res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber
-            delete res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber
-            delete res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber
-
-            res.body.should.eql({
-              StreamDescription: {
-                StreamStatus: 'ACTIVE',
-                StreamName: stream.StreamName,
-                StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
-                  ':stream/' + stream.StreamName,
-                HasMoreShards: false,
-                Shards: [{
-                  ShardId: 'shardId-000000000000',
-                  SequenceNumberRange: {},
-                  HashKeyRange: {
-                    StartingHashKey: '0',
-                    EndingHashKey: '113427455640312821154458202477256070484',
-                  },
-                }, {
-                  ShardId: 'shardId-000000000001',
-                  SequenceNumberRange: {},
-                  HashKeyRange: {
-                    StartingHashKey: '113427455640312821154458202477256070485',
-                    EndingHashKey: '226854911280625642308916404954512140969',
-                  },
-                }, {
-                  ShardId: 'shardId-000000000002',
-                  SequenceNumberRange: {},
-                  HashKeyRange: {
-                    StartingHashKey: '226854911280625642308916404954512140970',
-                    EndingHashKey: '340282366920938463463374607431768211455',
-                  },
-                }],
-              },
-            })
-
-            request(helpers.opts('ListStreams', {Limit: 1}), function(err, res) {
+            helpers.waitUntilActive(stream.StreamName, function(err, res) {
               if (err) return done(err)
-              res.statusCode.should.equal(200)
 
-              res.body.StreamNames.should.have.length(1)
-              res.body.HasMoreStreams.should.equal(true)
+              res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
+              res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
+              res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
 
-              request(helpers.opts('DeleteStream', {StreamName: stream.StreamName}), done)
+              var startSeq0 = new BigNumber(res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber),
+                startSeq1 = new BigNumber(res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber),
+                startSeq2 = new BigNumber(res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber)
+
+              startSeq1.minus(startSeq0).toFixed().should.equal('22300745198530623141535718272648361505980432')
+              startSeq2.minus(startSeq1).toFixed().should.equal('22300745198530623141535718272648361505980432')
+
+              var startDiff = parseInt(startSeq0.toString(16).slice(2, 10), 16) - (createdAt / 1000)
+              startDiff.should.be.below(-2)
+              startDiff.should.be.above(-7)
+
+              delete res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber
+              delete res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber
+              delete res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber
+
+              res.body.should.eql({
+                StreamDescription: {
+                  StreamStatus: 'ACTIVE',
+                  StreamName: stream.StreamName,
+                  StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
+                    ':stream/' + stream.StreamName,
+                  HasMoreShards: false,
+                  Shards: [{
+                    ShardId: 'shardId-000000000000',
+                    SequenceNumberRange: {},
+                    HashKeyRange: {
+                      StartingHashKey: '0',
+                      EndingHashKey: '113427455640312821154458202477256070484',
+                    },
+                  }, {
+                    ShardId: 'shardId-000000000001',
+                    SequenceNumberRange: {},
+                    HashKeyRange: {
+                      StartingHashKey: '113427455640312821154458202477256070485',
+                      EndingHashKey: '226854911280625642308916404954512140969',
+                    },
+                  }, {
+                    ShardId: 'shardId-000000000002',
+                    SequenceNumberRange: {},
+                    HashKeyRange: {
+                      StartingHashKey: '226854911280625642308916404954512140970',
+                      EndingHashKey: '340282366920938463463374607431768211455',
+                    },
+                  }],
+                },
+              })
+
+              request(helpers.opts('ListStreams', {Limit: 1}), function(err, res) {
+                if (err) return done(err)
+                res.statusCode.should.equal(200)
+
+                res.body.StreamNames.should.have.length(1)
+                res.body.HasMoreStreams.should.equal(true)
+
+                request(helpers.opts('DeleteStream', {StreamName: stream.StreamName}), done)
+              })
             })
           })
         })

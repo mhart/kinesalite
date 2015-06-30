@@ -21,6 +21,12 @@ module.exports = function splitShard(store, data, cb) {
     store.getStream(key, function(err, stream) {
       if (err) return cb(err)
 
+      if (stream.StreamStatus != 'ACTIVE') {
+        return cb(db.clientError('ResourceInUseException',
+          'Stream ' + data.StreamName + ' under account ' + metaDb.awsAccountId +
+          ' not ACTIVE, instead in state ' + stream.StreamStatus))
+      }
+
       if (shardIx >= stream.Shards.length) {
         return cb(db.clientError('ResourceNotFoundException',
           'Could not find shard ' + shardId + ' in stream ' + key +

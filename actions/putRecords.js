@@ -11,6 +11,11 @@ module.exports = function putRecords(store, data, cb) {
     store.getStream(data.StreamName, function(err, stream) {
       if (err) return cb(err)
 
+      if (!~['ACTIVE', 'UPDATING'].indexOf(stream.StreamStatus)) {
+        return cb(db.clientError('ResourceNotFoundException',
+          'Stream ' + data.StreamName + ' under account ' + metaDb.awsAccountId + ' not found.'))
+      }
+
       var batchOps = new Array(data.Records.length), returnRecords = new Array(data.Records.length),
         seqPieces = new Array(data.Records.length), record, hashKey, seqPiece, i
 
