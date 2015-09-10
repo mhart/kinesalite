@@ -22,7 +22,7 @@ module.exports = function addTagsToStream(store, data, cb) {
         return cb(db.clientError('InvalidArgumentException',
           'Failed to add tags to stream ' + data.StreamName + ' under account ' + metaDb.awsAccountId +
           ' because some tags contained illegal characters. The allowed characters are ' +
-          'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'%\',\'@\'.'))
+          'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'@\'.'))
 
       var newKeys = keys.concat(Object.keys(stream._tags)).reduce(function(obj, key) {
         obj[key] = true

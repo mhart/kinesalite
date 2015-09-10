@@ -19,7 +19,7 @@ module.exports = function removeTagsFromStream(store, data, cb) {
         return cb(db.clientError('InvalidArgumentException',
           'Failed to remove tags from stream ' + data.StreamName + ' under account ' + metaDb.awsAccountId +
           ' because some tags contained illegal characters. The allowed characters are ' +
-          'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'%\',\'@\'.'))
+          'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'@\'.'))
 
       data.TagKeys.forEach(function(key) {
         delete stream._tags[key]

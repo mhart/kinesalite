@@ -107,7 +107,7 @@ describe('removeTagsFromStream', function() {
       assertInvalidArgument({StreamName: helpers.testStream, TagKeys: ['abc%def']},
         'Failed to remove tags from stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
         ' because some tags contained illegal characters. The allowed characters are ' +
-        'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'%\',\'@\'.', done)
+        'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'@\'.', done)
     })
 
   })

@@ -118,7 +118,7 @@ describe('addTagsToStream', function() {
       assertInvalidArgument({StreamName: helpers.testStream, Tags: {'abc%def': '1'}},
         'Failed to add tags to stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
         ' because some tags contained illegal characters. The allowed characters are ' +
-        'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'%\',\'@\'.', done)
+        'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'@\'.', done)
     })
 
     it('should return InvalidArgumentException if ; in tag value', function(done) {
@@ -149,7 +149,7 @@ describe('addTagsToStream', function() {
       assertInvalidArgument({StreamName: helpers.testStream, Tags: {a: 'abc%def'}},
         'Failed to add tags to stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
         ' because some tags contained illegal characters. The allowed characters are ' +
-        'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'%\',\'@\'.', done)
+        'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'@\'.', done)
     })
 
   })
