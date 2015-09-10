@@ -26,24 +26,24 @@
   "author": "Michael Hart <michael.hart.au@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "async": "^1.2.0",
+    "async": "^1.4.2",
     "bignumber.js": "^2.0.7",
     "lazy": "^1.0.11",
-    "level-sublevel": "^6.4.6",
+    "level-sublevel": "^6.5.1",
     "levelup": "^1.2.0",
     "lock": "^0.1.2",
     "memdown": "^1.0.0",
-    "minimist": "^1.1.1",
+    "minimist": "^1.2.0",
     "node-uuid": "^1.4.3",
     "once": "^1.3.2"
   },
   "optionalDependencies": {
-    "leveldown": "^1.2.2"
+    "leveldown": "^1.4.1"
   },
   "devDependencies": {
-    "aws4": "^1.0.1",
-    "istanbul": "^0.3.14",
-    "mocha": "^2.2.5",
-    "should": "^6.0.3"
+    "aws4": "^1.0.4",
+    "istanbul": "^0.3.19",
+    "mocha": "^2.3.2",
+    "should": "^7.1.0"
   }
 }
