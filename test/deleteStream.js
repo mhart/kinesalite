@@ -83,6 +83,7 @@ describe('deleteStream', function() {
                   StreamName: stream.StreamName,
                   StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
                     ':stream/' + stream.StreamName,
+                  RetentionPeriodHours: 24,
                   HasMoreShards: false,
                   Shards: [],
                 },

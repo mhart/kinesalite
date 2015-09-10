@@ -3,6 +3,7 @@ exports.types = {
     type: 'Integer',
     notNull: true,
     greaterThanOrEqual: 1,
+    lessThanOrEqual: 100000,
   },
   StreamName: {
     type: 'String',

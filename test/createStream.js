@@ -50,7 +50,8 @@ describe('createStream', function() {
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a')
       assertValidation({StreamName: name, ShardCount: 100000000000},
-        '1 validation error detected: ' +
+        '2 validation errors detected: ' +
+        'Value \'1215752192\' at \'shardCount\' failed to satisfy constraint: Member must have value less than or equal to 100000; ' +
         'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
         'Member must have length less than or equal to 128', done)
     })
@@ -94,6 +95,7 @@ describe('createStream', function() {
               StreamName: stream.StreamName,
               StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
                 ':stream/' + stream.StreamName,
+              RetentionPeriodHours: 24,
               HasMoreShards: false,
               Shards: [],
             },
@@ -146,6 +148,7 @@ describe('createStream', function() {
                   StreamName: stream.StreamName,
                   StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
                     ':stream/' + stream.StreamName,
+                  RetentionPeriodHours: 24,
                   HasMoreShards: false,
                   Shards: [{
                     ShardId: 'shardId-000000000000',

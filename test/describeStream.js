@@ -91,6 +91,7 @@ describe('describeStream', function() {
             StreamName: helpers.testStream,
             StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
               ':stream/' + helpers.testStream,
+            RetentionPeriodHours: 24,
             HasMoreShards: false,
             Shards: [{
               ShardId: 'shardId-000000000000',

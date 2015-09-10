@@ -54,6 +54,8 @@ function checkTypes(data, types) {
             throw typeError('class java.lang.Boolean can not be converted to an ' + actualType)
           case 'number':
             if (actualType != 'Double') val = Math.floor(val)
+            if (actualType == 'Short') val = Math.min(val, 32767)
+            if (actualType == 'Integer') val = val | 0
             break
           case 'string':
             throw typeError('class java.lang.String can not be converted to an ' + actualType)

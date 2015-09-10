@@ -246,6 +246,7 @@ describe('mergeShards', function() {
                   StreamName: stream.StreamName,
                   StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
                     ':stream/' + stream.StreamName,
+                  RetentionPeriodHours: 24,
                   HasMoreShards: false,
                   Shards: [{
                     ShardId: 'shardId-000000000000',
@@ -339,6 +340,7 @@ describe('mergeShards', function() {
                         StreamName: stream.StreamName,
                         StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
                           ':stream/' + stream.StreamName,
+                        RetentionPeriodHours: 24,
                         HasMoreShards: false,
                         Shards: [{
                           ShardId: 'shardId-000000000000',
