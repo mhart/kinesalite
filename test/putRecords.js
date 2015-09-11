@@ -183,7 +183,7 @@ describe('putRecords', function() {
         helpers.assertSequenceNumber(res.body.Records[5].SequenceNumber, 1, now)
         helpers.assertSequenceNumber(res.body.Records[6].SequenceNumber, 2, now)
 
-        var indexOrder = [1, 3, 5, 0, 2, 4, 6], lastIx
+        var indexOrder = [2, 4, 6, 1, 3, 5, 0], lastIx
         indexOrder.forEach(function(i) {
           var seqIx = parseInt(new BigNumber(res.body.Records[i].SequenceNumber).toString(16).slice(11, 27), 16),
             diff = lastIx != null ? seqIx - lastIx : 1
@@ -216,6 +216,36 @@ describe('putRecords', function() {
           }, {
             ShardId: 'shardId-000000000002',
           }],
+        })
+
+        done()
+      })
+    })
+
+    // Use this test to play around with sequence number generation
+    it.skip('should print out sequences for many shards', function(done) {
+      var records = [], numShards = 50, streamName = 'test'
+      for (var j = 0; j < 2; j++) {
+        for (var i = 0; i < numShards; i++) {
+          records.push({
+            PartitionKey: 'a',
+            Data: '',
+            ExplicitHashKey: new BigNumber(2).pow(128).div(numShards).floor().times(i + 1).minus(1).toFixed(),
+          })
+        }
+      }
+      request(opts({StreamName: streamName, Records: records}), function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+
+        res.body.Records.sort(function(a, b) {
+          var seqIxA = parseInt(new BigNumber(a.SequenceNumber).toString(16).slice(11, 27), 16)
+          var seqIxB = parseInt(new BigNumber(b.SequenceNumber).toString(16).slice(11, 27), 16)
+          return seqIxA - seqIxB
+        })
+        res.body.Records.forEach(function(record, i) {
+          var seqIx = parseInt(new BigNumber(record.SequenceNumber).toString(16).slice(11, 27), 16)
+          console.log(i, seqIx, record.ShardId)
         })
 
         done()

@@ -50,10 +50,13 @@ module.exports = function putRecords(store, data, cb) {
       }
 
       // This appears to be the order that shards are processed in a PutRecords call
-      var shardOrder = [5, 4, 7, 6, 9, 19, 18, 17, 8, 16, 15, 14, 13, 12, 11, 1, 10, 0, 3, 21, 2, 20]
+      var shardOrder = stream.Shards.length < 18 ?
+        [15, 16, 14, 13, 10, 12, 11, 7, 5, 9, 8, 6, 4, 3, 2, 1, 0] : stream.Shards.length < 27 ?
+          [25, 21, 23, 22, 24, 20, 15, 19, 16, 17, 18, 11, 14, 13, 10, 12, 9, 6, 7, 5, 8, 3, 0, 4, 2, 1] :
+          [46, 45, 49, 47, 48, 40, 42, 41, 43, 44, 35, 38, 39, 37, 36, 31, 34, 33, 32, 30, 28, 26, 27, 29, 25, 22, 24, 20, 23, 21, 15, 16, 17, 19, 18, 11, 13, 12, 14, 10, 9, 7, 8, 6, 5, 1, 3, 0, 4, 2]
 
-      // Unsure of order after shard 21, just process sequentially
-      for (i = 22; i < stream.Shards.length; i++) {
+      // Unsure of order after shard 49, just process sequentially
+      for (i = 50; i < stream.Shards.length; i++) {
         shardOrder.push(i)
       }
 
