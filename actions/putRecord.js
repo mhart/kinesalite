@@ -73,7 +73,13 @@ module.exports = function putRecord(store, data, cb) {
       metaDb.put(key, stream, function(err) {
         if (err) return cb(err)
 
-        streamDb.put(streamKey, {PartitionKey: data.PartitionKey, Data: data.Data}, function(err) {
+        var record = {
+          PartitionKey: data.PartitionKey,
+          Data: data.Data,
+          ApproximateArrivalTimestamp: now / 1000,
+        }
+
+        streamDb.put(streamKey, record, function(err) {
           if (err) return cb(err)
           cb(null, {ShardId: shardId, SequenceNumber: seqNum})
         })

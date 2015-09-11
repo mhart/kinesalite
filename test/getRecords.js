@@ -213,6 +213,9 @@ describe('getRecords', function() {
             res.body.MillisBehindLatest.should.be.within(0, 5000)
             delete res.body.MillisBehindLatest
 
+            helpers.assertArrivalTimes(res.body.Records)
+            res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
+
             res.body.should.eql({
               Records: [
                 {
@@ -251,6 +254,9 @@ describe('getRecords', function() {
 
                 res.body.MillisBehindLatest.should.be.within(0, 5000)
                 delete res.body.MillisBehindLatest
+
+                helpers.assertArrivalTimes(res.body.Records)
+                res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
 
                 res.body.should.eql({
                   Records: [
@@ -327,6 +333,9 @@ describe('getRecords', function() {
               res.body.MillisBehindLatest.should.be.within(0, 5000)
               delete res.body.MillisBehindLatest
 
+              helpers.assertArrivalTimes(res.body.Records)
+              res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
+
               res.body.should.eql({
                 Records: [
                   {
@@ -356,6 +365,9 @@ describe('getRecords', function() {
 
                 res.body.MillisBehindLatest.should.be.within(0, 5000)
                 delete res.body.MillisBehindLatest
+
+                helpers.assertArrivalTimes(res.body.Records)
+                res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
 
                 res.body.should.eql({
                   Records: [
@@ -443,6 +455,9 @@ describe('getRecords', function() {
                   res.body.MillisBehindLatest.should.be.within(0, 5000)
                   delete res.body.MillisBehindLatest
 
+                  helpers.assertArrivalTimes(res.body.Records)
+                  res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
+
                   res.body.should.eql({
                     Records: [
                       {
@@ -462,6 +477,9 @@ describe('getRecords', function() {
 
                     res.body.MillisBehindLatest.should.be.within(0, 5000)
                     delete res.body.MillisBehindLatest
+
+                    helpers.assertArrivalTimes(res.body.Records)
+                    res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
 
                     res.body.should.eql({
                       Records: [
@@ -493,6 +511,9 @@ describe('getRecords', function() {
 
                         res.body.MillisBehindLatest.should.be.within(0, 5000)
                         delete res.body.MillisBehindLatest
+
+                        helpers.assertArrivalTimes(res.body.Records)
+                        res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
 
                         res.body.should.eql({
                           Records: [
@@ -563,6 +584,9 @@ describe('getRecords', function() {
             res.body.MillisBehindLatest.should.be.within(0, 5000)
             delete res.body.MillisBehindLatest
 
+            helpers.assertArrivalTimes(res.body.Records)
+            res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
+
             res.body.should.eql({
               Records: [
                 {
@@ -587,6 +611,9 @@ describe('getRecords', function() {
 
               res.body.MillisBehindLatest.should.be.within(0, 5000)
               delete res.body.MillisBehindLatest
+
+              helpers.assertArrivalTimes(res.body.Records)
+              res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
 
               res.body.should.eql({
                 Records: [
@@ -613,6 +640,9 @@ describe('getRecords', function() {
                 res.body.MillisBehindLatest.should.be.within(0, 5000)
                 delete res.body.MillisBehindLatest
 
+                helpers.assertArrivalTimes(res.body.Records)
+                res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
+
                 res.body.should.eql({
                   Records: [
                     {
@@ -632,6 +662,9 @@ describe('getRecords', function() {
 
                   res.body.MillisBehindLatest.should.be.within(0, 5000)
                   delete res.body.MillisBehindLatest
+
+                  helpers.assertArrivalTimes(res.body.Records)
+                  res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
 
                   res.body.should.eql({
                     Records: [

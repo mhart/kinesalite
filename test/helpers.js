@@ -25,6 +25,7 @@ exports.assertInvalidArgument = assertInvalidArgument
 exports.assertInternalFailure = assertInternalFailure
 exports.assertSequenceNumber = assertSequenceNumber
 exports.assertShardIterator = assertShardIterator
+exports.assertArrivalTimes = assertArrivalTimes
 exports.randomString = randomString
 exports.randomName = randomName
 exports.waitUntilActive = waitUntilActive
@@ -308,6 +309,20 @@ function assertShardIterator(shardIterator, streamName) {
   shardIterator.should.equal(buffer.toString('base64'))
   buffer.should.have.length(152 + (Math.floor((streamName.length + 2) / 16) * 16))
   buffer.slice(0, 8).toString('hex').should.equal('0000000000000001')
+}
+
+function assertArrivalTimes(records) {
+  records.should.not.be.empty()
+  records[0].should.have.property('ApproximateArrivalTimestamp')
+  var arrivalTime = records[0].ApproximateArrivalTimestamp
+  arrivalTime.should.be.within(1000000000, 10000000000)
+  records.forEach(function(record) {
+    var diff = Math.abs(arrivalTime - record.ApproximateArrivalTimestamp)
+    diff.should.be.below(1)
+    var seqTime = parseInt(new BigNumber(record.SequenceNumber).toString(16).slice(30, 38), 16)
+    diff = record.ApproximateArrivalTimestamp - seqTime
+    diff.should.be.within(0, 2)
+  })
 }
 
 function createTestStreams(done) {

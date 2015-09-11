@@ -86,7 +86,11 @@ module.exports = function putRecords(store, data, cb) {
           batchOps[i] = {
             type: 'put',
             key: streamKey,
-            value: {PartitionKey: record.PartitionKey, Data: record.Data},
+            value: {
+              PartitionKey: record.PartitionKey,
+              Data: record.Data,
+              ApproximateArrivalTimestamp: now / 1000,
+            },
           }
 
           returnRecords[i] = {ShardId: seqPiece.shardId, SequenceNumber: seqNum}
