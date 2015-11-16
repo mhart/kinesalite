@@ -112,6 +112,10 @@ describe('kinesalite connections', function() {
       request({headers: {'content-type': 'application/x-amz-json-1.0'}}, assertAccessDeniedXml(done))
     })
 
+    it('should return AccessDeniedException if random Content-Type', function(done) {
+      request({headers: {'content-type': 'application/x-amz-json-1.1asdf'}}, assertAccessDeniedXml(done))
+    })
+
     it('should return AccessDeniedException if invalid target', function(done) {
       request({headers: {'x-amz-target': 'Kinesis_20131202.ListStream'}}, assertAccessDeniedXml(done))
     })
@@ -294,9 +298,23 @@ describe('kinesalite connections', function() {
       }, body: 'hello', noSign: true}, assertSerializationDeprecated(done))
     })
 
+    it('should return SerializationException if non-JSON body and application/json with spaces', function(done) {
+      request({headers: {
+        'content-type': '     application/json     ;',
+        'x-amz-target': 'Kinesis_20131202.ListStreams',
+      }, body: 'hello', noSign: true}, assertSerializationDeprecated(done))
+    })
+
     it('should return MissingAuthenticationTokenException if no auth', function(done) {
       request({headers: {
         'content-type': 'application/x-amz-json-1.1',
+        'x-amz-target': 'Kinesis_20131202.ListStreams',
+      }, body: '{}', noSign: true}, assertMissing(done))
+    })
+
+    it('should return MissingAuthenticationTokenException if no auth and content type with spaces', function(done) {
+      request({headers: {
+        'content-type': '   application/x-amz-json-1.1   ;whatever',
         'x-amz-target': 'Kinesis_20131202.ListStreams',
       }, body: '{}', noSign: true}, assertMissing(done))
     })

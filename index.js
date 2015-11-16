@@ -108,7 +108,7 @@ function httpHandler(store, req, res) {
       }
     }
 
-    var contentType = req.headers['content-type']
+    var contentType = (req.headers['content-type'] || '').split(';')[0].trim()
 
     if ((req.method != 'OPTIONS' && contentType != 'application/x-amz-json-1.1' && contentType != 'application/json') ||
         (req.method == 'OPTIONS' && !req.headers.origin)) {
