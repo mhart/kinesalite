@@ -356,9 +356,71 @@ describe('splitShard', function() {
                         putSeq.shardCreateTime.should.equal(seq1Start.shardCreateTime)
                         putSeq.seqTime.should.be.above(putSeq.shardCreateTime - 1)
 
-                        request(helpers.opts('DeleteStream', {StreamName: stream.StreamName}), cb)
+                        checkHorizonShardIterator(cb)
                       })
                     }
+
+                    function checkHorizonShardIterator(cb) {
+                      request(helpers.opts('GetShardIterator', {
+                        StreamName: stream.StreamName,
+                        ShardId: 'shardId-000000000000',
+                        ShardIteratorType: 'TRIM_HORIZON',
+                      }), function(err, res) {
+                        if (err) return done(err)
+                        res.statusCode.should.equal(200)
+
+                        Object.keys(res.body).should.eql(['ShardIterator'])
+                        helpers.assertShardIterator(res.body.ShardIterator, stream.StreamName)
+
+                        request(helpers.opts('GetRecords', {
+                          ShardIterator: res.body.ShardIterator,
+                        }), function(err, res) {
+                          if (err) return done(err)
+                          res.statusCode.should.equal(200)
+
+                          Object.keys(res.body).sort().should.eql(['MillisBehindLatest', 'NextShardIterator', 'Records'])
+                          helpers.assertShardIterator(res.body.NextShardIterator, stream.StreamName)
+                          res.body.MillisBehindLatest.should.be.within(0, 10000)
+                          res.body.Records.should.not.be.empty()
+
+                          checkLatestShardIterator(cb)
+                        })
+                      })
+                    }
+
+                    function checkLatestShardIterator(retries, cb) {
+                      if (!cb) { cb = retries; retries = 0 }
+                      if (retries >= 10) return cb(new Error('Too many retries trying to call GetRecords'))
+
+                      request(helpers.opts('GetShardIterator', {
+                        StreamName: stream.StreamName,
+                        ShardId: 'shardId-000000000000',
+                        ShardIteratorType: 'LATEST',
+                      }), function(err, res) {
+                        if (err) return done(err)
+                        res.statusCode.should.equal(200)
+
+                        Object.keys(res.body).should.eql(['ShardIterator'])
+                        helpers.assertShardIterator(res.body.ShardIterator, stream.StreamName)
+
+                        request(helpers.opts('GetRecords', {
+                          ShardIterator: res.body.ShardIterator,
+                        }), function(err, res) {
+                          if (err) return done(err)
+                          res.statusCode.should.equal(200)
+
+                          // Can continue to return a number of times with a NextShardIterator after shard is closed
+                          if (res.body.NextShardIterator) return checkLatestShardIterator(++retries, cb)
+
+                          Object.keys(res.body).sort().should.eql(['MillisBehindLatest', 'Records'])
+                          res.body.Records.should.eql([])
+                          res.body.MillisBehindLatest.should.be.within(0, 10000)
+
+                          request(helpers.opts('DeleteStream', {StreamName: stream.StreamName}), cb)
+                        })
+                      })
+                    }
+
                   })
                 })
               })

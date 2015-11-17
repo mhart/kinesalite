@@ -4,7 +4,7 @@ var crypto = require('crypto'),
 
 module.exports = function getRecords(store, data, cb) {
 
-  var metaDb = store.metaDb, shardIx, shardId, iteratorTime, streamName, seqNo, pieces,
+  var metaDb = store.metaDb, shardIx, shardId, iteratorTime, streamName, seqNo, seqObj, pieces,
     buffer = new Buffer(data.ShardIterator, 'base64'), now = Date.now(),
     decipher = crypto.createDecipher('aes-256-cbc', db.ITERATOR_PWD)
 
@@ -46,7 +46,7 @@ module.exports = function getRecords(store, data, cb) {
   }
 
   try {
-    db.parseSequence(seqNo)
+    seqObj = db.parseSequence(seqNo)
   } catch (e) {
     return cb(invalidShardIterator())
   }
@@ -88,10 +88,19 @@ module.exports = function getRecords(store, data, cb) {
       .filter(function(item) { return !item._tooOld })
       .join(function(items) {
         var nextSeq = lastItem ? db.incrementSequence(lastItem._seqObj) : seqNo,
-          nextShardIterator = db.createShardIterator(streamName, shardId, nextSeq)
+          nextShardIterator = db.createShardIterator(streamName, shardId, nextSeq),
+          millisBehind = 0
+
+        if (!items.length && stream.Shards[shardIx].SequenceNumberRange.EndingSequenceNumber) {
+          var endSeqObj = db.parseSequence(stream.Shards[shardIx].SequenceNumberRange.EndingSequenceNumber)
+          if (seqObj.seqTime >= endSeqObj.seqTime) {
+            nextShardIterator = undefined
+            millisBehind = Math.max(0, Date.now() - endSeqObj.seqTime)
+          }
+        }
 
         cb(null, {
-          MillisBehindLatest: 0,
+          MillisBehindLatest: millisBehind,
           NextShardIterator: nextShardIterator,
           Records: items.map(function(item) {
             delete item._seqObj
