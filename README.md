@@ -51,7 +51,8 @@ kinesaliteServer.listen(4567, function(err) {
 })
 ```
 
-Once running, here's how you use the [AWS SDK](https://github.com/aws/aws-sdk-js) to connect:
+Once running, here's how you use the [AWS SDK](https://github.com/aws/aws-sdk-js) to connect
+(after [configuring the SDK](http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html)):
 
 ```js
 var AWS = require('aws-sdk')
