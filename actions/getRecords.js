@@ -67,7 +67,7 @@ module.exports = function getRecords(store, data, cb) {
 
     cb = once(cb)
 
-    var streamDb = store.getStreamDb(streamName), cutoffTime = Date.now() - (24 * 60 * 60 * 1000),
+    var streamDb = store.getStreamDb(streamName), cutoffTime = Date.now() - (stream.RetentionPeriodHours * 60 * 60 * 1000),
       keysToDelete = [], lastItem, opts
 
     opts = {
