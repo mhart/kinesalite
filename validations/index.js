@@ -33,7 +33,7 @@ function checkTypes(data, types) {
       case 'Boolean':
         switch (typeof val) {
           case 'number':
-            throw typeError('class java.math.BigDecimal can not be converted to an Boolean')
+            throw typeError('class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to an Boolean')
           case 'string':
             // "\'HELLOWTF\' can not be converted to an Boolean"
             // seems to convert to uppercase
@@ -55,7 +55,7 @@ function checkTypes(data, types) {
           case 'number':
             if (actualType != 'Double') val = Math.floor(val)
             if (actualType == 'Short') val = Math.min(val, 32767)
-            if (actualType == 'Integer') val = val | 0
+            if (actualType == 'Integer') val = Math.min(val, 2147483647)
             break
           case 'string':
             throw typeError('class java.lang.String can not be converted to an ' + actualType)
@@ -69,7 +69,7 @@ function checkTypes(data, types) {
           case 'boolean':
             throw typeError('class java.lang.Boolean can not be converted to an String')
           case 'number':
-            throw typeError('class java.math.BigDecimal can not be converted to an String')
+            throw typeError('class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to an String')
           case 'object':
             if (Array.isArray(val)) throw typeError('Start of list found where not expected')
             throw typeError('Start of structure or map found where not expected.')
@@ -80,7 +80,7 @@ function checkTypes(data, types) {
           case 'boolean':
             throw typeError('class java.lang.Boolean can not be converted to a Blob')
           case 'number':
-            throw typeError('class java.math.BigDecimal can not be converted to a Blob')
+            throw typeError('class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to a Blob')
           case 'object':
             if (Array.isArray(val)) throw typeError('Start of list found where not expected')
             throw typeError('Start of structure or map found where not expected.')

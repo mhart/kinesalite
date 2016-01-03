@@ -123,9 +123,9 @@ function assertType(target, property, type, done) {
     case 'Boolean':
       msgs = [
         ['23', '\'23\' can not be converted to an Boolean'],
-        [23, 'class java.math.BigDecimal can not be converted to an Boolean'],
-        [-2147483648, 'class java.math.BigDecimal can not be converted to an Boolean'],
-        [2147483648, 'class java.math.BigDecimal can not be converted to an Boolean'],
+        [23, 'class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to an Boolean'],
+        [-2147483648, 'class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to an Boolean'],
+        [2147483648, 'class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to an Boolean'],
         // For some reason, doubles are fine
         // [34.56, 'class java.lang.Double can not be converted to an Boolean'],
         [[], 'Start of list found where not expected'],
@@ -135,10 +135,10 @@ function assertType(target, property, type, done) {
     case 'String':
       msgs = [
         [true, 'class java.lang.Boolean can not be converted to an String'],
-        [23, 'class java.math.BigDecimal can not be converted to an String'],
-        [-2147483648, 'class java.math.BigDecimal can not be converted to an String'],
-        [2147483648, 'class java.math.BigDecimal can not be converted to an String'],
-        [34.56, 'class java.math.BigDecimal can not be converted to an String'],
+        [23, 'class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to an String'],
+        [-2147483648, 'class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to an String'],
+        [2147483648, 'class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to an String'],
+        [34.56, 'class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to an String'],
         [[], 'Start of list found where not expected'],
         [{}, 'Start of structure or map found where not expected.'],
       ]
@@ -162,10 +162,10 @@ function assertType(target, property, type, done) {
     case 'Blob':
       msgs = [
         [true, 'class java.lang.Boolean can not be converted to a Blob'],
-        [23, 'class java.math.BigDecimal can not be converted to a Blob'],
-        [-2147483648, 'class java.math.BigDecimal can not be converted to a Blob'],
-        [2147483648, 'class java.math.BigDecimal can not be converted to a Blob'],
-        [34.56, 'class java.math.BigDecimal can not be converted to a Blob'],
+        [23, 'class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to a Blob'],
+        [-2147483648, 'class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to a Blob'],
+        [2147483648, 'class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to a Blob'],
+        [34.56, 'class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to a Blob'],
         [[], 'Start of list found where not expected'],
         [{}, 'Start of structure or map found where not expected.'],
         ['23456', '\'23456\' can not be converted to a Blob: Base64 encoded length is expected a multiple of 4 bytes but found: 5'],
