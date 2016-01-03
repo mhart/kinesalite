@@ -16,30 +16,31 @@ describe('decreaseStreamRetentionPeriod', function() {
   describe('validations', function() {
 
     it('should return ValidationException for no StreamName', function(done) {
-      assertValidation({},
-        '2 validation errors detected: ' +
+      assertValidation({}, [
         'Value null at \'retentionPeriodHours\' failed to satisfy constraint: ' +
-        'Member must not be null; ' +
+        'Member must not be null',
         'Value null at \'streamName\' failed to satisfy constraint: ' +
-        'Member must not be null', done)
+        'Member must not be null',
+      ], done)
     })
 
     it('should return ValidationException for empty StreamName', function(done) {
-      assertValidation({StreamName: '', RetentionPeriodHours: -1},
-        '3 validation errors detected: ' +
+      assertValidation({StreamName: '', RetentionPeriodHours: -1}, [
         'Value \'-1\' at \'retentionPeriodHours\' failed to satisfy constraint: ' +
-        'Member must have value greater than or equal to 1; Value \'\' at \'streamName\' ' +
-        'failed to satisfy constraint: Member must satisfy regular expression pattern: ' +
-        '[a-zA-Z0-9_.-]+; Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1', done)
+        'Member must have value greater than or equal to 1',
+        'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
+        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+',
+        'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
+        'Member must have length greater than or equal to 1',
+      ], done)
     })
 
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a')
-      assertValidation({StreamName: name, RetentionPeriodHours: 24},
-        '1 validation error detected: ' +
+      assertValidation({StreamName: name, RetentionPeriodHours: 24}, [
         'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 128', done)
+        'Member must have length less than or equal to 128',
+      ], done)
     })
 
     it('should return InvalidArgumentException for retention period less than 24', function(done) {

@@ -36,51 +36,51 @@ describe('getShardIterator', function() {
   describe('validations', function() {
 
     it('should return ValidationException for no StreamName', function(done) {
-      assertValidation({},
-        '3 validation errors detected: ' +
+      assertValidation({}, [
         'Value null at \'shardId\' failed to satisfy constraint: ' +
-        'Member must not be null; ' +
+        'Member must not be null',
         'Value null at \'shardIteratorType\' failed to satisfy constraint: ' +
-        'Member must not be null; ' +
+        'Member must not be null',
         'Value null at \'streamName\' failed to satisfy constraint: ' +
-        'Member must not be null', done)
+        'Member must not be null',
+      ], done)
     })
 
     it('should return ValidationException for empty StreamName', function(done) {
-      assertValidation({StreamName: '', ShardIteratorType: '', ShardId: '', StartingSequenceNumber: ''},
-        '6 validation errors detected: ' +
+      assertValidation({StreamName: '', ShardIteratorType: '', ShardId: '', StartingSequenceNumber: ''}, [
         'Value \'\' at \'shardId\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+; ' +
+        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+',
         'Value \'\' at \'shardId\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'shardIteratorType\' failed to satisfy constraint: ' +
-        'Member must satisfy enum value set: [AFTER_SEQUENCE_NUMBER, LATEST, AT_SEQUENCE_NUMBER, TRIM_HORIZON]; ' +
+        'Member must satisfy enum value set: [AFTER_SEQUENCE_NUMBER, LATEST, AT_SEQUENCE_NUMBER, TRIM_HORIZON]',
         'Value \'\' at \'startingSequenceNumber\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,128}); ' +
+        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,128})',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+; ' +
+        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1', done)
+        'Member must have length greater than or equal to 1',
+      ], done)
     })
 
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a')
-      assertValidation({StreamName: name, ShardId: name, ShardIteratorType: 'LATEST'},
-        '2 validation errors detected: ' +
+      assertValidation({StreamName: name, ShardId: name, ShardIteratorType: 'LATEST'}, [
         'Value \'' + name + '\' at \'shardId\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 128; ' +
+        'Member must have length less than or equal to 128',
         'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 128', done)
+        'Member must have length less than or equal to 128',
+      ], done)
     })
 
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a')
-      assertValidation({StreamName: name, ShardId: name, ShardIteratorType: 'LATEST'},
-        '2 validation errors detected: ' +
+      assertValidation({StreamName: name, ShardId: name, ShardIteratorType: 'LATEST'}, [
         'Value \'' + name + '\' at \'shardId\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 128; ' +
+        'Member must have length less than or equal to 128',
         'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 128', done)
+        'Member must have length less than or equal to 128',
+      ], done)
     })
 
     it('should return ResourceNotFoundException if unknown stream and shard ID just small enough', function(done) {

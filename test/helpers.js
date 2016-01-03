@@ -225,14 +225,29 @@ function assertValidation(target, data, msg, done) {
   request(opts(target, data), function(err, res) {
     if (err) return done(err)
     res.statusCode.should.equal(400)
-    if (msg instanceof RegExp) {
-      res.body.__type.should.equal('ValidationException')
+    res.body.__type.should.equal('ValidationException')
+    var resMsg = res.body.message
+    if (Array.isArray(msg)) {
+      var msgPrefix = msg.length + ' validation ' + (msg.length == 1 ? 'error' : 'errors') + ' detected: '
+      resMsg.should.startWith(msgPrefix)
+      resMsg = resMsg.slice(msgPrefix.length)
+      while (msg.length) {
+        for (var i = 0; i < msg.length; i++) {
+          if (resMsg.indexOf(msg[i]) === 0) {
+            resMsg = resMsg.slice(msg[i].length)
+            if (resMsg.indexOf('; ') === 0) resMsg = resMsg.slice(2)
+            break
+          }
+        }
+        if (i >= msg.length) {
+          throw new Error('Could not match ' + resMsg + ' from ' + msg)
+        }
+        msg.splice(i, 1)
+      }
+    } else if (msg instanceof RegExp) {
       res.body.message.should.match(msg)
     } else {
-      res.body.should.eql({
-        __type: 'ValidationException',
-        message: msg,
-      })
+      res.body.message.should.equal(msg)
     }
     done()
   })
