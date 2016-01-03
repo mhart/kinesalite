@@ -1,6 +1,6 @@
 var helpers = require('./helpers')
 
-require('should');
+require('should')
 
 var target = 'IncreaseStreamRetentionPeriod',
     request = helpers.request,
@@ -75,7 +75,7 @@ describe('increaseStreamRetentionPeriod', function() {
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {
       var name1 = randomName()
-      assertNotFound({StreamName: name1, RetentionPeriodHours: 25 },
+      assertNotFound({StreamName: name1, RetentionPeriodHours: 25},
         'Stream ' + name1 + ' under account ' + helpers.awsAccountId + ' not found.', done)
     })
   })
@@ -99,7 +99,7 @@ describe('increaseStreamRetentionPeriod', function() {
 
           res.body.StreamDescription.RetentionPeriodHours.should.eql(hours)
 
-          done();
+          done()
         })
       })
     })
