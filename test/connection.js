@@ -7,8 +7,8 @@ var https = require('https'),
 function assertBody(statusCode, contentType, body, done) {
   return function(err, res) {
     if (err) return done(err)
-    res.statusCode.should.equal(statusCode)
     res.body.should.eql(body)
+    res.statusCode.should.equal(statusCode)
     if (contentType != null) {
       res.headers['content-type'].should.equal(contentType)
     } else {
@@ -18,6 +18,116 @@ function assertBody(statusCode, contentType, body, done) {
     res.headers['content-length'].should.equal(String(Buffer.byteLength(res.body, 'utf8')))
     res.headers['x-amzn-requestid'].should.match(uuidRegex)
     new Buffer(res.headers['x-amz-id-2'], 'base64').length.should.be.within(72, 80)
+    done()
+  }
+}
+
+function assertMissingTokenXml(done) {
+  return assertBody(403, null,
+    '<MissingAuthenticationTokenException>\n' +
+    '  <Message>Missing Authentication Token</Message>\n' +
+    '</MissingAuthenticationTokenException>\n', done)
+}
+
+function assertInvalidSignatureXml(done) {
+  return assertBody(403, null,
+    '<InvalidSignatureException>\n  <Message>Found both \'X-Amz-Algorithm\' as a query-string param and \'Authorization\' as HTTP header.</Message>\n</InvalidSignatureException>\n', done)
+}
+
+function assertIncompleteQueryXml(done) {
+  return assertBody(403, null,
+    '<IncompleteSignatureException>\n  <Message>AWS query-string parameters must include \'X-Amz-Algorithm\'. AWS query-string parameters must include \'X-Amz-Credential\'. AWS query-string parameters must include \'X-Amz-Signature\'. AWS query-string parameters must include \'X-Amz-SignedHeaders\'. AWS query-string parameters must include \'X-Amz-Date\'. Re-examine the query-string parameters.</Message>\n</IncompleteSignatureException>\n', done)
+}
+
+function assertIncompleteHeaderXml(done) {
+  return assertBody(403, null,
+    '<IncompleteSignatureException>\n  <Message>Authorization header requires \'Credential\' parameter. Authorization header requires \'Signature\' parameter. Authorization header requires \'SignedHeaders\' parameter. Authorization header requires existence of either a \'X-Amz-Date\' or a \'Date\' header. Authorization=a</Message>\n</IncompleteSignatureException>\n', done)
+}
+
+function assertAccessDeniedXml(done) {
+  return assertBody(403, null,
+    '<AccessDeniedException>\n' +
+    '  <Message>Unable to determine service/operation name to be authorized</Message>\n' +
+    '</AccessDeniedException>\n', done)
+}
+
+function assertUnrecognizedClientXml(service, operation, done) {
+  return assertBody(403, null,
+    '<UnrecognizedClientException>\n' +
+    '  <Message>No authorization strategy was found for service: ' + service + ', operation: ' + operation + '</Message>\n' +
+    '</UnrecognizedClientException>\n', done)
+}
+
+function assertInternalFailureXml(done) {
+  return assertBody(500, null, '<InternalFailure/>\n', done)
+}
+
+function assertUnknownOperationXml(done) {
+  return assertBody(404, null, '<UnknownOperationException/>\n', done)
+}
+
+function assertUnknown(done) {
+  return assertBody(400, 'application/x-amz-json-1.1', {__type: 'UnknownOperationException'}, done)
+}
+
+function assertUnknownDeprecated(done) {
+  return assertBody(200, 'application/json', {
+    Output: {__type: 'com.amazon.coral.service#UnknownOperationException', message: null},
+    Version: '1.0',
+  }, done)
+}
+
+function assertSerialization(done) {
+  return assertBody(400, 'application/x-amz-json-1.1', {__type: 'SerializationException'}, done)
+}
+
+function assertSerializationDeprecated(done) {
+  return assertBody(200, 'application/json', {
+    Output: {__type: 'com.amazon.coral.service#SerializationException', Message: null},
+    Version: '1.0',
+  }, done)
+}
+
+function assertMissing(done) {
+  return assertBody(400, 'application/x-amz-json-1.1', {
+    __type: 'MissingAuthenticationTokenException',
+    message: 'Missing Authentication Token',
+  }, done)
+}
+
+function assertIncomplete(msg, done) {
+  return assertBody(400, 'application/x-amz-json-1.1', {
+    __type: 'IncompleteSignatureException',
+    message: msg,
+  }, done)
+}
+
+function assertInvalid(done) {
+  return assertBody(400, 'application/x-amz-json-1.1', {
+    __type: 'InvalidSignatureException',
+    message: 'Found both \'X-Amz-Algorithm\' as a query-string param and \'Authorization\' as HTTP header.',
+  }, done)
+}
+
+function assertOk(done) {
+  return assertBody(200, 'application/x-amz-json-1.1', {HasMoreStreams: false, StreamNames: []}, done)
+}
+
+function assertCors(headers, done) {
+  if (!done) { done = headers; headers = null }
+  return function(err, res) {
+    if (err) return done(err)
+    res.statusCode.should.equal(200)
+    res.headers['x-amzn-requestid'].should.match(uuidRegex)
+    res.headers['access-control-allow-origin'].should.equal('*')
+    Object.keys(headers || {}).forEach(function(header) {
+      res.headers[header].should.equal(headers[header])
+    })
+    res.headers['access-control-max-age'].should.equal('172800')
+    res.headers['content-length'].should.equal('0')
+    res.headers.should.not.have.property('x-amz-id-2')
+    res.headers.should.not.have.property('content-type')
+    res.body.should.eql('')
     done()
   }
 }
@@ -54,35 +164,85 @@ describe('kinesalite connections', function() {
       })
     })
 
-    function assertMissingTokenXml(done) {
-      return assertBody(403, null,
-        '<MissingAuthenticationTokenException>\n' +
-        '  <Message>Missing Authentication Token</Message>\n' +
-        '</MissingAuthenticationTokenException>\n', done)
+    // This hairy beast can be used to ensure the correct order of checks in a request
+    // BUT BE WARNED – THIS RUNS 3120 TESTS
+    if (false) {
+      var paths = ['/whatever', '/?X-Amz-Algorithm']
+      var authHeaders = ['', 'a']
+      var contentHeaders = ['', 'application/x-amz-json-1.0', 'application/x-amz-json-1.1', 'application/json']
+      var originHeaders = ['', 'whatever']
+      var targetHeaders = ['', 'whatever', 'Kinesis_20131202.', 'Kinesis_20131202.whatever', 'whatever.ListStreams', 'Kinesis_20131202.ListStreams']
+      var bodies = ['', 'hello', 'true', 'null', '{}']
+      var noSigns = [true, false]
+      var methods = ['OPTIONS', 'GET', 'PUT', 'DELETE', 'POST']
+      paths.forEach(function(path) {
+        authHeaders.forEach(function(authHeader) {
+          contentHeaders.forEach(function(contentHeader) {
+            originHeaders.forEach(function(originHeader) {
+              targetHeaders.forEach(function(targetHeader) {
+                bodies.forEach(function(body) {
+                  noSigns.forEach(function(noSign) {
+                    methods.forEach(function(method) {
+                      if ((authHeader || path == '/?X-Amz-Algorithm') && !noSign) return
+                      if (~['OPTIONS', 'GET', 'DELETE'].indexOf(method) && body) return
+
+                      var headers = {}
+                      if (authHeader) headers.authorization = authHeader
+                      if (contentHeader) headers['content-type'] = contentHeader
+                      if (originHeader) headers.origin = originHeader
+                      if (targetHeader) headers['x-amz-target'] = targetHeader
+                      var opts = {method: method, path: path, headers: headers, body: body, noSign: noSign}
+
+                      it('should return exception with ' + JSON.stringify(opts), function(done) {
+                        var returnFn
+
+                        if (method == 'OPTIONS' && originHeader) {
+                          returnFn = assertCors
+                        } else if (method == 'POST' && ~['application/x-amz-json-1.1', 'application/json'].indexOf(contentHeader)) {
+                          if (body && body != '{}') {
+                            returnFn = contentHeader == 'application/x-amz-json-1.1' ? assertSerialization : assertSerializationDeprecated
+                          } else if (contentHeader == 'application/json') {
+                            returnFn = assertUnknownDeprecated
+                          } else if (targetHeader != 'Kinesis_20131202.ListStreams') {
+                            returnFn = assertUnknown
+                          } else if (body != '{}') {
+                            returnFn = assertSerialization
+                          } else if (path == '/?X-Amz-Algorithm') {
+                            returnFn = authHeader ? assertInvalid :
+                              assertIncomplete.bind(null, 'AWS query-string parameters must include \'X-Amz-Algorithm\'. AWS query-string parameters must include \'X-Amz-Credential\'. AWS query-string parameters must include \'X-Amz-Signature\'. AWS query-string parameters must include \'X-Amz-SignedHeaders\'. AWS query-string parameters must include \'X-Amz-Date\'. Re-examine the query-string parameters.')
+                          } else if (authHeader) {
+                            returnFn = assertIncomplete.bind(null, 'Authorization header requires \'Credential\' parameter. Authorization header requires \'Signature\' parameter. Authorization header requires \'SignedHeaders\' parameter. Authorization header requires existence of either a \'X-Amz-Date\' or a \'Date\' header. Authorization=a')
+                          } else if (noSign) {
+                            returnFn = assertMissing
+                          } else {
+                            returnFn = assertOk
+                          }
+                        } else if (path == '/?X-Amz-Algorithm') {
+                          returnFn = authHeader ? assertInvalidSignatureXml : assertIncompleteQueryXml
+                        } else if (authHeader) {
+                          returnFn = assertIncompleteHeaderXml
+                        } else if (noSign) {
+                          returnFn = assertMissingTokenXml
+                        } else if (targetHeader == 'whatever.ListStreams') {
+                          returnFn = assertUnrecognizedClientXml.bind(null, 'whatever', 'ListStreams')
+                        } else if (targetHeader == 'Kinesis_20131202.whatever') {
+                          returnFn = assertInternalFailureXml
+                        } else if (targetHeader == 'Kinesis_20131202.ListStreams') {
+                          returnFn = assertUnknownOperationXml
+                        } else {
+                          returnFn = assertAccessDeniedXml
+                        }
+                        request(opts, returnFn(done))
+                      })
+                    })
+                  })
+                })
+              })
+            })
+          })
+        })
+      })
     }
-
-    function assertAccessDeniedXml(done) {
-      return assertBody(403, null,
-        '<AccessDeniedException>\n' +
-        '  <Message>Unable to determine service/operation name to be authorized</Message>\n' +
-        '</AccessDeniedException>\n', done)
-    }
-
-    it('should return MissingAuthenticationTokenException if OPTIONS with no auth', function(done) {
-      request({method: 'OPTIONS', noSign: true}, assertMissingTokenXml(done))
-    })
-
-    it('should return MissingAuthenticationTokenException if GET with no auth', function(done) {
-      request({method: 'GET', noSign: true}, assertMissingTokenXml(done))
-    })
-
-    it('should return MissingAuthenticationTokenException if PUT with no auth', function(done) {
-      request({method: 'PUT', noSign: true}, assertMissingTokenXml(done))
-    })
-
-    it('should return MissingAuthenticationTokenException if DELETE with no auth', function(done) {
-      request({method: 'DELETE', noSign: true}, assertMissingTokenXml(done))
-    })
 
     it('should return MissingAuthenticationTokenException if POST with no auth', function(done) {
       request({noSign: true}, assertMissingTokenXml(done))
@@ -116,12 +276,29 @@ describe('kinesalite connections', function() {
       request({headers: {'content-type': 'application/x-amz-json-1.1asdf'}}, assertAccessDeniedXml(done))
     })
 
-    it('should return AccessDeniedException if invalid target', function(done) {
-      request({headers: {'x-amz-target': 'Kinesis_20131202.ListStream'}}, assertAccessDeniedXml(done))
+    it('should return AccessDeniedException if random target', function(done) {
+      request({headers: {'x-amz-target': 'Whatever'}}, assertAccessDeniedXml(done))
     })
 
-    it('should return AccessDeniedException if no Content-Type', function(done) {
-      request({headers: {'x-amz-target': 'Kinesis_20131202.ListStreams'}}, assertAccessDeniedXml(done))
+    it('should return AccessDeniedException if real service with empty action', function(done) {
+      request({headers: {'x-amz-target': 'Kinesis_20131202.'}}, assertAccessDeniedXml(done))
+    })
+
+    it('should return InternalFailure if random action', function(done) {
+      request({headers: {'x-amz-target': 'Kinesis_20131202.Whatever'}}, assertInternalFailureXml(done))
+    })
+
+    it('should return UnrecognizedClientException if random service with random action', function(done) {
+      request({headers: {'x-amz-target': 'Whatever.Whatever'}},
+        assertUnrecognizedClientXml('Whatever', 'Whatever', done))
+    })
+
+    it('should return InternalFailure if incomplete action', function(done) {
+      request({headers: {'x-amz-target': 'Kinesis_20131202.ListStream'}}, assertInternalFailureXml(done))
+    })
+
+    it('should return UnknownOperationException if no Content-Type', function(done) {
+      request({headers: {'x-amz-target': 'Kinesis_20131202.ListStreams'}}, assertUnknownOperationXml(done))
     })
 
     it('should return AccessDeniedException and set CORS if using Origin', function(done) {
@@ -137,24 +314,11 @@ describe('kinesalite connections', function() {
       })
     })
 
-    function assertCors(headers, done) {
-      return function(err, res) {
-        if (err) return done(err)
-        res.statusCode.should.equal(200)
-        res.headers['x-amzn-requestid'].should.match(uuidRegex)
-        res.headers['access-control-allow-origin'].should.equal('*')
-        Object.keys(headers || {}).forEach(function(header) {
-          res.headers[header].should.equal(headers[header])
-        })
-        res.headers['access-control-max-age'].should.equal('172800')
-        res.headers['content-length'].should.equal('0')
-        res.headers.should.not.have.property('x-amz-id-2')
-        res.body.should.eql('')
-        done()
-      }
-    }
+    it('should set CORS if OPTIONS and Origin and no auth', function(done) {
+      request({method: 'OPTIONS', headers: {origin: 'whatever'}, noSign: true}, assertCors(null, done))
+    })
 
-    it('should set CORS if OPTIONS and Origin', function(done) {
+    it('should set CORS if OPTIONS and Origin and auth', function(done) {
       request({method: 'OPTIONS', headers: {origin: 'whatever'}}, assertCors(null, done))
     })
 
@@ -200,49 +364,6 @@ describe('kinesalite connections', function() {
   })
 
   describe('JSON', function() {
-
-    function assertUnknown(done) {
-      return assertBody(400, 'application/x-amz-json-1.1', {__type: 'UnknownOperationException'}, done)
-    }
-
-    function assertUnknownDeprecated(done) {
-      return assertBody(200, 'application/json', {
-        Output: {__type: 'com.amazon.coral.service#UnknownOperationException', message: null},
-        Version: '1.0',
-      }, done)
-    }
-
-    function assertSerialization(done) {
-      return assertBody(400, 'application/x-amz-json-1.1', {__type: 'SerializationException'}, done)
-    }
-
-    function assertSerializationDeprecated(done) {
-      return assertBody(200, 'application/json', {
-        Output: {__type: 'com.amazon.coral.service#SerializationException', Message: null},
-        Version: '1.0',
-      }, done)
-    }
-
-    function assertMissing(done) {
-      return assertBody(400, 'application/x-amz-json-1.1', {
-        __type: 'MissingAuthenticationTokenException',
-        message: 'Missing Authentication Token',
-      }, done)
-    }
-
-    function assertIncomplete(msg, done) {
-      return assertBody(400, 'application/x-amz-json-1.1', {
-        __type: 'IncompleteSignatureException',
-        message: msg,
-      }, done)
-    }
-
-    function assertInvalid(done) {
-      return assertBody(400, 'application/x-amz-json-1.1', {
-        __type: 'InvalidSignatureException',
-        message: 'Found both \'X-Amz-Algorithm\' as a query-string param and \'Authorization\' as HTTP header.',
-      }, done)
-    }
 
     it('should return UnknownOperationException if no target', function(done) {
       request({headers: {'content-type': 'application/x-amz-json-1.1'}}, assertUnknown(done))

@@ -55,16 +55,26 @@ validOperations.forEach(function(action) {
   actionValidations[action] = require('./validations/' + action)
 })
 
-function sendData(req, res, data, statusCode) {
-  var body = data != null ? JSON.stringify(data) : ''
+function sendRaw(req, res, body, statusCode) {
   req.removeAllListeners()
   res.statusCode = statusCode || 200
-  res.setHeader('Content-Type', res.contentType)
-  res.setHeader('Content-Length', Buffer.byteLength(body, 'utf8'))
+  if (body != null) res.setHeader('Content-Length', Buffer.byteLength(body, 'utf8'))
   // AWS doesn't send a 'Connection' header but seems to use keep-alive behaviour
   // res.setHeader('Connection', '')
   // res.shouldKeepAlive = false
   res.end(body)
+}
+
+function sendJson(req, res, data, statusCode) {
+  var body = data != null ? JSON.stringify(data) : ''
+  res.setHeader('Content-Type', res.contentType)
+  sendRaw(req, res, body, statusCode)
+}
+
+function sendError(req, res, contentValid, type, msg) {
+  return contentValid ? sendJson(req, res, {__type: type, message: msg}, 400) :
+    typeof msg == 'number' ? sendRaw(req, res, '<' + type + '/>\n', msg) :
+      sendRaw(req, res, '<' + type + '>\n  <Message>' + msg + '</Message>\n</' + type + '>\n', 403)
 }
 
 function httpHandler(store, req, res) {
@@ -73,10 +83,8 @@ function httpHandler(store, req, res) {
   req.on('data', function(data) {
     var newLength = data.length + (body ? body.length : 0)
     if (newLength > MAX_REQUEST_BYTES) {
-      req.removeAllListeners()
-      res.statusCode = 413
       res.setHeader('Transfer-Encoding', 'chunked')
-      return res.end()
+      return sendRaw(req, res, null, 413)
     }
     body = body ? Buffer.concat([body, data], newLength) : data
   })
@@ -89,9 +97,12 @@ function httpHandler(store, req, res) {
     if (req.method != 'OPTIONS' || !req.headers.origin)
       res.setHeader('x-amz-id-2', crypto.randomBytes(72).toString('base64'))
 
+    // FIRST check if we've got an origin header:
+
     if (req.headers.origin) {
       res.setHeader('Access-Control-Allow-Origin', '*')
 
+      // If it's a valid OPTIONS call, return here
       if (req.method == 'OPTIONS') {
         if (req.headers['access-control-request-headers'])
           res.setHeader('Access-Control-Allow-Headers', req.headers['access-control-request-headers'])
@@ -100,91 +111,75 @@ function httpHandler(store, req, res) {
           res.setHeader('Access-Control-Allow-Methods', req.headers['access-control-request-method'])
 
         res.setHeader('Access-Control-Max-Age', 172800)
-        res.setHeader('Content-Length', 0)
-        req.removeAllListeners()
-        return res.end()
-      } else {
-        res.setHeader('Access-Control-Expose-Headers', ['x-amz-request-id', 'x-amz-id-2'])
+        return sendRaw(req, res, '')
       }
+
+      res.setHeader('Access-Control-Expose-Headers', ['x-amz-request-id', 'x-amz-id-2'])
     }
 
     var contentType = (req.headers['content-type'] || '').split(';')[0].trim()
-
-    if ((req.method != 'OPTIONS' && contentType != 'application/x-amz-json-1.1' && contentType != 'application/json') ||
-        (req.method == 'OPTIONS' && !req.headers.origin)) {
-      req.removeAllListeners()
-      res.statusCode = 403
-      body = req.headers.authorization ?
-          '<AccessDeniedException>\n' +
-          '  <Message>Unable to determine service/operation name to be authorized</Message>\n' +
-          '</AccessDeniedException>\n' :
-          '<MissingAuthenticationTokenException>\n' +
-          '  <Message>Missing Authentication Token</Message>\n' +
-          '</MissingAuthenticationTokenException>\n'
-      res.setHeader('Content-Length', Buffer.byteLength(body, 'utf8'))
-      return res.end(body)
-    }
-
-    res.contentType = contentType
+    var contentValid = req.method == 'POST' && ~['application/x-amz-json-1.1', 'application/json'].indexOf(contentType)
 
     var target = (req.headers['x-amz-target'] || '').split('.')
+    var service = target[0]
+    var operation = target[1]
+    var serviceValid = service && ~validApis.indexOf(service)
+    var operationValid = operation && ~validOperations.indexOf(operation)
 
-    if (target.length != 2 || !~validApis.indexOf(target[0]) || !~validOperations.indexOf(target[1])) {
+    // AWS doesn't seem to care about the HTTP path, so no checking needed for that
+
+    // THEN if the method and content-type are ok, see if the JSON parses:
+
+    var data
+    if (contentValid) {
+      res.contentType = contentType
+
+      if (body) {
+        try { data = JSON.parse(body) } catch (e) { }
+
+        if (typeof data != 'object' || data == null) {
+          if (contentType == 'application/json') {
+            return sendJson(req, res, {
+              Output: {__type: 'com.amazon.coral.service#SerializationException', Message: null},
+              Version: '1.0',
+            }, 200)
+          }
+          return sendJson(req, res, {__type: 'SerializationException'}, 400)
+        }
+      }
+
+      // After this point, application/json doesn't seem to progress any further
       if (contentType == 'application/json') {
-        return sendData(req, res, {
+        return sendJson(req, res, {
           Output: {__type: 'com.amazon.coral.service#UnknownOperationException', message: null},
           Version: '1.0',
         }, 200)
       }
-      return sendData(req, res, {__type: 'UnknownOperationException'}, 400)
-    }
 
-    // AWS doesn't seem to care about the HTTP path, so no checking needed for that
+      if (!serviceValid || !operationValid) {
+        return sendJson(req, res, {__type: 'UnknownOperationException'}, 400)
+      }
 
-    var action = validations.toLowerFirst(target[1])
-
-    // THEN check body, see if the JSON parses:
-
-    var data
-    if (contentType != 'application/json' || (contentType == 'application/json' && body)) {
-      try {
-        data = JSON.parse(body)
-      } catch (e) {
-        if (contentType == 'application/json') {
-          return sendData(req, res, {
-            Output: {__type: 'com.amazon.coral.service#SerializationException', Message: null},
-            Version: '1.0',
-          }, 200)
-        }
-        return sendData(req, res, {__type: 'SerializationException'}, 400)
+      if (!data) {
+        return sendJson(req, res, {__type: 'SerializationException'}, 400)
       }
     }
 
-    // After this point, application/json doesn't seem to progress any further
-    if (contentType == 'application/json') {
-      return sendData(req, res, {
-        Output: {__type: 'com.amazon.coral.service#UnknownOperationException', message: null},
-        Version: '1.0',
-      }, 200)
-    }
+    // THEN check auth:
 
     var authHeader = req.headers.authorization
-    var query = url.parse(req.url, true).query
+    var query = ~req.url.indexOf('?') ? url.parse(req.url, true).query : {}
     var authQuery = 'X-Amz-Algorithm' in query
-
-    if (authHeader && authQuery)
-      return sendData(req, res, {
-        __type: 'InvalidSignatureException',
-        message: 'Found both \'X-Amz-Algorithm\' as a query-string param and \'Authorization\' as HTTP header.',
-      }, 400)
-
-    if (!authHeader && !authQuery)
-      return sendData(req, res, {
-        __type: 'MissingAuthenticationTokenException',
-        message: 'Missing Authentication Token',
-      }, 400)
-
     var msg = '', params
+
+    if (authHeader && authQuery) {
+      return sendError(req, res, contentValid, 'InvalidSignatureException',
+        'Found both \'X-Amz-Algorithm\' as a query-string param and \'Authorization\' as HTTP header.')
+    }
+
+    if (!authHeader && !authQuery) {
+      return sendError(req, res, contentValid, 'MissingAuthenticationTokenException', 'Missing Authentication Token')
+    }
 
     if (authHeader) {
       params = ['Credential', 'Signature', 'SignedHeaders']
@@ -211,25 +206,40 @@ function httpHandler(store, req, res) {
     }
 
     if (msg) {
-      return sendData(req, res, {
-        __type: 'IncompleteSignatureException',
-        message: msg,
-      }, 400)
+      return sendError(req, res, contentValid, 'IncompleteSignatureException', msg)
     }
 
+    // THEN if we don't have the correct method + content-type, we'll be exiting here:
+
+    if (!contentValid) {
+      if (!service || !operation) {
+        return sendError(req, res, false, 'AccessDeniedException',
+          'Unable to determine service/operation name to be authorized')
+      } else if (!serviceValid) {
+        return sendError(req, res, false, 'UnrecognizedClientException',
+          'No authorization strategy was found for service: ' + service + ', operation: ' + operation)
+      } else if (!operationValid) {
+        return sendError(req, res, false, 'InternalFailure', 500)
+      }
+      return sendError(req, res, false, 'UnknownOperationException', 404)
+    }
+
+    // If we've reached here, we're good to go:
+
+    var action = validations.toLowerFirst(operation)
     var actionValidation = actionValidations[action]
     try {
       data = validations.checkTypes(data, actionValidation.types)
-      validations.checkValidations(data, actionValidation.types, actionValidation.custom, target[1])
+      validations.checkValidations(data, actionValidation.types, actionValidation.custom, operation)
     } catch (e) {
-      if (e.statusCode) return sendData(req, res, e.body, e.statusCode)
+      if (e.statusCode) return sendJson(req, res, e.body, e.statusCode)
       throw e
     }
 
     actions[action](store, data, function(err, data) {
-      if (err && err.statusCode) return sendData(req, res, err.body, err.statusCode)
+      if (err && err.statusCode) return sendJson(req, res, err.body, err.statusCode)
       if (err) throw err
-      sendData(req, res, data)
+      sendJson(req, res, data)
     })
   })
 }
