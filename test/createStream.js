@@ -28,32 +28,33 @@ describe('createStream', function() {
   describe('validations', function() {
 
     it('should return ValidationException for no StreamName', function(done) {
-      assertValidation({},
-        '2 validation errors detected: ' +
+      assertValidation({}, [
         'Value null at \'shardCount\' failed to satisfy constraint: ' +
-        'Member must not be null; ' +
+        'Member must not be null',
         'Value null at \'streamName\' failed to satisfy constraint: ' +
-        'Member must not be null', done)
+        'Member must not be null',
+      ], done)
     })
 
     it('should return ValidationException for empty StreamName', function(done) {
-      assertValidation({StreamName: '', ShardCount: 0},
-        '3 validation errors detected: ' +
+      assertValidation({StreamName: '', ShardCount: 0}, [
         'Value \'0\' at \'shardCount\' failed to satisfy constraint: ' +
-        'Member must have value greater than or equal to 1; ' +
+        'Member must have value greater than or equal to 1',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+; ' +
+        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1', done)
+        'Member must have length greater than or equal to 1',
+      ], done)
     })
 
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a')
-      assertValidation({StreamName: name, ShardCount: 100000000000},
-        '2 validation errors detected: ' +
-        'Value \'2147483647\' at \'shardCount\' failed to satisfy constraint: Member must have value less than or equal to 100000; ' +
+      assertValidation({StreamName: name, ShardCount: 100000000000}, [
+        'Value \'2147483647\' at \'shardCount\' failed to satisfy constraint: ' +
+        'Member must have value less than or equal to 100000',
         'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 128', done)
+        'Member must have length less than or equal to 128',
+      ], done)
     })
 
     it('should return LimitExceededException for large ShardCount', function(done) {

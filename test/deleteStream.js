@@ -21,27 +21,27 @@ describe('deleteStream', function() {
   describe('validations', function() {
 
     it('should return ValidationException for no StreamName', function(done) {
-      assertValidation({},
-        '1 validation error detected: ' +
+      assertValidation({}, [
         'Value null at \'streamName\' failed to satisfy constraint: ' +
-        'Member must not be null', done)
+        'Member must not be null',
+      ], done)
     })
 
     it('should return ValidationException for empty StreamName', function(done) {
-      assertValidation({StreamName: ''},
-        '2 validation errors detected: ' +
+      assertValidation({StreamName: ''}, [
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+; ' +
+        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1', done)
+        'Member must have length greater than or equal to 1',
+      ], done)
     })
 
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a')
-      assertValidation({StreamName: name},
-        '1 validation error detected: ' +
+      assertValidation({StreamName: name}, [
         'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 128', done)
+        'Member must have length less than or equal to 128',
+      ], done)
     })
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {

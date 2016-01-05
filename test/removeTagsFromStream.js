@@ -30,47 +30,47 @@ describe('removeTagsFromStream', function() {
   describe('validations', function() {
 
     it('should return ValidationException for no StreamName', function(done) {
-      assertValidation({},
-        '2 validation errors detected: ' +
+      assertValidation({}, [
         'Value null at \'tagKeys\' failed to satisfy constraint: ' +
-        'Member must not be null; ' +
+        'Member must not be null',
         'Value null at \'streamName\' failed to satisfy constraint: ' +
-        'Member must not be null', done)
+        'Member must not be null',
+      ], done)
     })
 
     it('should return ValidationException for empty StreamName', function(done) {
-      assertValidation({StreamName: '', TagKeys: []},
-        '3 validation errors detected: ' +
+      assertValidation({StreamName: '', TagKeys: []}, [
         'Value \'[]\' at \'tagKeys\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+; ' +
+        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1', done)
+        'Member must have length greater than or equal to 1',
+      ], done)
     })
 
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a')
-      assertValidation({StreamName: name, TagKeys: ['a']},
-        '1 validation error detected: ' +
+      assertValidation({StreamName: name, TagKeys: ['a']}, [
         'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 128', done)
+        'Member must have length less than or equal to 128',
+      ], done)
     })
 
     it('should return ValidationException for long TagKey', function(done) {
       var name = new Array(129 + 1).join('a')
-      assertValidation({StreamName: randomName(), TagKeys: ['a', name, 'b']},
-        '1 validation error detected: ' +
+      assertValidation({StreamName: randomName(), TagKeys: ['a', name, 'b']}, [
         'Value \'[a, ' + name + ', b]\' at \'tagKeys\' failed to satisfy constraint: ' +
         'Member must satisfy constraint: [Member must have length less than or equal to 128, ' +
-        'Member must have length greater than or equal to 1]', done)
+        'Member must have length greater than or equal to 1]',
+      ], done)
     })
 
     it('should return ValidationException for too many TagKeys', function(done) {
-      assertValidation({StreamName: randomName(), TagKeys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']},
-        '1 validation error detected: ' +
+      assertValidation({StreamName: randomName(), TagKeys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']}, [
         'Value \'[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]\' at \'tagKeys\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 10', done)
+        'Member must have length less than or equal to 10',
+      ], done)
     })
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {

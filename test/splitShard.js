@@ -34,39 +34,39 @@ describe('splitShard', function() {
   describe('validations', function() {
 
     it('should return ValidationException for no StreamName', function(done) {
-      assertValidation({},
-        '3 validation errors detected: ' +
+      assertValidation({}, [
         'Value null at \'newStartingHashKey\' failed to satisfy constraint: ' +
-        'Member must not be null; ' +
+        'Member must not be null',
         'Value null at \'streamName\' failed to satisfy constraint: ' +
-        'Member must not be null; ' +
+        'Member must not be null',
         'Value null at \'shardToSplit\' failed to satisfy constraint: ' +
-        'Member must not be null', done)
+        'Member must not be null',
+      ], done)
     })
 
     it('should return ValidationException for empty StreamName', function(done) {
-      assertValidation({StreamName: '', ShardToSplit: '', NewStartingHashKey: ''},
-        '5 validation errors detected: ' +
+      assertValidation({StreamName: '', ShardToSplit: '', NewStartingHashKey: ''}, [
         'Value \'\' at \'newStartingHashKey\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,38}); ' +
+        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,38})',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+; ' +
+        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'shardToSplit\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+; ' +
+        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+',
         'Value \'\' at \'shardToSplit\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1', done)
+        'Member must have length greater than or equal to 1',
+      ], done)
     })
 
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a')
-      assertValidation({StreamName: name, ShardToSplit: name, NewStartingHashKey: '0'},
-        '2 validation errors detected: ' +
+      assertValidation({StreamName: name, ShardToSplit: name, NewStartingHashKey: '0'}, [
         'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 128; ' +
+        'Member must have length less than or equal to 128',
         'Value \'' + name + '\' at \'shardToSplit\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 128', done)
+        'Member must have length less than or equal to 128',
+      ], done)
     })
 
     it('should return ResourceNotFoundException if unknown stream and shard ID just small enough', function(done) {

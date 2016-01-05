@@ -43,51 +43,51 @@ describe('putRecords', function() {
   describe('validations', function() {
 
     it('should return ValidationException for no StreamName', function(done) {
-      assertValidation({},
-        '2 validation errors detected: ' +
+      assertValidation({}, [
         'Value null at \'records\' failed to satisfy constraint: ' +
-        'Member must not be null; ' +
+        'Member must not be null',
         'Value null at \'streamName\' failed to satisfy constraint: ' +
-        'Member must not be null', done)
+        'Member must not be null',
+      ], done)
     })
 
     it('should return ValidationException for empty StreamName', function(done) {
-      assertValidation({StreamName: '', Records: []},
-        '3 validation errors detected: ' +
+      assertValidation({StreamName: '', Records: []}, [
         'Value \'[]\' at \'records\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+; ' +
+        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1', done)
+        'Member must have length greater than or equal to 1',
+      ], done)
     })
 
     it('should return ValidationException for empty PartitionKey', function(done) {
-      assertValidation({StreamName: '', Records: [{PartitionKey: '', Data: '', ExplicitHashKey: ''}]},
-        '4 validation errors detected: ' +
+      assertValidation({StreamName: '', Records: [{PartitionKey: '', Data: '', ExplicitHashKey: ''}]}, [
         'Value \'\' at \'records.1.member.partitionKey\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'records.1.member.explicitHashKey\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,38}); ' +
+        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,38})',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+; ' +
+        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1', done)
+        'Member must have length greater than or equal to 1',
+      ], done)
     })
 
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a'), name2 = new Array(257 + 1).join('a'),
         data = new Buffer(1048577).toString('base64')
-      assertValidation({StreamName: name, Records: [{PartitionKey: name2, Data: data, ExplicitHashKey: ''}]},
-        '4 validation errors detected: ' +
+      assertValidation({StreamName: name, Records: [{PartitionKey: name2, Data: data, ExplicitHashKey: ''}]}, [
         'Value \'' + name2 + '\' at \'records.1.member.partitionKey\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 256; ' +
+        'Member must have length less than or equal to 256',
         'Value \'\' at \'records.1.member.explicitHashKey\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,38}); ' +
+        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,38})',
         'Value \'java.nio.HeapByteBuffer[pos=0 lim=1048577 cap=1048577]\' at \'records.1.member.data\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 1048576; ' +
+        'Member must have length less than or equal to 1048576',
         'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 128', done)
+        'Member must have length less than or equal to 128',
+      ], done)
     })
 
     it('should return ValidationException for too many records', function(done) {
@@ -96,28 +96,28 @@ describe('putRecords', function() {
         records.push({PartitionKey: '', Data: ''})
         strs.push('com.amazonaws.kinesis.v20131202.PutRecordsRequestEntry@2')
       }
-      assertValidation({StreamName: '', Records: records},
-        '10 validation errors detected: ' +
+      assertValidation({StreamName: '', Records: records}, [
         'Value \'[' + strs.join(', ') + ']\' at \'records\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 500; ' +
+        'Member must have length less than or equal to 500',
         'Value \'\' at \'records.1.member.partitionKey\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'records.2.member.partitionKey\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'records.3.member.partitionKey\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'records.4.member.partitionKey\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'records.5.member.partitionKey\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'records.6.member.partitionKey\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'records.7.member.partitionKey\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'records.8.member.partitionKey\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'records.9.member.partitionKey\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1', done)
+        'Member must have length greater than or equal to 1',
+      ], done)
     })
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {

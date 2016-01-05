@@ -40,44 +40,44 @@ describe('putRecord ', function() {
   describe('validations', function() {
 
     it('should return ValidationException for no StreamName', function(done) {
-      assertValidation({},
-        '3 validation errors detected: ' +
+      assertValidation({}, [
         'Value null at \'partitionKey\' failed to satisfy constraint: ' +
-        'Member must not be null; ' +
+        'Member must not be null',
         'Value null at \'data\' failed to satisfy constraint: ' +
-        'Member must not be null; ' +
+        'Member must not be null',
         'Value null at \'streamName\' failed to satisfy constraint: ' +
-        'Member must not be null', done)
+        'Member must not be null',
+      ], done)
     })
 
     it('should return ValidationException for empty StreamName', function(done) {
-      assertValidation({StreamName: '', PartitionKey: '', Data: '', ExplicitHashKey: '', SequenceNumberForOrdering: ''},
-        '5 validation errors detected: ' +
+      assertValidation({StreamName: '', PartitionKey: '', Data: '', ExplicitHashKey: '', SequenceNumberForOrdering: ''}, [
         'Value \'\' at \'sequenceNumberForOrdering\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,128}); ' +
+        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,128})',
         'Value \'\' at \'partitionKey\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'explicitHashKey\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,38}); ' +
+        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,38})',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+; ' +
+        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1', done)
+        'Member must have length greater than or equal to 1',
+      ], done)
     })
 
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a'), name2 = new Array(257 + 1).join('a'),
         data = new Buffer(1048577).toString('base64')
-      assertValidation({StreamName: name, PartitionKey: name2, Data: data, ExplicitHashKey: ''},
-        '4 validation errors detected: ' +
+      assertValidation({StreamName: name, PartitionKey: name2, Data: data, ExplicitHashKey: ''}, [
         'Value \'' + name2 + '\' at \'partitionKey\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 256; ' +
+        'Member must have length less than or equal to 256',
         'Value \'\' at \'explicitHashKey\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,38}); ' +
+        'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,38})',
         'Value \'java.nio.HeapByteBuffer[pos=0 lim=1048577 cap=1048577]\' at \'data\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 1048576; ' +
+        'Member must have length less than or equal to 1048576',
         'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 128', done)
+        'Member must have length less than or equal to 128',
+      ], done)
     })
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {

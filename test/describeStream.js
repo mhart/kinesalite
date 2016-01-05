@@ -29,37 +29,37 @@ describe('describeStream', function() {
   describe('validations', function() {
 
     it('should return ValidationException for no StreamName', function(done) {
-      assertValidation({},
-        '1 validation error detected: ' +
+      assertValidation({}, [
         'Value null at \'streamName\' failed to satisfy constraint: ' +
-        'Member must not be null', done)
+        'Member must not be null',
+      ], done)
     })
 
     it('should return ValidationException for empty StreamName', function(done) {
-      assertValidation({StreamName: '', Limit: 0, ExclusiveStartShardId: ''},
-        '5 validation errors detected: ' +
+      assertValidation({StreamName: '', Limit: 0, ExclusiveStartShardId: ''}, [
         'Value \'0\' at \'limit\' failed to satisfy constraint: ' +
-        'Member must have value greater than or equal to 1; ' +
+        'Member must have value greater than or equal to 1',
         'Value \'\' at \'exclusiveStartShardId\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+; ' +
+        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+',
         'Value \'\' at \'exclusiveStartShardId\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1; ' +
+        'Member must have length greater than or equal to 1',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+; ' +
+        'Member must satisfy regular expression pattern: [a-zA-Z0-9_.-]+',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length greater than or equal to 1', done)
+        'Member must have length greater than or equal to 1',
+      ], done)
     })
 
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a')
-      assertValidation({StreamName: name, Limit: 100000, ExclusiveStartShardId: name},
-        '3 validation errors detected: ' +
+      assertValidation({StreamName: name, Limit: 100000, ExclusiveStartShardId: name}, [
         'Value \'100000\' at \'limit\' failed to satisfy constraint: ' +
-        'Member must have value less than or equal to 10000; ' +
+        'Member must have value less than or equal to 10000',
         'Value \'' + name + '\' at \'exclusiveStartShardId\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 128; ' +
+        'Member must have length less than or equal to 128',
         'Value \'' + name + '\' at \'streamName\' failed to satisfy constraint: ' +
-        'Member must have length less than or equal to 128', done)
+        'Member must have length less than or equal to 128',
+      ], done)
     })
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {
