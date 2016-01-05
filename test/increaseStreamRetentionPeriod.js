@@ -13,6 +13,18 @@ var target = 'IncreaseStreamRetentionPeriod',
 
 describe('increaseStreamRetentionPeriod', function() {
 
+  describe('serializations', function() {
+
+    it('should return SerializationException when StreamName is not a String', function(done) {
+      assertType('StreamName', 'String', done)
+    })
+
+    it('should return SerializationException when RetentionPeriodHours is not an Integer', function(done) {
+      assertType('RetentionPeriodHours', 'Integer', done)
+    })
+
+  })
+
   describe('validations', function() {
 
     it('should return ValidationException for no StreamName', function(done) {
@@ -44,34 +56,15 @@ describe('increaseStreamRetentionPeriod', function() {
     })
 
     it('should return InvalidArgumentException for retention period less than 24', function(done) {
-      var hours = 23
-      assertInvalidArgument({StreamName: helpers.testStream, RetentionPeriodHours: hours},
+      assertInvalidArgument({StreamName: helpers.testStream, RetentionPeriodHours: 23},
         'Minimum allowed retention period is 24 hours. ' +
-        'Requested retention period (' + hours + ' hours) is too short.', done)
+        'Requested retention period (23 hours) is too short.', done)
     })
 
     it('should return InvalidArgumentException for retention period greater than 168', function(done) {
-      var hours = 169
-      assertInvalidArgument({StreamName: helpers.testStream, RetentionPeriodHours: hours},
+      assertInvalidArgument({StreamName: helpers.testStream, RetentionPeriodHours: 169},
         'Maximum allowed retention period is 168 hours. ' +
-        'Requested retention period (' + hours + ' hours) is too long.', done)
-    })
-
-    it('should return InvalidArgumentException for retention period less than current', function(done) {
-      var hours = 24
-
-      request(opts({
-        StreamName: helpers.testStream,
-        RetentionPeriodHours: 25,
-      }), function(err, res) {
-        if (err) return done(err)
-        res.statusCode.should.equal(200)
-
-        assertInvalidArgument({StreamName: helpers.testStream, RetentionPeriodHours: hours},
-          'Requested retention period (' + hours + ' hours) for stream ' + helpers.testStream +
-          ' can not be shorter than existing retention period (25 hours).' +
-          ' Use DecreaseRetentionPeriod API.', done)
-      })
+        'Requested retention period (169 hours) is too long.', done)
     })
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {
@@ -84,23 +77,50 @@ describe('increaseStreamRetentionPeriod', function() {
   describe('functionality', function() {
 
     it('should increase stream retention period', function(done) {
-      var hours = 25
+      this.timeout(100000)
       request(opts({
         StreamName: helpers.testStream,
-        RetentionPeriodHours: hours,
+        RetentionPeriodHours: 25,
       }), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
 
-        request(helpers.opts('DescribeStream', {
-          StreamName: helpers.testStream,
-        }), function(err, res) {
+        helpers.waitUntilActive(helpers.testStream, function(err, res) {
           if (err) return done(err)
-          res.statusCode.should.equal(200)
 
-          res.body.StreamDescription.RetentionPeriodHours.should.eql(hours)
+          res.body.StreamDescription.RetentionPeriodHours.should.eql(25)
 
-          done()
+          request(opts({
+            StreamName: helpers.testStream,
+            RetentionPeriodHours: 25,
+          }), function(err, res) {
+            if (err) return done(err)
+            res.statusCode.should.equal(200)
+
+            assertInvalidArgument({StreamName: helpers.testStream, RetentionPeriodHours: 24},
+              'Requested retention period (24 hours) for stream ' + helpers.testStream +
+              ' can not be shorter than existing retention period (25 hours).' +
+              ' Use DecreaseRetentionPeriod API.',
+            function(err) {
+              if (err) return done(err)
+
+              request(helpers.opts('DecreaseStreamRetentionPeriod', {
+                StreamName: helpers.testStream,
+                RetentionPeriodHours: 24,
+              }), function(err, res) {
+                if (err) return done(err)
+                res.statusCode.should.equal(200)
+
+                helpers.waitUntilActive(helpers.testStream, function(err, res) {
+                  if (err) return done(err)
+
+                  res.body.StreamDescription.RetentionPeriodHours.should.eql(24)
+
+                  done()
+                })
+              })
+            })
+          })
         })
       })
     })
