@@ -341,7 +341,7 @@ function assertArrivalTimes(records) {
     diff.should.be.below(1)
     var seqTime = parseInt(new BigNumber(record.SequenceNumber).toString(16).slice(30, 38), 16)
     diff = record.ApproximateArrivalTimestamp - seqTime
-    diff.should.be.within(0, 2)
+    diff.should.be.within(0, 3)
   })
 }
 
