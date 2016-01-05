@@ -50,6 +50,7 @@ module.exports = function putRecords(store, data, cb) {
       }
 
       // This appears to be the order that shards are processed in a PutRecords call
+      // XXX: No longer true – shards can be processed simultaneously and do not appear to be deterministic
       var shardOrder = stream.Shards.length < 18 ?
         [15, 16, 14, 13, 10, 12, 11, 7, 5, 9, 8, 6, 4, 3, 2, 1, 0] : stream.Shards.length < 27 ?
           [25, 21, 23, 22, 24, 20, 15, 19, 16, 17, 18, 11, 14, 13, 10, 12, 9, 6, 7, 5, 8, 3, 0, 4, 2, 1] :

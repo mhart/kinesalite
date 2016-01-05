@@ -183,12 +183,15 @@ describe('putRecords', function() {
         helpers.assertSequenceNumber(res.body.Records[5].SequenceNumber, 1, now)
         helpers.assertSequenceNumber(res.body.Records[6].SequenceNumber, 2, now)
 
-        var indexOrder = [2, 4, 6, 1, 3, 5, 0], lastIx
-        indexOrder.forEach(function(i) {
-          var seqIx = parseInt(new BigNumber(res.body.Records[i].SequenceNumber).toString(16).slice(11, 27), 16),
-            diff = lastIx != null ? seqIx - lastIx : 1
-          diff.should.equal(1)
-          lastIx = seqIx
+        var indexOrder = [[2, 4, 6], [1, 3, 5], [0]]
+        indexOrder.forEach(function(arr) {
+          var lastIx
+          arr.forEach(function(i) {
+            var seqIx = parseInt(new BigNumber(res.body.Records[i].SequenceNumber).toString(16).slice(11, 27), 16),
+              diff = lastIx != null ? seqIx - lastIx : 1
+            diff.should.equal(1)
+            lastIx = seqIx
+          })
         })
 
         delete res.body.Records[0].SequenceNumber
@@ -223,6 +226,7 @@ describe('putRecords', function() {
     })
 
     // Use this test to play around with sequence number generation
+    // aws kinesis create-stream --stream-name test --shard-count 50
     it.skip('should print out sequences for many shards', function(done) {
       var records = [], numShards = 50, streamName = 'test'
       for (var j = 0; j < 2; j++) {
