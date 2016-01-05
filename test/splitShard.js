@@ -378,8 +378,13 @@ describe('splitShard', function() {
                           if (err) return done(err)
                           res.statusCode.should.equal(200)
 
-                          Object.keys(res.body).sort().should.eql(['MillisBehindLatest', 'NextShardIterator', 'Records'])
-                          helpers.assertShardIterator(res.body.NextShardIterator, stream.StreamName)
+                          // Sometimes returns with a NextShardIterator, sometimes doesn't
+                          if (res.body.NextShardIterator) {
+                            helpers.assertShardIterator(res.body.NextShardIterator, stream.StreamName)
+                            delete res.body.NextShardIterator
+                          }
+
+                          Object.keys(res.body).sort().should.eql(['MillisBehindLatest', 'Records'])
                           res.body.MillisBehindLatest.should.be.within(0, 10000)
                           res.body.Records.should.not.be.empty()
 
