@@ -32,7 +32,7 @@ module.exports = function getRecords(store, data, cb) {
   if (!/^shardId-[\d]{12}$/.test(shardId) || !(shardIx >= 0 && shardIx < 2147483648))
     return cb(invalidShardIterator())
 
-  if (!(iteratorTime > 0 && iteratorTime < Date.now()))
+  if (!(iteratorTime > 0 && iteratorTime <= Date.now()))
     return cb(invalidShardIterator())
 
   if (!/[a-zA-Z0-9_.-]+/.test(streamName) || !streamName.length || streamName.length > 128)
