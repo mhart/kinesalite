@@ -97,7 +97,7 @@ module.exports = function splitShard(store, data, cb) {
                   ParentShardId: shardId,
                   HashKeyRange: {
                     StartingHashKey: shard.HashKeyRange.StartingHashKey,
-                    EndingHashKey: hashKey.minus(1).toString(),
+                    EndingHashKey: hashKey.minus(1).toFixed(),
                   },
                   SequenceNumberRange: {
                     StartingSequenceNumber: db.stringifySequence({
@@ -111,7 +111,7 @@ module.exports = function splitShard(store, data, cb) {
                 stream.Shards.push({
                   ParentShardId: shardId,
                   HashKeyRange: {
-                    StartingHashKey: hashKey.toString(),
+                    StartingHashKey: hashKey.toFixed(),
                     EndingHashKey: shard.HashKeyRange.EndingHashKey,
                   },
                   SequenceNumberRange: {
