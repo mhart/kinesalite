@@ -89,7 +89,7 @@ module.exports = function splitShard(store, data, cb) {
                 shard.SequenceNumberRange.EndingSequenceNumber = db.stringifySequence({
                   shardCreateTime: db.parseSequence(shard.SequenceNumberRange.StartingSequenceNumber).shardCreateTime,
                   shardIx: shardIx,
-                  seqIx: new BigNumber('7fffffffffffffff', 16).toString(),
+                  seqIx: new BigNumber('7fffffffffffffff', 16).toFixed(),
                   seqTime: now,
                 })
 

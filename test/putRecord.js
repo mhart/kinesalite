@@ -193,7 +193,7 @@ describe('putRecord ', function() {
     })
 
     it('should work with ExplicitHashKey just below range', function(done) {
-      var hashKey = new BigNumber(2).pow(128).div(3).floor().times(2).minus(1).toString(10), now = Date.now()
+      var hashKey = new BigNumber(2).pow(128).div(3).floor().times(2).minus(1).toFixed(), now = Date.now()
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', ExplicitHashKey: hashKey}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
@@ -205,7 +205,7 @@ describe('putRecord ', function() {
     })
 
     it('should work with ExplicitHashKey just above range', function(done) {
-      var hashKey = new BigNumber(2).pow(128).div(3).floor().times(2).toString(10), now = Date.now()
+      var hashKey = new BigNumber(2).pow(128).div(3).floor().times(2).toFixed(), now = Date.now()
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', ExplicitHashKey: hashKey}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)

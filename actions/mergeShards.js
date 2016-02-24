@@ -77,14 +77,14 @@ module.exports = function mergeShards(store, data, cb) {
               shards[0].SequenceNumberRange.EndingSequenceNumber = db.stringifySequence({
                 shardCreateTime: db.parseSequence(shards[0].SequenceNumberRange.StartingSequenceNumber).shardCreateTime,
                 shardIx: shardIxs[0],
-                seqIx: new BigNumber('7fffffffffffffff', 16).toString(),
+                seqIx: new BigNumber('7fffffffffffffff', 16).toFixed(),
                 seqTime: now,
               })
 
               shards[1].SequenceNumberRange.EndingSequenceNumber = db.stringifySequence({
                 shardCreateTime: db.parseSequence(shards[1].SequenceNumberRange.StartingSequenceNumber).shardCreateTime,
                 shardIx: shardIxs[1],
-                seqIx: new BigNumber('7fffffffffffffff', 16).toString(),
+                seqIx: new BigNumber('7fffffffffffffff', 16).toFixed(),
                 seqTime: now,
               })
 
