@@ -53,7 +53,7 @@ describe('getShardIterator', function() {
         'Value \'\' at \'shardId\' failed to satisfy constraint: ' +
         'Member must have length greater than or equal to 1',
         'Value \'\' at \'shardIteratorType\' failed to satisfy constraint: ' +
-        'Member must satisfy enum value set: [AFTER_SEQUENCE_NUMBER, LATEST, AT_SEQUENCE_NUMBER, TRIM_HORIZON]',
+        'Member must satisfy enum value set: [AFTER_SEQUENCE_NUMBER, LATEST, AT_TIMESTAMP, AT_SEQUENCE_NUMBER, TRIM_HORIZON]',
         'Value \'\' at \'startingSequenceNumber\' failed to satisfy constraint: ' +
         'Member must satisfy regular expression pattern: 0|([1-9]\\d{0,128})',
         'Value \'\' at \'streamName\' failed to satisfy constraint: ' +
