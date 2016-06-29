@@ -32,7 +32,7 @@ module.exports = function getRecords(store, data, cb) {
   if (!/^shardId-[\d]{12}$/.test(shardId) || !(shardIx >= 0 && shardIx < 2147483648))
     return cb(invalidShardIterator())
 
-  if (!(iteratorTime > 0 && iteratorTime <= Date.now()))
+  if (!(iteratorTime > 0 && iteratorTime <= now))
     return cb(invalidShardIterator())
 
   if (!/[a-zA-Z0-9_.-]+/.test(streamName) || !streamName.length || streamName.length > 128)
@@ -67,7 +67,7 @@ module.exports = function getRecords(store, data, cb) {
 
     cb = once(cb)
 
-    var streamDb = store.getStreamDb(streamName), cutoffTime = Date.now() - (stream.RetentionPeriodHours * 60 * 60 * 1000),
+    var streamDb = store.getStreamDb(streamName), cutoffTime = now - (stream.RetentionPeriodHours * 60 * 60 * 1000),
       keysToDelete = [], lastItem, opts
 
     opts = {
@@ -87,7 +87,7 @@ module.exports = function getRecords(store, data, cb) {
       })
       .filter(function(item) { return !item._tooOld })
       .join(function(items) {
-        var nextSeq = lastItem ? db.incrementSequence(lastItem._seqObj) : seqNo,
+        var nextSeq = db.incrementSequence(lastItem ? lastItem._seqObj : seqObj, lastItem ? null : now),
           nextShardIterator = db.createShardIterator(streamName, shardId, nextSeq),
           millisBehind = 0
 
@@ -95,7 +95,7 @@ module.exports = function getRecords(store, data, cb) {
           var endSeqObj = db.parseSequence(stream.Shards[shardIx].SequenceNumberRange.EndingSequenceNumber)
           if (seqObj.seqTime >= endSeqObj.seqTime) {
             nextShardIterator = undefined
-            millisBehind = Math.max(0, Date.now() - endSeqObj.seqTime)
+            millisBehind = Math.max(0, now - endSeqObj.seqTime)
           }
         }
 
