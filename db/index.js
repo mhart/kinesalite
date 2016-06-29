@@ -199,13 +199,13 @@ function stringifySequence(obj) {
   }
 }
 
-function incrementSequence(seqObj) {
+function incrementSequence(seqObj, seqTime) {
   if (typeof seqObj == 'string') seqObj = parseSequence(seqObj)
 
   return stringifySequence({
     shardCreateTime: seqObj.shardCreateTime,
     seqIx: seqObj.seqIx,
-    seqTime: seqObj.seqTime + 1000,
+    seqTime: seqTime || (seqObj.seqTime + 1000),
     shardIx: seqObj.shardIx,
   })
 }
