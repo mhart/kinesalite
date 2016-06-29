@@ -46,6 +46,7 @@ module.exports = function createStream(store, data, cb) {
         }
         stream = {
           RetentionPeriodHours: 24,
+          EnhancedMonitoring: [{ShardLevelMetrics: []}],
           HasMoreShards: false,
           Shards: [],
           StreamARN: 'arn:aws:kinesis:' + metaDb.awsRegion + ':' + metaDb.awsAccountId + ':stream/' + data.StreamName,

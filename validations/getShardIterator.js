@@ -9,7 +9,7 @@ exports.types = {
   ShardIteratorType: {
     type: 'String',
     notNull: true,
-    enum: ['AFTER_SEQUENCE_NUMBER', 'LATEST', 'AT_SEQUENCE_NUMBER', 'TRIM_HORIZON'],
+    enum: ['AFTER_SEQUENCE_NUMBER', 'LATEST', 'AT_TIMESTAMP', 'AT_SEQUENCE_NUMBER', 'TRIM_HORIZON'],
   },
   StartingSequenceNumber: {
     type: 'String',
