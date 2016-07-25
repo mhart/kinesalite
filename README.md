@@ -70,6 +70,15 @@ var kinesis = require('kinesis')
 kinesis.listStreams({host: 'localhost', port: 4567}, console.log)
 ```
 
+### CBOR protocol issues with the Java SDK
+
+The Java AWS SDK recently changed their Kinesis client to default to the [CBOR protocol](http://cbor.io/), which kinesalite doesn't support – you may see an error like this:
+```
+com.amazonaws.AmazonServiceException: Unable to parse HTTP response content (Service: AmazonKinesis; Status Code: 404; Error Code: null;
+```
+
+You can set the `AWS_CBOR_DISABLE` environment variable to disable this (any value should work, eg `true` or `1`) before invoking any of the Kinesis calls in the Java SDK.
+
 Installation
 ------------
 
