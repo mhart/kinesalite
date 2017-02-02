@@ -1,5 +1,18 @@
 #!/usr/bin/env node
 
+// Handle signals properly
+// see: https://github.com/nodejs/node-v0.x-archive/issues/9131
+exitOnSignal('SIGINT');
+exitOnSignal('SIGTERM');
+
+function exitOnSignal(signal) {
+  process.on(signal, function() {
+    console.log('\ncaught ' + signal + ', exiting');
+    // perform all required cleanup
+    process.exit(0);
+  });
+}
+
 var argv = require('minimist')(process.argv.slice(2))
 
 if (argv.help) {
