@@ -1,18 +1,5 @@
 #!/usr/bin/env node
 
-// Handle signals properly
-// see: https://github.com/nodejs/node-v0.x-archive/issues/9131
-exitOnSignal('SIGINT');
-exitOnSignal('SIGTERM');
-
-function exitOnSignal(signal) {
-  process.on(signal, function() {
-    console.log('\ncaught ' + signal + ', exiting');
-    // perform all required cleanup
-    process.exit(0);
-  });
-}
-
 var argv = require('minimist')(process.argv.slice(2))
 
 if (argv.help) {
@@ -35,6 +22,9 @@ if (argv.help) {
     'Report bugs at github.com/mhart/kinesalite/issues',
   ].join('\n'))
 }
+
+// If we're PID 1, eg in a docker container, SIGINT won't end the process as usual
+if (process.pid == 1) process.on('SIGINT', process.exit)
 
 var server = require('./index.js')(argv).listen(argv.port || 4567, function() {
   var address = server.address(), protocol = argv.ssl ? 'https' : 'http'
