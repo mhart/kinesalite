@@ -93,7 +93,15 @@ module.exports = function getRecords(store, data, cb) {
 
         if (!items.length && stream.Shards[shardIx].SequenceNumberRange.EndingSequenceNumber) {
           var endSeqObj = db.parseSequence(stream.Shards[shardIx].SequenceNumberRange.EndingSequenceNumber)
-          if (seqObj.seqTime >= endSeqObj.seqTime) {
+          /* To make kinesalite compatible with the Kinesis Client Library (KCL), we
+             always need to return an undefined nextShardIterator as soon as we arrive
+             at this point. Since `EndingSequenceNumber` is set, we can assume that
+             this shard has been closed as a result of a split or merge operation. Now,
+             if `items` is empty (because no new records get pushed to this closed shard),
+             then `lastItem` is always undefined, hence never allowing `nextSeq` to increase
+             in the assignment above, therefore resulting in an infinite polling loop
+             with always the exact same 'next' shard iterator returned to the KCL. */
+          if (true || seqObj.seqTime >= endSeqObj.seqTime) {
             nextShardIterator = undefined
             millisBehind = Math.max(0, now - endSeqObj.seqTime)
           }
