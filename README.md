@@ -4,7 +4,7 @@ Kinesalite
 [![Build Status](https://secure.travis-ci.org/mhart/kinesalite.png?branch=master)](http://travis-ci.org/mhart/kinesalite)
 
 An implementation of [Amazon's Kinesis](http://docs.aws.amazon.com/kinesis/latest/APIReference/),
-focussed on correctness and performance, and built on LevelDB
+focused on correctness and performance, and built on LevelDB
 (well, [@rvagg](https://github.com/rvagg)'s awesome [LevelUP](https://github.com/rvagg/node-levelup) to be precise).
 
 The Kinesis equivalent of [dynalite](https://github.com/mhart/dynalite).
