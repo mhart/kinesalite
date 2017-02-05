@@ -57,10 +57,12 @@ Once running, here's how you use the [AWS SDK](https://github.com/aws/aws-sdk-js
 ```js
 var AWS = require('aws-sdk')
 
-var kinesis = new AWS.Kinesis({endpoint: 'http://localhost:4567'})
+var kinesis = new AWS.Kinesis({endpoint: 'http://localhost:4567', region: 'us-east-1'})
 
 kinesis.listStreams(console.log.bind(console))
 ```
+
+Region is a required parameter of the AWS SDK, if not specified when creating streams you will see this error `error: Error creating stream: ConfigError: Missing region in config`. 
 
 Or with the [kinesis](https://github.com/mhart/kinesis) module (currently only works in https mode, when kinesalite is started with `--ssl`):
 
