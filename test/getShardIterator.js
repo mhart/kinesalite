@@ -30,7 +30,6 @@ describe('getShardIterator', function() {
     it('should return SerializationException when StreamName is not a String', function(done) {
       assertType('StreamName', 'String', done)
     })
-
   })
 
   describe('validations', function() {
@@ -224,6 +223,10 @@ describe('getShardIterator', function() {
         'while it was used in a call to a shard with shardId-000000000000', done)
     })
 
+    it('should return InvalidArgumentException if AT_TIMESTAMP and no Timestamp', function(done) {
+      assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'AT_TIMESTAMP'},
+        'Must specify timestampInMillis parameter for iterator of type AT_TIMESTAMP. Current request has no timestamp parameter.', done)
+    })
   })
 
   describe('functionality', function() {
