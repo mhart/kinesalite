@@ -3,11 +3,16 @@ var BigNumber = require('bignumber.js'),
 
 module.exports = function putRecord(store, data, cb) {
 
-  var key = data.StreamName, metaDb = store.metaDb, streamDb = store.getStreamDb(data.StreamName)
+  var key = data.StreamName, metaDb = store.metaDb, streamDb = store.getStreamDb(data.StreamName), throughputExceededPercent = store.throughputExceededPercent
 
   metaDb.lock(key, function(release) {
     cb = release(cb)
 
+    if (throughputExceededPercent > 0) {
+      if(Math.floor(Math.random()*100) < throughputExceededPercent) {
+        return cb(db.clientError('ProvisionedThroughputExceededException', 'Rate exceeded for shard shardId-000000000000 in stream ' + data.StreamName + ' under account ' + metaDb.awsAccountId + ' .'))
+      }
+    }
     store.getStream(data.StreamName, function(err, stream) {
       if (err) return cb(err)
 

@@ -27,6 +27,7 @@ function create(options) {
   if (options.deleteStreamMs == null) options.deleteStreamMs = 500
   if (options.updateStreamMs == null) options.updateStreamMs = 500
   if (options.shardLimit == null) options.shardLimit = 10
+  if (options.throughputExceededPercent == null) options.throughputExceededPercent = 0
 
   var db = levelup(options.path || '/does/not/matter', options.path ? {} : {db: memdown}),
       sublevelDb = sublevel(db),
@@ -90,6 +91,7 @@ function create(options) {
     deleteStreamDb: deleteStreamDb,
     getStream: getStream,
     recreate: recreate,
+    throughputExceededPercent: options.throughputExceededPercent
   }
 }
 
