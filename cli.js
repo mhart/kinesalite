@@ -18,6 +18,7 @@ if (argv.help) {
     '--deleteStreamMs <ms>  Amount of time streams stay in DELETING state (default: 500)',
     '--updateStreamMs <ms>  Amount of time streams stay in UPDATING state (default: 500)',
     '--shardLimit <limit>   Shard limit for error reporting (default: 10)',
+    '--throughputExceededPercent <percent>   Percent Chance to return a ProvisionedThroughputExceededException on PutRecord (default 0)',
     '',
     'Report bugs at github.com/mhart/kinesalite/issues',
   ].join('\n'))
