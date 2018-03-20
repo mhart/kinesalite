@@ -1,14 +1,15 @@
 {
-  "name": "kinesalite",
+  "name": "kinesalite-lyft",
   "version": "1.11.6",
   "description": "An implementation of Amazon's Kinesis built on LevelDB",
   "main": "index.js",
-  "bin": "cli.js",
+  "bin": {
+    "kinesalite": "cli.js"
+  },
   "scripts": {
     "test": "mocha --require should --reporter spec -t $([ $REMOTE ] && echo 30s || echo 4s)",
     "coverage": "istanbul cover ./node_modules/.bin/_mocha -- --require should -t 4s"
   },
-  "repository": "mhart/kinesalite",
   "keywords": [
     "kinesis",
     "mock",
@@ -35,7 +36,8 @@
     "memdown": "^1.1.2",
     "minimist": "^1.2.0",
     "node-uuid": "^1.4.7",
-    "once": "^1.3.3"
+    "once": "^1.3.3",
+    "leveldown": "^1.4.4"
   },
   "optionalDependencies": {
     "leveldown": "^1.4.4"
@@ -45,5 +47,12 @@
     "istanbul": "^0.4.2",
     "mocha": "^2.4.5",
     "should": "^8.2.2"
+  },
+  "bugs": {
+    "url": "https://github.com/mhart/kinesalite/issues"
+  },
+  "homepage": "https://github.com/mhart/kinesalite#readme",
+  "directories": {
+    "test": "test"
   }
 }
