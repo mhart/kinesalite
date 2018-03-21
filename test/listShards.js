@@ -1,6 +1,6 @@
 var helpers = require('./helpers')
 
-var target = 'DescribeStream',
+var target = 'ListShards',
     request = helpers.request,
     randomName = helpers.randomName,
     opts = helpers.opts.bind(null, target),
@@ -8,7 +8,7 @@ var target = 'DescribeStream',
     assertValidation = helpers.assertValidation.bind(null, target),
     assertNotFound = helpers.assertNotFound.bind(null, target)
 
-describe('describeStream', function() {
+describe('listShards', function() {
 
   describe('serializations', function() {
 
@@ -72,28 +72,20 @@ describe('describeStream', function() {
 
   describe('functionality', function() {
 
-    it('should return stream description', function(done) {
+    it('should return list of shards', function(done) {
       request(opts({StreamName: helpers.testStream}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
 
-        res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
-        res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
-        res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
+        res.body.Shards[0].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
+        res.body.Shards[1].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
+        res.body.Shards[2].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
 
-        delete res.body.StreamDescription.Shards[0].SequenceNumberRange.StartingSequenceNumber
-        delete res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber
-        delete res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber
+        delete res.body.Shards[0].SequenceNumberRange.StartingSequenceNumber
+        delete res.body.Shards[1].SequenceNumberRange.StartingSequenceNumber
+        delete res.body.Shards[2].SequenceNumberRange.StartingSequenceNumber
 
         res.body.should.eql({
-          StreamDescription: {
-            StreamStatus: 'ACTIVE',
-            StreamName: helpers.testStream,
-            StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
-              ':stream/' + helpers.testStream,
-            RetentionPeriodHours: 24,
-            EnhancedMonitoring: [{ShardLevelMetrics: []}],
-            HasMoreShards: false,
             Shards: [{
               ShardId: 'shardId-000000000000',
               SequenceNumberRange: {},
@@ -116,7 +108,6 @@ describe('describeStream', function() {
                 EndingHashKey: '340282366920938463463374607431768211455',
               },
             }],
-          },
         })
 
         done()
