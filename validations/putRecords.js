@@ -4,7 +4,7 @@ exports.types = {
     notNull: true,
     lengthGreaterThanOrEqual: 1,
     lengthLessThanOrEqual: 500,
-    memberStr: 'com.amazonaws.kinesis.v20131202.PutRecordsRequestEntry@2',
+    memberStr: 'com.amazonaws.kinesis.v20131202.PutRecordsRequestEntry@c965e310',
     children: {
       type: 'Structure',
       children: {
