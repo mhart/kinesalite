@@ -211,6 +211,7 @@ describe('mergeShards', function() {
     // Takes 65 secs to run on production
     it('should work with standard merge', function(done) {
       this.timeout(100000)
+      var createTime = Date.now() / 1000
       var stream = {StreamName: randomName(), ShardCount: 3}
       request(helpers.opts('CreateStream', stream), function(err, res) {
         if (err) return done(err)
@@ -240,6 +241,10 @@ describe('mergeShards', function() {
               delete res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber
               delete res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber
 
+              res.body.StreamDescription.StreamCreationTimestamp.should.be.above(createTime - 10)
+              res.body.StreamDescription.StreamCreationTimestamp.should.be.below(createTime + 10)
+              delete res.body.StreamDescription.StreamCreationTimestamp
+
               res.body.should.eql({
                 StreamDescription: {
                   StreamStatus: 'UPDATING',
@@ -247,6 +252,7 @@ describe('mergeShards', function() {
                   StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
                     ':stream/' + stream.StreamName,
                   RetentionPeriodHours: 24,
+                  EncryptionType: 'NONE',
                   EnhancedMonitoring: [{ShardLevelMetrics: []}],
                   HasMoreShards: false,
                   Shards: [{
@@ -335,6 +341,10 @@ describe('mergeShards', function() {
                     delete res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber
                     delete res.body.StreamDescription.Shards[3].SequenceNumberRange.StartingSequenceNumber
 
+                    res.body.StreamDescription.StreamCreationTimestamp.should.be.above(createTime - 10)
+                    res.body.StreamDescription.StreamCreationTimestamp.should.be.below(createTime + 10)
+                    delete res.body.StreamDescription.StreamCreationTimestamp
+
                     res.body.should.eql({
                       StreamDescription: {
                         StreamStatus: 'ACTIVE',
@@ -342,6 +352,7 @@ describe('mergeShards', function() {
                         StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
                           ':stream/' + stream.StreamName,
                         RetentionPeriodHours: 24,
+                        EncryptionType: 'NONE',
                         EnhancedMonitoring: [{ShardLevelMetrics: []}],
                         HasMoreShards: false,
                         Shards: [{

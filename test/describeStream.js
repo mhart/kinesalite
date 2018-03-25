@@ -85,6 +85,10 @@ describe('describeStream', function() {
         delete res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber
         delete res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber
 
+        res.body.StreamDescription.StreamCreationTimestamp.should.be.above(new Date('2018-01-01') / 1000)
+        res.body.StreamDescription.StreamCreationTimestamp.should.be.below(new Date('2118-01-01') / 1000)
+        delete res.body.StreamDescription.StreamCreationTimestamp
+
         res.body.should.eql({
           StreamDescription: {
             StreamStatus: 'ACTIVE',
@@ -92,6 +96,7 @@ describe('describeStream', function() {
             StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
               ':stream/' + helpers.testStream,
             RetentionPeriodHours: 24,
+            EncryptionType: 'NONE',
             EnhancedMonitoring: [{ShardLevelMetrics: []}],
             HasMoreShards: false,
             Shards: [{

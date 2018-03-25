@@ -94,7 +94,7 @@ describe('putRecords', function() {
       var records = [], strs = []
       for (var i = 0; i < 501; i++) {
         records.push({PartitionKey: '', Data: ''})
-        strs.push('com.amazonaws.kinesis.v20131202.PutRecordsRequestEntry@2')
+        strs.push('com.amazonaws.kinesis.v20131202.PutRecordsRequestEntry@c965e310')
       }
       assertValidation({StreamName: '', Records: records}, [
         'Value \'[' + strs.join(', ') + ']\' at \'records\' failed to satisfy constraint: ' +

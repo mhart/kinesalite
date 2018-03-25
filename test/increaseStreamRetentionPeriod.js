@@ -55,16 +55,17 @@ describe('increaseStreamRetentionPeriod', function() {
       ], done)
     })
 
+    it('should return ValidationException for retention period greater than 168', function(done) {
+      assertValidation({StreamName: 'a', RetentionPeriodHours: 169}, [
+        'Value \'169\' at \'retentionPeriodHours\' failed to satisfy constraint: ' +
+        'Member must have value less than or equal to 168',
+      ], done)
+    })
+
     it('should return InvalidArgumentException for retention period less than 24', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, RetentionPeriodHours: 23},
         'Minimum allowed retention period is 24 hours. ' +
         'Requested retention period (23 hours) is too short.', done)
-    })
-
-    it('should return InvalidArgumentException for retention period greater than 168', function(done) {
-      assertInvalidArgument({StreamName: helpers.testStream, RetentionPeriodHours: 169},
-        'Maximum allowed retention period is 168 hours. ' +
-        'Requested retention period (169 hours) is too long.', done)
     })
 
     it('should return ResourceNotFoundException if stream does not exist', function(done) {

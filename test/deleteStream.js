@@ -56,6 +56,7 @@ describe('deleteStream', function() {
 
     it('should allow stream to be deleted while it is being created', function(done) {
       this.timeout(100000)
+      var createTime = Date.now() / 1000
       var stream = {StreamName: randomName(), ShardCount: 1}
       request(helpers.opts('CreateStream', stream), function(err, res) {
         if (err) return done(err)
@@ -77,6 +78,10 @@ describe('deleteStream', function() {
               if (err) return done(err)
               res.statusCode.should.equal(200)
 
+              res.body.StreamDescription.StreamCreationTimestamp.should.be.above(createTime - 10)
+              res.body.StreamDescription.StreamCreationTimestamp.should.be.below(createTime + 10)
+              delete res.body.StreamDescription.StreamCreationTimestamp
+
               res.body.should.eql({
                 StreamDescription: {
                   StreamStatus: 'DELETING',
@@ -84,6 +89,7 @@ describe('deleteStream', function() {
                   StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
                     ':stream/' + stream.StreamName,
                   RetentionPeriodHours: 24,
+                  EncryptionType: 'NONE',
                   EnhancedMonitoring: [{ShardLevelMetrics: []}],
                   HasMoreShards: false,
                   Shards: [],

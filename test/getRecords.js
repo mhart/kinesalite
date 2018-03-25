@@ -59,7 +59,7 @@ describe('getRecords', function() {
     })
 
     // Takes 5 minutes to run
-    it.skip('should return ExpiredIteratorException if ShardIterator has expired', function(done) {
+    it('should return ExpiredIteratorException if ShardIterator has expired', function(done) {
       this.timeout(310000)
       request(helpers.opts('GetShardIterator', {
         StreamName: helpers.testStream,
@@ -87,7 +87,7 @@ describe('getRecords', function() {
     })
 
     // Takes 95 secs to run on production
-    it('should return ResourceNotFoundException if shard or stream does not exist', function(done) {
+    it.skip('should return ResourceNotFoundException if shard or stream does not exist', function(done) {
       this.timeout(200000)
       var stream = {StreamName: randomName(), ShardCount: 2}
       request(helpers.opts('CreateStream', stream), function(err, res) {
@@ -150,15 +150,19 @@ describe('getRecords', function() {
                               ' under account ' + helpers.awsAccountId + ' does not exist', function(err) {
                             if (err) return done(err)
 
-                            request(opts({ShardIterator: shardIterator0}), function(err, res) {
-                              if (err) return done(err)
-                              res.statusCode.should.equal(200)
+                            // TODO: This now causes an InternalFailure on production
+                            // request(opts({ShardIterator: shardIterator0}), function(err, res) {
+                              // if (err) return done(err)
+                              // console.log(res.body)
+                              // res.statusCode.should.equal(200)
 
-                              res.body.Records.should.eql([])
-                              helpers.assertShardIterator(res.body.NextShardIterator, stream.StreamName)
+                              // res.body.Records.should.eql([])
+                              // helpers.assertShardIterator(res.body.NextShardIterator, stream.StreamName)
 
-                              request(helpers.opts('DeleteStream', {StreamName: stream.StreamName}), done)
-                            })
+                              // request(helpers.opts('DeleteStream', {StreamName: stream.StreamName}), done)
+                            // })
+
+                            request(helpers.opts('DeleteStream', {StreamName: stream.StreamName}), done)
                           })
                         })
                       })
