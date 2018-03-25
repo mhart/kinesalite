@@ -52,9 +52,11 @@ module.exports = function getShardIterator(store, data, cb) {
           ', while it was used in a call to a shard with ' + shardId))
       }
       if (seqObj.version != shardSeqObj.version || seqObj.shardCreateTime != shardSeqObj.shardCreateTime) {
-        seqStr = seqObj.version === 0 ? db.stringifySequence(seqObj) : data.StartingSequenceNumber
+        if (seqObj.version === 0) {
+          return cb(db.serverError())
+        }
         return cb(db.clientError('InvalidArgumentException',
-          'StartingSequenceNumber ' + seqStr + ' used in GetShardIterator on shard ' + shardId +
+          'StartingSequenceNumber ' + data.StartingSequenceNumber + ' used in GetShardIterator on shard ' + shardId +
           ' in stream ' + data.StreamName + ' under account ' + metaDb.awsAccountId + ' is invalid ' +
           'because it did not come from this stream.'))
       }
