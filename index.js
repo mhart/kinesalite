@@ -58,7 +58,9 @@ validOperations.forEach(function(action) {
 function sendRaw(req, res, body, statusCode) {
   req.removeAllListeners()
   res.statusCode = statusCode || 200
-  if (body != null) res.setHeader('Content-Length', Buffer.byteLength(body, 'utf8'))
+  if (body != null) {
+    res.setHeader('Content-Length', Buffer.isBuffer(body) ? body.length : Buffer.byteLength(body, 'utf8'))
+  }
   // AWS doesn't send a 'Connection' header but seems to use keep-alive behaviour
   // res.setHeader('Connection', '')
   // res.shouldKeepAlive = false
@@ -69,6 +71,28 @@ function sendJson(req, res, data, statusCode) {
   var body = data != null ? JSON.stringify(data) : ''
   res.setHeader('Content-Type', res.contentType)
   sendRaw(req, res, body, statusCode)
+}
+
+function sendCborUnknown(req, res) {
+  res.setHeader('Content-Type', 'application/x-amz-cbor-1.1')
+  return sendRaw(req, res, Buffer.concat([
+    Buffer.from('bf66', 'hex'),
+    Buffer.from('__type', 'utf8'),
+    Buffer.from('7819', 'hex'),
+    Buffer.from('UnknownOperationException', 'utf8'),
+    Buffer.from('ff', 'hex'),
+  ]), 400)
+}
+
+function sendCborSerialization(req, res) {
+  res.setHeader('Content-Type', 'application/x-amz-cbor-1.1')
+  return sendRaw(req, res, Buffer.concat([
+    Buffer.from('bf66', 'hex'),
+    Buffer.from('__type', 'utf8'),
+    Buffer.from('76', 'hex'),
+    Buffer.from('SerializationException', 'utf8'),
+    Buffer.from('ff', 'hex'),
+  ]), 400)
 }
 
 function sendError(req, res, contentValid, type, msg) {
@@ -114,11 +138,16 @@ function httpHandler(store, req, res) {
         return sendRaw(req, res, '')
       }
 
-      res.setHeader('Access-Control-Expose-Headers', ['x-amz-request-id', 'x-amz-id-2'])
+      res.setHeader('Access-Control-Expose-Headers', 'x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date')
+    }
+
+    if (req.method != 'POST') {
+      return sendError(req, res, false, 'AccessDeniedException',
+        'Unable to determine service/operation name to be authorized')
     }
 
     var contentType = (req.headers['content-type'] || '').split(';')[0].trim()
-    var contentValid = req.method == 'POST' && ~['application/x-amz-json-1.1', 'application/json'].indexOf(contentType)
+    var contentValid = ~['application/x-amz-json-1.1', 'application/json'].indexOf(contentType)
 
     var target = (req.headers['x-amz-target'] || '').split('.')
     var service = target[0]
@@ -130,39 +159,49 @@ function httpHandler(store, req, res) {
 
     // THEN if the method and content-type are ok, see if the JSON parses:
 
-    var data
-    if (contentValid) {
-      res.contentType = contentType
-
-      if (body) {
-        try { data = JSON.parse(body) } catch (e) { }
-
-        if (typeof data != 'object' || data == null) {
-          if (contentType == 'application/json') {
-            return sendJson(req, res, {
-              Output: {__type: 'com.amazon.coral.service#SerializationException', Message: null},
-              Version: '1.0',
-            }, 200)
-          }
-          return sendJson(req, res, {__type: 'SerializationException'}, 400)
-        }
+    if (!body) {
+      if (contentType == 'application/x-amz-json-1.1') {
+        res.contentType = 'application/x-amz-json-1.1'
+        return sendJson(req, res, {__type: serviceValid && operationValid ? 'SerializationException' : 'UnknownOperationException'}, 400)
       }
 
-      // After this point, application/json doesn't seem to progress any further
+      res.setHeader('Content-Type', 'application/x-amz-cbor-1.1')
+      return serviceValid && operationValid ? sendCborSerialization(req, res) : sendCborUnknown(req, res)
+    }
+
+    if (!contentValid) {
+      if (!service || !operation) {
+        return sendError(req, res, false, 'AccessDeniedException',
+          'Unable to determine service/operation name to be authorized')
+      }
+      return sendError(req, res, false, 'UnknownOperationException', 404)
+    }
+
+    res.contentType = contentType
+
+    var data
+    try { data = JSON.parse(body) } catch (e) { }
+
+    if (typeof data != 'object' || data == null) {
       if (contentType == 'application/json') {
         return sendJson(req, res, {
-          Output: {__type: 'com.amazon.coral.service#UnknownOperationException', message: null},
+          Output: {__type: 'com.amazon.coral.service#SerializationException', Message: null},
           Version: '1.0',
         }, 200)
       }
+      return sendJson(req, res, {__type: 'SerializationException'}, 400)
+    }
 
-      if (!serviceValid || !operationValid) {
-        return sendJson(req, res, {__type: 'UnknownOperationException'}, 400)
-      }
+    // After this point, application/json doesn't seem to progress any further
+    if (contentType == 'application/json') {
+      return sendJson(req, res, {
+        Output: {__type: 'com.amazon.coral.service#UnknownOperationException', message: null},
+        Version: '1.0',
+      }, 200)
+    }
 
-      if (!data) {
-        return sendJson(req, res, {__type: 'SerializationException'}, 400)
-      }
+    if (!serviceValid || !operationValid) {
+      return sendJson(req, res, {__type: 'UnknownOperationException'}, 400)
     }
 
     // THEN check auth:
@@ -207,21 +246,6 @@ function httpHandler(store, req, res) {
 
     if (msg) {
       return sendError(req, res, contentValid, 'IncompleteSignatureException', msg)
-    }
-
-    // THEN if we don't have the correct method + content-type, we'll be exiting here:
-
-    if (!contentValid) {
-      if (!service || !operation) {
-        return sendError(req, res, false, 'AccessDeniedException',
-          'Unable to determine service/operation name to be authorized')
-      } else if (!serviceValid) {
-        return sendError(req, res, false, 'UnrecognizedClientException',
-          'No authorization strategy was found for service: ' + service + ', operation: ' + operation)
-      } else if (!operationValid) {
-        return sendError(req, res, false, 'InternalFailure', 500)
-      }
-      return sendError(req, res, false, 'UnknownOperationException', 404)
     }
 
     // If we've reached here, we're good to go:
