@@ -140,14 +140,6 @@ describe('putRecord ', function() {
       assertInternalFailure({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq}, done)
     })
 
-    // No longer happens, now returns 200 OK
-    it.skip('should return InvalidArgumentException for future time in SequenceNumberForOrdering', function(done) {
-      var seq = new BigNumber('200000000000000000000000000000' + Math.floor(Date.now() / 1000 + 2).toString(16) + '000000002', 16).toFixed()
-      assertInvalidArgument({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq},
-        'ExclusiveMinimumSequenceNumber ' + seq + ' used in PutRecord on stream ' + helpers.testStream +
-        ' under account ' + helpers.awsAccountId + ' is invalid.', done)
-    })
-
     it('should return InvalidArgumentException if using sequence number with large date', function(done) {
       var seq = new BigNumber('13bb2cc3d80000000000000000000000', 16).toFixed()
       assertInvalidArgument({StreamName: helpers.testStream, PartitionKey: 'a', Data: '', SequenceNumberForOrdering: seq},

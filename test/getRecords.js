@@ -87,7 +87,7 @@ describe('getRecords', function() {
     })
 
     // Takes 95 secs to run on production
-    it.skip('should return ResourceNotFoundException if shard or stream does not exist', function(done) {
+    it('should return ResourceNotFoundException if shard or stream does not exist', function(done) {
       this.timeout(200000)
       var stream = {StreamName: randomName(), ShardCount: 2}
       request(helpers.opts('CreateStream', stream), function(err, res) {
