@@ -327,11 +327,7 @@ describe('kinesalite connections', function() {
       request({headers: {origin: 'whatever'}}, function(err, res) {
         if (err) return done(err)
         res.headers['access-control-allow-origin'].should.equal('*')
-        if (res.rawHeaders) {
-          res.headers['access-control-expose-headers'].should.equal('x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date')
-        } else {
-          res.headers['access-control-expose-headers'].should.equal('x-amz-request-id')
-        }
+        res.headers['access-control-expose-headers'].should.equal('x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date')
         assertUnknownCbor(done)(err, res)
       })
     })
