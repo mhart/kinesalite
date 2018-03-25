@@ -22,4 +22,7 @@ exports.types = {
     lengthGreaterThanOrEqual: 1,
     lengthLessThanOrEqual: 128,
   },
+  Timestamp: {
+    type: 'Timestamp',
+  },
 }

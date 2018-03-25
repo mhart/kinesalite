@@ -32,6 +32,9 @@ describe('getShardIterator', function() {
       assertType('StreamName', 'String', done)
     })
 
+    it('should return SerializationException when Timestamp is not a Timestamp', function(done) {
+      assertType('Timestamp', 'Timestamp', done)
+    })
   })
 
   describe('validations', function() {
@@ -206,6 +209,17 @@ describe('getShardIterator', function() {
         'while it was used in a call to a shard with shardId-000000000000', done)
     })
 
+    it('should return InvalidArgumentException if AT_TIMESTAMP and no Timestamp', function(done) {
+      assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'AT_TIMESTAMP'},
+        'Must specify timestampInMillis parameter for iterator of type AT_TIMESTAMP. Current request has no timestamp parameter.', done)
+    })
+
+    it('should return InvalidArgumentException if Timestamp in the future', function(done) {
+      var theFuture = (Date.now() / 1000) + 2
+      assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'AT_TIMESTAMP', Timestamp: theFuture},
+        new RegExp('^The timestampInMillis parameter cannot be greater than the currentTimestampInMillis. ' +
+          'timestampInMillis: ' + theFuture * 1000 + ', currentTimestampInMillis: \\d+$'), done)
+    })
   })
 
   describe('functionality', function() {
