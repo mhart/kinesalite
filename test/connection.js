@@ -16,7 +16,7 @@ function assertBody(statusCode, contentType, body, done) {
     }
     if (!Buffer.isBuffer(res.body)) {
       if (typeof res.body != 'string') res.body = JSON.stringify(res.body)
-      res.body = Buffer.from(res.body, 'utf8')
+      res.body = new Buffer(res.body, 'utf8')
     }
     res.headers['content-length'].should.equal(String(res.body.length))
     res.headers['x-amzn-requestid'].should.match(uuidRegex)
@@ -82,11 +82,11 @@ function assertUnknownDeprecated(done) {
 
 function assertUnknownCbor(done) {
   return assertBody(400, 'application/x-amz-cbor-1.1', Buffer.concat([
-    Buffer.from('bf66', 'hex'),
-    Buffer.from('__type', 'utf8'),
-    Buffer.from('7819', 'hex'),
-    Buffer.from('UnknownOperationException', 'utf8'),
-    Buffer.from('ff', 'hex')
+    new Buffer('bf66', 'hex'),
+    new Buffer('__type', 'utf8'),
+    new Buffer('7819', 'hex'),
+    new Buffer('UnknownOperationException', 'utf8'),
+    new Buffer('ff', 'hex')
   ]), done)
 }
 
@@ -103,11 +103,11 @@ function assertSerializationDeprecated(done) {
 
 function assertSerializationCbor(done) {
   return assertBody(400, 'application/x-amz-cbor-1.1', Buffer.concat([
-    Buffer.from('bf66', 'hex'),
-    Buffer.from('__type', 'utf8'),
-    Buffer.from('76', 'hex'),
-    Buffer.from('SerializationException', 'utf8'),
-    Buffer.from('ff', 'hex')
+    new Buffer('bf66', 'hex'),
+    new Buffer('__type', 'utf8'),
+    new Buffer('76', 'hex'),
+    new Buffer('SerializationException', 'utf8'),
+    new Buffer('ff', 'hex')
   ]), done)
 }
 

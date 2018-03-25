@@ -76,22 +76,22 @@ function sendJson(req, res, data, statusCode) {
 function sendCborUnknown(req, res) {
   res.setHeader('Content-Type', 'application/x-amz-cbor-1.1')
   return sendRaw(req, res, Buffer.concat([
-    Buffer.from('bf66', 'hex'),
-    Buffer.from('__type', 'utf8'),
-    Buffer.from('7819', 'hex'),
-    Buffer.from('UnknownOperationException', 'utf8'),
-    Buffer.from('ff', 'hex'),
+    new Buffer('bf66', 'hex'),
+    new Buffer('__type', 'utf8'),
+    new Buffer('7819', 'hex'),
+    new Buffer('UnknownOperationException', 'utf8'),
+    new Buffer('ff', 'hex'),
   ]), 400)
 }
 
 function sendCborSerialization(req, res) {
   res.setHeader('Content-Type', 'application/x-amz-cbor-1.1')
   return sendRaw(req, res, Buffer.concat([
-    Buffer.from('bf66', 'hex'),
-    Buffer.from('__type', 'utf8'),
-    Buffer.from('76', 'hex'),
-    Buffer.from('SerializationException', 'utf8'),
-    Buffer.from('ff', 'hex'),
+    new Buffer('bf66', 'hex'),
+    new Buffer('__type', 'utf8'),
+    new Buffer('76', 'hex'),
+    new Buffer('SerializationException', 'utf8'),
+    new Buffer('ff', 'hex'),
   ]), 400)
 }
 
