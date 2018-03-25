@@ -176,6 +176,14 @@ function assertType(target, property, type, done) {
         ['+/+=', '\'+/+=\' can not be converted to a Blob: Invalid last non-pad Base64 character dectected'],
       ]
       break
+    case 'Timestamp':
+      msgs = [
+        ['23', 'class java.lang.String can not be converted to milliseconds since epoch'],
+        [true, 'class java.lang.Boolean can not be converted to milliseconds since epoch'],
+        [[], 'Start of list found where not expected'],
+        [{}, 'Start of structure or map found where not expected.'],
+      ]
+      break
     case 'List':
       msgs = [
         ['23', 'Expected list or null'],
@@ -294,10 +302,12 @@ function assertLimitExceeded(target, data, msg, done) {
 function assertInvalidArgument(target, data, msg, done) {
   request(opts(target, data), function(err, res) {
     if (err) return done(err)
-    res.body.should.eql({
-      __type: 'InvalidArgumentException',
-      message: msg,
-    })
+    res.body.__type.should.equal('InvalidArgumentException')
+    if (msg instanceof RegExp) {
+      res.body.message.should.match(msg)
+    } else {
+      res.body.message.should.equal(msg)
+    }
     res.statusCode.should.equal(400)
     done()
   })

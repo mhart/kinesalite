@@ -23,6 +23,6 @@ exports.types = {
     lengthLessThanOrEqual: 128,
   },
   Timestamp: {
-    type: 'Double',
+    type: 'Timestamp',
   },
 }

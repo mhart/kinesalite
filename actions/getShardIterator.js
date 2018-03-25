@@ -30,7 +30,8 @@ module.exports = function getShardIterator(store, data, cb) {
     }
 
     var seqObj, seqStr, iteratorSeq, shardSeq = stream.Shards[shardIx].SequenceNumberRange.StartingSequenceNumber,
-      shardSeqObj = db.parseSequence(shardSeq)
+      shardSeqObj = db.parseSequence(shardSeq),
+      now = Date.now()
 
     if (data.StartingSequenceNumber) {
       if (data.ShardIteratorType == 'TRIM_HORIZON' || data.ShardIteratorType == 'LATEST') {
@@ -72,13 +73,19 @@ module.exports = function getShardIterator(store, data, cb) {
       iteratorSeq = db.stringifySequence({
         shardCreateTime: shardSeqObj.shardCreateTime,
         seqIx: stream._seqIx[Math.floor(shardIx / 5)],
-        seqTime: Date.now(),
+        seqTime: now,
         shardIx: shardSeqObj.shardIx,
       })
     } else if (data.ShardIteratorType == 'AT_TIMESTAMP') {
-      if (isNaN(data.Timestamp)) {
+      if (data.Timestamp == null) {
         return cb(db.clientError('InvalidArgumentException',
           'Must specify timestampInMillis parameter for iterator of type AT_TIMESTAMP. Current request has no timestamp parameter.'))
+      }
+      var timestampInMillis = data.Timestamp * 1000
+      if (timestampInMillis > now) {
+        return cb(db.clientError('InvalidArgumentException',
+          'The timestampInMillis parameter cannot be greater than the currentTimestampInMillis. ' +
+          'timestampInMillis: ' + timestampInMillis + ', currentTimestampInMillis: ' + now))
       }
       var opts = {
         gt: db.shardIxToHex(shardIx),
