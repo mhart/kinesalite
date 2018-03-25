@@ -35,7 +35,7 @@ module.exports = function putRecord(store, data, cb) {
           var seqObj = db.parseSequence(data.SequenceNumberForOrdering)
           if (seqObj.seqTime > Date.now()) throw new Error('Sequence time in the future')
         } catch (e) {
-          return cb(e.message == 'Unknown version: 3' ? db.serverError() : db.clientError('InvalidArgumentException',
+          return cb(db.clientError('InvalidArgumentException',
               'ExclusiveMinimumSequenceNumber ' + data.SequenceNumberForOrdering + ' used in PutRecord on stream ' +
               data.StreamName + ' under account ' + metaDb.awsAccountId + ' is invalid.'))
         }
