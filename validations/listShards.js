@@ -10,23 +10,17 @@ exports.types = {
     greaterThanOrEqual: 1,
     lessThanOrEqual: 10000,
   },
-  //TODO validate exactly one of [NextToken|StreamCreationTimestamp|StreamName]
-  // NextToken: {
-  //   type: 'String',
-  //   regex: '[a-zA-Z0-9_.-]+',
-  //   lengthGreaterThanOrEqual: 1,
-  //   lengthLessThanOrEqual: 1048576,
-  // },
-  //TODO add Timestamp type
-  // StreamCreationTimestamp: {
-  //   type: 'Timestamp',
-  //   notNull: true,
-  // },
+  NextToken: {
+    type: 'String',
+    lengthGreaterThanOrEqual: 1,
+  },
+  StreamCreationTimestamp: {
+    type: 'Timestamp',
+  },
   StreamName: {
     type: 'String',
-    notNull: true,
     regex: '[a-zA-Z0-9_.-]+',
     lengthGreaterThanOrEqual: 1,
     lengthLessThanOrEqual: 128,
-  }
+  },
 }
