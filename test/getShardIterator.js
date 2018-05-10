@@ -10,6 +10,7 @@ var target = 'GetShardIterator',
     assertValidation = helpers.assertValidation.bind(null, target),
     assertNotFound = helpers.assertNotFound.bind(null, target),
     assertInvalidArgument = helpers.assertInvalidArgument.bind(null, target)
+    assertInternalFailure = helpers.assertInternalFailure.bind(null, target)
 
 describe('getShardIterator', function() {
 
@@ -31,6 +32,9 @@ describe('getShardIterator', function() {
       assertType('StreamName', 'String', done)
     })
 
+    it('should return SerializationException when Timestamp is not a Timestamp', function(done) {
+      assertType('Timestamp', 'Timestamp', done)
+    })
   })
 
   describe('validations', function() {
@@ -177,28 +181,9 @@ describe('getShardIterator', function() {
           'while it was used in a call to a shard with shardId-000000000000', done)
     })
 
-    it('should return InvalidArgumentException if using small (old?) sequence number', function(done) {
+    it('should return InternalFailure if using small (old?) sequence number', function(done) {
       var name1 = helpers.testStream, name2 = 'shardId-0'
-      assertInvalidArgument({StreamName: name1, ShardId: name2, ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: '0'},
-        'StartingSequenceNumber 21267647932558653966460912964485513216 used in GetShardIterator on shard ' +
-          'shardId-000000000000 in stream ' + name1 + ' under account ' + helpers.awsAccountId +
-          ' is invalid because it did not come from this stream.', done)
-    })
-
-    it('should return InvalidArgumentException if using more complex (old?) sequence number', function(done) {
-      var name1 = helpers.testStream, name2 = 'shardId-2'
-      assertInvalidArgument({StreamName: name1, ShardId: name2, ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: '425352958651173072921826052383309826'},
-        'StartingSequenceNumber 21693000891209827039382739016868823042 used in GetShardIterator on shard ' +
-          'shardId-000000000002 in stream ' + name1 + ' under account ' + helpers.awsAccountId +
-          ' is invalid because it did not come from this stream.', done)
-    })
-
-    it('should return InvalidArgumentException if using large (old?) sequence number', function(done) {
-      var name1 = helpers.testStream, name2 = 'shardId-0', seq = new BigNumber('f3bb2cc3d7ff7fffffffffffffff0000', 16).toFixed()
-      assertInvalidArgument({StreamName: name1, ShardId: name2, ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: seq},
-        'StartingSequenceNumber 26227199374821822965252748908982894592 used in GetShardIterator on shard ' +
-          'shardId-000000000000 in stream ' + name1 + ' under account ' + helpers.awsAccountId +
-          ' is invalid because it did not come from this stream.', done)
+      assertInternalFailure({StreamName: name1, ShardId: name2, ShardIteratorType: 'AT_SEQUENCE_NUMBER', StartingSequenceNumber: '0'}, done)
     })
 
     it('should return InvalidArgumentException if using sequence number with large date', function(done) {
@@ -224,6 +209,17 @@ describe('getShardIterator', function() {
         'while it was used in a call to a shard with shardId-000000000000', done)
     })
 
+    it('should return InvalidArgumentException if AT_TIMESTAMP and no Timestamp', function(done) {
+      assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'AT_TIMESTAMP'},
+        'Must specify timestampInMillis parameter for iterator of type AT_TIMESTAMP. Current request has no timestamp parameter.', done)
+    })
+
+    it('should return InvalidArgumentException if Timestamp in the future', function(done) {
+      var theFuture = (Date.now() / 1000) + 2
+      assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'AT_TIMESTAMP', Timestamp: theFuture},
+        new RegExp('^The timestampInMillis parameter cannot be greater than the currentTimestampInMillis. ' +
+          'timestampInMillis: ' + theFuture * 1000 + ', currentTimestampInMillis: \\d+$'), done)
+    })
   })
 
   describe('functionality', function() {

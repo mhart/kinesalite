@@ -164,11 +164,26 @@ describe('addTagsToStream', function() {
         if (err) return done(err)
         res.statusCode.should.equal(200)
 
-        assertInvalidArgument({
-          StreamName: helpers.testStream,
-          Tags: {d: '', e: '', f: '', g: '', h: '', i: ''},
-        }, 'Failed to add tags to stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
-            ' because a given stream cannot have more than 10 tags associated with it.', function(err) {
+        function addTagsUntilInvalid(i, cb) {
+          var tags = {}
+          for (j = 0; j < 10; j++) {
+            tags[i + j] = 'a'
+          }
+          if (i >= 40) {
+            return assertInvalidArgument({
+              StreamName: helpers.testStream,
+              Tags: tags,
+            }, 'Failed to add tags to stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
+                ' because a given stream cannot have more than 10 tags associated with it.', cb)
+          }
+          request(opts({StreamName: helpers.testStream, Tags: tags}), function(err, res) {
+            if (err) return cb(err)
+            res.statusCode.should.equal(200)
+            addTagsUntilInvalid(i + 10, cb)
+          })
+        }
+
+        addTagsUntilInvalid(0, function(err) {
           if (err) return done(err)
 
           request(helpers.opts('ListTagsForStream', {StreamName: helpers.testStream}), function(err, res) {
@@ -193,10 +208,19 @@ describe('addTagsToStream', function() {
                 res.body.Tags.should.containEql({Key: 'b', Value: 'ü0 _./=+-@'})
                 res.body.Tags.should.containEql({Key: 'c', Value: ''})
 
-                request(helpers.opts('RemoveTagsFromStream', {
-                  StreamName: helpers.testStream,
-                  TagKeys: ['a', 'ü0 _.', '/=+-@', 'b', 'c'],
-                }), done)
+                function removeAllTags(tagKeys, cb) {
+                  if (!tagKeys.length) return cb()
+                  request(helpers.opts('RemoveTagsFromStream', {
+                    StreamName: helpers.testStream,
+                    TagKeys: tagKeys.slice(0, 10),
+                  }), function(err, res) {
+                    if (err) return cb(err)
+                    res.statusCode.should.equal(200)
+                    removeAllTags(tagKeys.slice(10), cb)
+                  })
+                }
+
+                removeAllTags(res.body.Tags.map(function(t) { return t.Key }), done)
               })
             })
           })

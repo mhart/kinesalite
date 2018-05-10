@@ -131,8 +131,10 @@ function parseSequence(seq) {
     var seqIxHex = hex.slice(11, 27), shardIxHex = hex.slice(38, 46)
     if (parseInt(seqIxHex[0], 16) > 7) throw new Error('Sequence index too high')
     if (parseInt(shardIxHex[0], 16) > 7) shardIxHex = '-' + shardIxHex
+    var shardCreateSecs = parseInt(hex.slice(1, 10), 16)
+    if (shardCreateSecs >= 16025175000) throw new Error('Date too large: ' + shardCreateSecs)
     return {
-      shardCreateTime: parseInt(hex.slice(1, 10), 16) * 1000,
+      shardCreateTime: shardCreateSecs * 1000,
       seqIx: new BigNumber(seqIxHex, 16).toFixed(),
       byte1: hex.slice(27, 29),
       seqTime: parseInt(hex.slice(29, 38), 16) * 1000,

@@ -16,12 +16,6 @@ module.exports = function decreaseStreamRetentionPeriod(store, data, cb) {
           ' hours) is too short.'))
       }
 
-      if (data.RetentionPeriodHours > 168) {
-        return cb(db.clientError('InvalidArgumentException',
-          'Maximum allowed retention period is 168 hours. Requested retention period (' + data.RetentionPeriodHours +
-          ' hours) is too long.'))
-      }
-
       if (stream.RetentionPeriodHours < data.RetentionPeriodHours) {
         return cb(db.clientError('InvalidArgumentException',
           'Requested retention period (' + data.RetentionPeriodHours +

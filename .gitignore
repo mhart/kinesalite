@@ -3,3 +3,4 @@ npm-debug.log
 coverage*
 .tern-port
 .vscode
+package-lock.json

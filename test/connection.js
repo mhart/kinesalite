@@ -14,10 +14,13 @@ function assertBody(statusCode, contentType, body, done) {
     } else {
       res.headers.should.not.have.property('content-type')
     }
-    if (typeof res.body != 'string') res.body = JSON.stringify(res.body)
-    res.headers['content-length'].should.equal(String(Buffer.byteLength(res.body, 'utf8')))
+    if (!Buffer.isBuffer(res.body)) {
+      if (typeof res.body != 'string') res.body = JSON.stringify(res.body)
+      res.body = new Buffer(res.body, 'utf8')
+    }
+    res.headers['content-length'].should.equal(String(res.body.length))
     res.headers['x-amzn-requestid'].should.match(uuidRegex)
-    new Buffer(res.headers['x-amz-id-2'], 'base64').length.should.be.within(72, 80)
+    new Buffer(res.headers['x-amz-id-2'], 'base64').length.should.be.within(64, 80)
     done()
   }
 }
@@ -77,6 +80,16 @@ function assertUnknownDeprecated(done) {
   }, done)
 }
 
+function assertUnknownCbor(done) {
+  return assertBody(400, 'application/x-amz-cbor-1.1', Buffer.concat([
+    new Buffer('bf66', 'hex'),
+    new Buffer('__type', 'utf8'),
+    new Buffer('7819', 'hex'),
+    new Buffer('UnknownOperationException', 'utf8'),
+    new Buffer('ff', 'hex')
+  ]), done)
+}
+
 function assertSerialization(done) {
   return assertBody(400, 'application/x-amz-json-1.1', {__type: 'SerializationException'}, done)
 }
@@ -86,6 +99,16 @@ function assertSerializationDeprecated(done) {
     Output: {__type: 'com.amazon.coral.service#SerializationException', Message: null},
     Version: '1.0',
   }, done)
+}
+
+function assertSerializationCbor(done) {
+  return assertBody(400, 'application/x-amz-cbor-1.1', Buffer.concat([
+    new Buffer('bf66', 'hex'),
+    new Buffer('__type', 'utf8'),
+    new Buffer('76', 'hex'),
+    new Buffer('SerializationException', 'utf8'),
+    new Buffer('ff', 'hex')
+  ]), done)
 }
 
 function assertMissing(done) {
@@ -244,8 +267,8 @@ describe('kinesalite connections', function() {
       })
     }
 
-    it('should return MissingAuthenticationTokenException if POST with no auth', function(done) {
-      request({noSign: true}, assertMissingTokenXml(done))
+    it('should return CBOR UnknownOperationException if POST with no auth', function(done) {
+      request({noSign: true}, assertUnknownCbor(done))
     })
 
     it('should return AccessDeniedException if GET', function(done) {
@@ -260,57 +283,52 @@ describe('kinesalite connections', function() {
       request({method: 'DELETE'}, assertAccessDeniedXml(done))
     })
 
-    it('should return AccessDeniedException if POST with no body', function(done) {
-      request(assertAccessDeniedXml(done))
+    it('should return CBOR UnknownOperationException if POST with no body', function(done) {
+      request(assertUnknownCbor(done))
     })
 
     it('should return AccessDeniedException if body and no Content-Type', function(done) {
       request({body: '{}'}, assertAccessDeniedXml(done))
     })
 
-    it('should return AccessDeniedException if x-amz-json-1.0 Content-Type', function(done) {
-      request({headers: {'content-type': 'application/x-amz-json-1.0'}}, assertAccessDeniedXml(done))
+    it('should return CBOR UnknownOperationException if x-amz-json-1.0 Content-Type', function(done) {
+      request({headers: {'content-type': 'application/x-amz-json-1.0'}}, assertUnknownCbor(done))
     })
 
-    it('should return AccessDeniedException if random Content-Type', function(done) {
-      request({headers: {'content-type': 'application/x-amz-json-1.1asdf'}}, assertAccessDeniedXml(done))
+    it('should return CBOR UnknownOperationException if random Content-Type', function(done) {
+      request({headers: {'content-type': 'application/x-amz-json-1.1asdf'}}, assertUnknownCbor(done))
     })
 
-    it('should return AccessDeniedException if random target', function(done) {
-      request({headers: {'x-amz-target': 'Whatever'}}, assertAccessDeniedXml(done))
+    it('should return CBOR UnknownOperationException if random target', function(done) {
+      request({headers: {'x-amz-target': 'Whatever'}}, assertUnknownCbor(done))
     })
 
-    it('should return AccessDeniedException if real service with empty action', function(done) {
-      request({headers: {'x-amz-target': 'Kinesis_20131202.'}}, assertAccessDeniedXml(done))
+    it('should return CBOR UnknownOperationException if real service with empty action', function(done) {
+      request({headers: {'x-amz-target': 'Kinesis_20131202.'}}, assertUnknownCbor(done))
     })
 
-    it('should return InternalFailure if random action', function(done) {
-      request({headers: {'x-amz-target': 'Kinesis_20131202.Whatever'}}, assertInternalFailureXml(done))
+    it('should return CBOR UnknownOperationException if random action', function(done) {
+      request({headers: {'x-amz-target': 'Kinesis_20131202.Whatever'}}, assertUnknownCbor(done))
     })
 
-    it('should return UnrecognizedClientException if random service with random action', function(done) {
-      request({headers: {'x-amz-target': 'Whatever.Whatever'}},
-        assertUnrecognizedClientXml('Whatever', 'Whatever', done))
+    it('should return CBOR UnknownOperationException if random service with random action', function(done) {
+      request({headers: {'x-amz-target': 'Whatever.Whatever'}}, assertUnknownCbor(done))
     })
 
-    it('should return InternalFailure if incomplete action', function(done) {
-      request({headers: {'x-amz-target': 'Kinesis_20131202.ListStream'}}, assertInternalFailureXml(done))
+    it('should return CBOR UnknownOperationException if incomplete action', function(done) {
+      request({headers: {'x-amz-target': 'Kinesis_20131202.ListStream'}}, assertUnknownCbor(done))
     })
 
-    it('should return UnknownOperationException if no Content-Type', function(done) {
-      request({headers: {'x-amz-target': 'Kinesis_20131202.ListStreams'}}, assertUnknownOperationXml(done))
+    it('should return CBOR SerializationException if no Content-Type', function(done) {
+      request({headers: {'x-amz-target': 'Kinesis_20131202.ListStreams'}}, assertSerializationCbor(done))
     })
 
-    it('should return AccessDeniedException and set CORS if using Origin', function(done) {
+    it('should return CBOR UnknownOperationException and set CORS if using Origin', function(done) {
       request({headers: {origin: 'whatever'}}, function(err, res) {
         if (err) return done(err)
         res.headers['access-control-allow-origin'].should.equal('*')
-        if (res.rawHeaders) {
-          res.headers['access-control-expose-headers'].should.equal('x-amz-request-id, x-amz-id-2')
-        } else {
-          res.headers['access-control-expose-headers'].should.equal('x-amz-request-id')
-        }
-        assertAccessDeniedXml(done)(err, res)
+        res.headers['access-control-expose-headers'].should.equal('x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date')
+        assertUnknownCbor(done)(err, res)
       })
     })
 
@@ -373,15 +391,15 @@ describe('kinesalite connections', function() {
       request({headers: {'content-type': 'application/x-amz-json-1.1'}, noSign: true}, assertUnknown(done))
     })
 
-    it('should return UnknownOperationException if no target and application/json', function(done) {
-      request({headers: {'content-type': 'application/json'}}, assertUnknownDeprecated(done))
+    it('should return CBOR UnknownOperationException if no target and application/json', function(done) {
+      request({headers: {'content-type': 'application/json'}}, assertUnknownCbor(done))
     })
 
-    it('should return UnknownOperationException if valid target and application/json', function(done) {
+    it('should return CBOR SerializationException if valid target and application/json', function(done) {
       request({headers: {
         'content-type': 'application/json',
         'x-amz-target': 'Kinesis_20131202.ListStreams',
-      }}, assertUnknownDeprecated(done))
+      }}, assertSerializationCbor(done))
     })
 
     it('should return SerializationException if no body', function(done) {

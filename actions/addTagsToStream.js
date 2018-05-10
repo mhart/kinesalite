@@ -29,7 +29,7 @@ module.exports = function addTagsToStream(store, data, cb) {
         return obj
       }, {})
 
-      if (Object.keys(newKeys).length > 10)
+      if (Object.keys(newKeys).length > 50)
         return cb(db.clientError('InvalidArgumentException',
           'Failed to add tags to stream ' + data.StreamName + ' under account ' + metaDb.awsAccountId +
           ' because a given stream cannot have more than 10 tags associated with it.'))

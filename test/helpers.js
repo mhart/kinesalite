@@ -74,14 +74,17 @@ function request(options, cb) {
   }
   // console.log(options)
   (options.ssl ? https : http).request(options, function(res) {
-    res.setEncoding('utf8')
     res.on('error', cb)
-    res.body = ''
-    res.on('data', function(chunk) { res.body += chunk })
+    var chunks = []
+    res.on('data', function(chunk) { chunks.push(chunk) })
     res.on('end', function() {
-      try { res.body = JSON.parse(res.body) } catch (e) {} // eslint-disable-line no-empty
-      if (res.body.__type == 'LimitExceededException' && /^Rate exceeded/.test(res.body.message))
-        return setTimeout(request, Math.floor(Math.random() * 1000), options, cb)
+      res.body = Buffer.concat(chunks)
+      if ((res.headers['content-type'] || '').indexOf('application/x-amz-cbor') !== 0) {
+        res.body = res.body.toString('utf8')
+        try { res.body = JSON.parse(res.body) } catch (e) {} // eslint-disable-line no-empty
+        if (res.body.__type == 'LimitExceededException' && /^Rate exceeded/.test(res.body.message))
+          return setTimeout(request, Math.floor(Math.random() * 1000), options, cb)
+      }
       cb(null, res)
     })
   }).on('error', cb).end(options.body)
@@ -98,7 +101,7 @@ function opts(target, data) {
 }
 
 function randomString() {
-  return String(Math.random() * 0x100000000)
+  return String(Math.random() * 0x10000000000000)
 }
 
 function randomName() {
@@ -173,6 +176,14 @@ function assertType(target, property, type, done) {
         ['+/+=', '\'+/+=\' can not be converted to a Blob: Invalid last non-pad Base64 character dectected'],
       ]
       break
+    case 'Timestamp':
+      msgs = [
+        ['23', 'class java.lang.String can not be converted to milliseconds since epoch'],
+        [true, 'class java.lang.Boolean can not be converted to milliseconds since epoch'],
+        [[], 'Start of list found where not expected'],
+        [{}, 'Start of structure or map found where not expected.'],
+      ]
+      break
     case 'List':
       msgs = [
         ['23', 'Expected list or null'],
@@ -224,7 +235,6 @@ function assertType(target, property, type, done) {
 function assertValidation(target, data, msg, done) {
   request(opts(target, data), function(err, res) {
     if (err) return done(err)
-    res.statusCode.should.equal(400)
     res.body.__type.should.equal('ValidationException')
     var resMsg = res.body.message
     if (Array.isArray(msg)) {
@@ -249,6 +259,7 @@ function assertValidation(target, data, msg, done) {
     } else {
       res.body.message.should.equal(msg)
     }
+    res.statusCode.should.equal(400)
     done()
   })
 }
@@ -257,9 +268,9 @@ function assertNotFound(target, data, msg, done) {
   if (!Array.isArray(msg)) msg = [msg]
   request(opts(target, data), function(err, res) {
     if (err) return done(err)
-    res.statusCode.should.equal(400)
     res.body.__type.should.equal('ResourceNotFoundException')
     msg.should.containEql(res.body.message)
+    res.statusCode.should.equal(400)
     done()
   })
 }
@@ -267,11 +278,11 @@ function assertNotFound(target, data, msg, done) {
 function assertInUse(target, data, msg, done) {
   request(opts(target, data), function(err, res) {
     if (err) return done(err)
-    res.statusCode.should.equal(400)
     res.body.should.eql({
       __type: 'ResourceInUseException',
       message: msg,
     })
+    res.statusCode.should.equal(400)
     done()
   })
 }
@@ -279,11 +290,11 @@ function assertInUse(target, data, msg, done) {
 function assertLimitExceeded(target, data, msg, done) {
   request(opts(target, data), function(err, res) {
     if (err) return done(err)
-    res.statusCode.should.equal(400)
     res.body.should.eql({
       __type: 'LimitExceededException',
       message: msg,
     })
+    res.statusCode.should.equal(400)
     done()
   })
 }
@@ -291,11 +302,13 @@ function assertLimitExceeded(target, data, msg, done) {
 function assertInvalidArgument(target, data, msg, done) {
   request(opts(target, data), function(err, res) {
     if (err) return done(err)
+    res.body.__type.should.equal('InvalidArgumentException')
+    if (msg instanceof RegExp) {
+      res.body.message.should.match(msg)
+    } else {
+      res.body.message.should.equal(msg)
+    }
     res.statusCode.should.equal(400)
-    res.body.should.eql({
-      __type: 'InvalidArgumentException',
-      message: msg,
-    })
     done()
   })
 }
@@ -303,10 +316,10 @@ function assertInvalidArgument(target, data, msg, done) {
 function assertInternalFailure(target, data, done) {
   request(opts(target, data), function(err, res) {
     if (err) return done(err)
-    res.statusCode.should.equal(500)
     res.body.should.eql({
       __type: 'InternalFailure',
     })
+    res.statusCode.should.equal(500)
     done()
   })
 }
@@ -322,12 +335,14 @@ function assertSequenceNumber(seqNum, shardIx, timestamp) {
 function assertShardIterator(shardIterator, streamName) {
   var buffer = new Buffer(shardIterator, 'base64')
   shardIterator.should.equal(buffer.toString('base64'))
+  var lengthMod16 = (buffer.length - 152) % 16
+  lengthMod16.should.equal(0)
   // XXX: Length checks seem to be a bit unreliable
-  try {
-    buffer.should.have.length(152 + (Math.floor((streamName.length + 2) / 16) * 16))
-  } catch (e) {
-    buffer.should.have.length(152 + (Math.floor((streamName.length + 14) / 16) * 16))
-  }
+  // try {
+    // buffer.should.have.length(152 + (Math.floor((streamName.length + 2) / 16) * 16))
+  // } catch (e) {
+    // buffer.should.have.length(152 + (Math.floor((streamName.length + 14) / 16) * 16))
+  // }
   buffer.slice(0, 8).toString('hex').should.equal('0000000000000001')
 }
 

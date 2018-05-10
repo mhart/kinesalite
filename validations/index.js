@@ -97,6 +97,17 @@ function checkTypes(data, types) {
           throw typeError('\'' + val + '\' can not be converted to a Blob: ' +
             'Invalid last non-pad Base64 character dectected')
         return val
+      case 'Timestamp':
+        switch (typeof val) {
+          case 'boolean':
+            throw typeError('class java.lang.Boolean can not be converted to milliseconds since epoch')
+          case 'string':
+            throw typeError('class java.lang.String can not be converted to milliseconds since epoch')
+          case 'object':
+            if (Array.isArray(val)) throw typeError('Start of list found where not expected')
+            throw typeError('Start of structure or map found where not expected.')
+        }
+        return val
       case 'List':
         switch (typeof val) {
           case 'boolean':

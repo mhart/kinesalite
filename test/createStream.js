@@ -90,6 +90,10 @@ describe('createStream', function() {
           if (err) return done(err)
           res.statusCode.should.equal(200)
 
+          res.body.StreamDescription.StreamCreationTimestamp.should.be.above((createdAt / 1000) - 10)
+          res.body.StreamDescription.StreamCreationTimestamp.should.be.below((createdAt / 1000) + 10)
+          delete res.body.StreamDescription.StreamCreationTimestamp
+
           res.body.should.eql({
             StreamDescription: {
               StreamStatus: 'CREATING',
@@ -97,6 +101,7 @@ describe('createStream', function() {
               StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
                 ':stream/' + stream.StreamName,
               RetentionPeriodHours: 24,
+              EncryptionType: 'NONE',
               EnhancedMonitoring: [{ShardLevelMetrics: []}],
               HasMoreShards: false,
               Shards: [],
@@ -144,6 +149,10 @@ describe('createStream', function() {
               delete res.body.StreamDescription.Shards[1].SequenceNumberRange.StartingSequenceNumber
               delete res.body.StreamDescription.Shards[2].SequenceNumberRange.StartingSequenceNumber
 
+              res.body.StreamDescription.StreamCreationTimestamp.should.be.above((createdAt / 1000) - 10)
+              res.body.StreamDescription.StreamCreationTimestamp.should.be.below((createdAt / 1000) + 10)
+              delete res.body.StreamDescription.StreamCreationTimestamp
+
               res.body.should.eql({
                 StreamDescription: {
                   StreamStatus: 'ACTIVE',
@@ -151,6 +160,7 @@ describe('createStream', function() {
                   StreamARN: 'arn:aws:kinesis:' + helpers.awsRegion + ':' + helpers.awsAccountId +
                     ':stream/' + stream.StreamName,
                   RetentionPeriodHours: 24,
+                  EncryptionType: 'NONE',
                   EnhancedMonitoring: [{ShardLevelMetrics: []}],
                   HasMoreShards: false,
                   Shards: [{

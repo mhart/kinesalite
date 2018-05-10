@@ -4,7 +4,7 @@ Kinesalite
 [![Build Status](https://secure.travis-ci.org/mhart/kinesalite.png?branch=master)](http://travis-ci.org/mhart/kinesalite)
 
 An implementation of [Amazon's Kinesis](http://docs.aws.amazon.com/kinesis/latest/APIReference/),
-focussed on correctness and performance, and built on LevelDB
+focussed<a href="#focussed"><sup>1</sup></a> on correctness and performance, and built on LevelDB
 (well, [@rvagg](https://github.com/rvagg)'s awesome [LevelUP](https://github.com/rvagg/node-levelup) to be precise).
 
 The Kinesis equivalent of [dynalite](https://github.com/mhart/dynalite).
@@ -88,3 +88,8 @@ With [npm](http://npmjs.org/) do:
 $ npm install -g kinesalite
 ```
 
+Footnotes
+---------
+
+<a id="focussed"><sup>1</sup></a>Hi! You're probably American if you're worried about this spelling. No worries –
+and no need to open a pull request – we have different spellings in the rest of the English speaking world 🐨

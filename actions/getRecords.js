@@ -87,7 +87,11 @@ module.exports = function getRecords(store, data, cb) {
       })
       .filter(function(item) { return !item._tooOld })
       .join(function(items) {
-        var nextSeq = db.incrementSequence(lastItem ? lastItem._seqObj : seqObj, lastItem ? null : now),
+        var defaultTime = now
+        if (seqObj.seqTime > defaultTime) {
+          defaultTime = seqObj.seqTime
+        }
+        var nextSeq = db.incrementSequence(lastItem ? lastItem._seqObj : seqObj, lastItem ? null : defaultTime),
           nextShardIterator = db.createShardIterator(streamName, shardId, nextSeq),
           millisBehind = 0
 

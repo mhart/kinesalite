@@ -47,11 +47,13 @@ module.exports = function createStream(store, data, cb) {
         stream = {
           RetentionPeriodHours: 24,
           EnhancedMonitoring: [{ShardLevelMetrics: []}],
+          EncryptionType: 'NONE',
           HasMoreShards: false,
           Shards: [],
           StreamARN: 'arn:aws:kinesis:' + metaDb.awsRegion + ':' + metaDb.awsAccountId + ':stream/' + data.StreamName,
           StreamName: data.StreamName,
           StreamStatus: 'CREATING',
+          StreamCreationTimestamp: Math.floor(createTime / 1000),
           _seqIx: new Array(Math.ceil(data.ShardCount / 5)), // Hidden data, remove when returning
           _tags: Object.create(null), // Hidden data, remove when returning
         }
