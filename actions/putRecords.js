@@ -9,8 +9,6 @@ module.exports = function putRecords(store, data, cb) {
   metaDb.lock(key, function(release) {
     cb = release(cb)
 
-    console.log('Received a putRecords request');
-
     if (throughputExceededPercent > 0) {
       if(Math.floor(Math.random()*100) < throughputExceededPercent) {
         return cb(db.clientError('ProvisionedThroughputExceededException', 'Rate exceeded for shard shardId-000000000000 in stream ' + data.StreamName + ' under account ' + metaDb.awsAccountId + ' .'))
