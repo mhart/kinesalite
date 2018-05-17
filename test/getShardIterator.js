@@ -215,10 +215,10 @@ describe('getShardIterator', function() {
     })
 
     it('should return InvalidArgumentException if Timestamp in the future', function(done) {
-      var theFuture = (Date.now() / 1000) + 2
+      var theFuture = Date.now() + 2000
       assertInvalidArgument({StreamName: helpers.testStream, ShardId: 'shardId-0', ShardIteratorType: 'AT_TIMESTAMP', Timestamp: theFuture},
         new RegExp('^The timestampInMillis parameter cannot be greater than the currentTimestampInMillis. ' +
-          'timestampInMillis: ' + theFuture * 1000 + ', currentTimestampInMillis: \\d+$'), done)
+          'timestampInMillis: ' + theFuture + ', currentTimestampInMillis: \\d+$'), done)
     })
   })
 
