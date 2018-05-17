@@ -81,7 +81,7 @@ module.exports = function getShardIterator(store, data, cb) {
         return cb(db.clientError('InvalidArgumentException',
           'Must specify timestampInMillis parameter for iterator of type AT_TIMESTAMP. Current request has no timestamp parameter.'))
       }
-      var timestampInMillis = data.Timestamp * 1000
+      var timestampInMillis = data.Timestamp
       if (timestampInMillis > now) {
         return cb(db.clientError('InvalidArgumentException',
           'The timestampInMillis parameter cannot be greater than the currentTimestampInMillis. ' +
