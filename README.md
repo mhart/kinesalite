@@ -91,5 +91,5 @@ $ npm install -g kinesalite
 Footnotes
 ---------
 
-<a id="focussed"><sup>1</sup></a>Hi! You're probably American if you're worried about this spelling. No worries –
+<a id="focussed"><sup>1</sup></a>Hi! You're probably American ([and not a New Yorker editor](https://www.newyorker.com/books/page-turner/the-double-l)) if you're worried about this spelling. No worries –
 and no need to open a pull request – we have different spellings in the rest of the English speaking world 🐨
