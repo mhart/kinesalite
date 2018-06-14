@@ -3,10 +3,17 @@ var BigNumber = require('bignumber.js'),
 
 module.exports = function putRecords(store, data, cb) {
 
-  var key = data.StreamName, metaDb = store.metaDb, streamDb = store.getStreamDb(data.StreamName)
+  var key = data.StreamName, metaDb = store.metaDb, streamDb = store.getStreamDb(data.StreamName), throughputExceededPercent = store.throughputExceededPercent, failedRecordPercent = store.failedRecordPercent, errorTypes = ['ProvisionedThroughputExceededException', 'InternalFailure']
+
 
   metaDb.lock(key, function(release) {
     cb = release(cb)
+
+    if (throughputExceededPercent > 0) {
+      if(Math.floor(Math.random()*100) < throughputExceededPercent) {
+        return cb(db.clientError('ProvisionedThroughputExceededException', 'Rate exceeded for shard shardId-000000000000 in stream ' + data.StreamName + ' under account ' + metaDb.awsAccountId + ' .'))
+      }
+    }
 
     store.getStream(data.StreamName, function(err, stream) {
       if (err) return cb(err)
@@ -17,7 +24,7 @@ module.exports = function putRecords(store, data, cb) {
       }
 
       var batchOps = new Array(data.Records.length), returnRecords = new Array(data.Records.length),
-        seqPieces = new Array(data.Records.length), record, hashKey, seqPiece, i
+        seqPieces = new Array(data.Records.length), record, hashKey, seqPiece, i, failedRecords = 0
 
       for (i = 0; i < data.Records.length; i++) {
         record = data.Records[i]
@@ -97,7 +104,16 @@ module.exports = function putRecords(store, data, cb) {
             },
           }
 
-          returnRecords[i] = {ShardId: seqPiece.shardId, SequenceNumber: seqNum}
+          if (Math.floor(Math.random() * 100) < failedRecordPercent) {
+            if (Math.floor(Math.random() * 2) == 0) {
+              returnRecords[i] = {ErrorCode: errorTypes[0], ErrorMessage: 'Rate exceeded for shard ' + seqPiece.shardId + ' in stream ' + data.StreamName + ' under account ' + metaDb.awsAccountId + ' .'}
+            } else {
+              returnRecords[i] = {ErrorCode: errorTypes[1], ErrorMessage: 'Internal Service Failure'}
+            }
+            failedRecords += 1;
+          } else {
+            returnRecords[i] = {ShardId: seqPiece.shardId, SequenceNumber: seqNum}
+          }
         }
       })
 
@@ -106,7 +122,7 @@ module.exports = function putRecords(store, data, cb) {
 
         streamDb.batch(batchOps, {}, function(err) {
           if (err) return cb(err)
-          cb(null, {FailedRecordCount: 0, Records: returnRecords})
+          cb(null, {FailedRecordCount: failedRecords, Records: returnRecords})
         })
       })
     })
