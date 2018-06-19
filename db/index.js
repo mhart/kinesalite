@@ -3,7 +3,7 @@ var crypto = require('crypto'),
     levelup = require('levelup'),
     memdown = require('memdown'),
     sublevel = require('level-sublevel'),
-    Lock = require('lock'),
+    lock = require('lock'),
     BigNumber = require('bignumber.js')
 
 exports.create = create
@@ -28,12 +28,12 @@ function create(options) {
   if (options.updateStreamMs == null) options.updateStreamMs = 500
   if (options.shardLimit == null) options.shardLimit = 10
 
-  var db = levelup(options.path || '/does/not/matter', options.path ? {} : {db: memdown}),
+  var db = levelup(options.path ? require('leveldown')(options.path) : memdown()),
       sublevelDb = sublevel(db),
       metaDb = sublevelDb.sublevel('meta', {valueEncoding: 'json'}),
       streamDbs = []
 
-  metaDb.lock = new Lock()
+  metaDb.lock = lock.Lock()
 
   // XXX: Is there a better way to get this?
   metaDb.awsAccountId = (process.env.AWS_ACCOUNT_ID || '0000-0000-0000').replace(/[^\d]/g, '')
@@ -42,7 +42,7 @@ function create(options) {
   function getStreamDb(name) {
     if (!streamDbs[name]) {
       streamDbs[name] = sublevelDb.sublevel('stream-' + name, {valueEncoding: 'json'})
-      streamDbs[name].lock = new Lock()
+      streamDbs[name].lock = lock.Lock()
     }
     return streamDbs[name]
   }

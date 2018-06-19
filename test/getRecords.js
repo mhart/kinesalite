@@ -181,8 +181,8 @@ describe('getRecords', function() {
 
     it('should return correct AT_SEQUENCE_NUMBER and AFTER_SEQUENCE_NUMBER records', function(done) {
       var hashKey1 = new BigNumber(2).pow(128).minus(1).toFixed(),
-        hashKey2 = new BigNumber(2).pow(128).div(3).floor().times(2).minus(1).toFixed(),
-        hashKey3 = new BigNumber(2).pow(128).div(3).floor().times(2).toFixed(),
+        hashKey2 = new BigNumber(2).pow(128).div(3).integerValue(BigNumber.ROUND_FLOOR).times(2).minus(1).toFixed(),
+        hashKey3 = new BigNumber(2).pow(128).div(3).integerValue(BigNumber.ROUND_FLOOR).times(2).toFixed(),
         records = [
           {PartitionKey: 'a', Data: crypto.randomBytes(10).toString('base64')},
           {PartitionKey: 'b', Data: crypto.randomBytes(10).toString('base64')},
@@ -287,8 +287,8 @@ describe('getRecords', function() {
 
     it('should return correct AT_TIMESTAMP records', function(done) {
       var hashKey1 = new BigNumber(2).pow(128).minus(1).toFixed(),
-        hashKey2 = new BigNumber(2).pow(128).div(3).floor().times(2).minus(1).toFixed(),
-        hashKey3 = new BigNumber(2).pow(128).div(3).floor().times(2).toFixed(),
+        hashKey2 = new BigNumber(2).pow(128).div(3).integerValue(BigNumber.ROUND_FLOOR).times(2).minus(1).toFixed(),
+        hashKey3 = new BigNumber(2).pow(128).div(3).integerValue(BigNumber.ROUND_FLOOR).times(2).toFixed(),
         records1 = [
           {PartitionKey: 'a', Data: crypto.randomBytes(10).toString('base64')},
           {PartitionKey: 'b', Data: crypto.randomBytes(10).toString('base64')},
@@ -305,8 +305,8 @@ describe('getRecords', function() {
         var secondInsertSeconds = new Date().getTime() / 1000;
 
         var hashKey1 = new BigNumber(2).pow(128).minus(1).toFixed(),
-          hashKey2 = new BigNumber(2).pow(128).div(3).floor().times(2).minus(1).toFixed(),
-          hashKey3 = new BigNumber(2).pow(128).div(3).floor().times(2).toFixed(),
+          hashKey2 = new BigNumber(2).pow(128).div(3).integerValue(BigNumber.ROUND_FLOOR).times(2).minus(1).toFixed(),
+          hashKey3 = new BigNumber(2).pow(128).div(3).integerValue(BigNumber.ROUND_FLOOR).times(2).toFixed(),
           records2 = [
             {PartitionKey: 'a', Data: crypto.randomBytes(10).toString('base64')},
             {PartitionKey: 'b', Data: crypto.randomBytes(10).toString('base64')},
@@ -397,8 +397,8 @@ describe('getRecords', function() {
           res.body.should.eql({Records: []})
 
           var hashKey1 = new BigNumber(2).pow(128).minus(1).toFixed(),
-            hashKey2 = new BigNumber(2).pow(128).div(3).floor().times(2).minus(1).toFixed(),
-            hashKey3 = new BigNumber(2).pow(128).div(3).floor().times(2).toFixed(),
+            hashKey2 = new BigNumber(2).pow(128).div(3).integerValue(BigNumber.ROUND_FLOOR).times(2).minus(1).toFixed(),
+            hashKey3 = new BigNumber(2).pow(128).div(3).integerValue(BigNumber.ROUND_FLOOR).times(2).toFixed(),
             records = [
               {PartitionKey: 'a', Data: crypto.randomBytes(10).toString('base64')},
               {PartitionKey: 'b', Data: crypto.randomBytes(10).toString('base64')},

@@ -30,7 +30,7 @@ module.exports = function createStream(store, data, cb) {
               'for current limits and how to request higher limits.'))
         }
 
-        var i, shards = new Array(data.ShardCount), shardHash = POW_128.div(data.ShardCount).floor(),
+        var i, shards = new Array(data.ShardCount), shardHash = POW_128.div(data.ShardCount).integerValue(BigNumber.ROUND_FLOOR),
           createTime = Date.now() - SEQ_ADJUST_MS, stream
         for (i = 0; i < data.ShardCount; i++) {
           shards[i] = {

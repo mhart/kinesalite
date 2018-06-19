@@ -21,7 +21,7 @@ module.exports = function putRecord(store, data, cb) {
       if (data.ExplicitHashKey != null) {
         hashKey = new BigNumber(data.ExplicitHashKey)
 
-        if (hashKey.cmp(0) < 0 || hashKey.cmp(new BigNumber(2).pow(128)) >= 0) {
+        if (hashKey.comparedTo(0) < 0 || hashKey.comparedTo(new BigNumber(2).pow(128)) >= 0) {
           return cb(db.clientError('InvalidArgumentException',
             'Invalid ExplicitHashKey. ExplicitHashKey must be in the range: [0, 2^128-1]. ' +
             'Specified value was ' + data.ExplicitHashKey))
@@ -43,8 +43,8 @@ module.exports = function putRecord(store, data, cb) {
 
       for (var i = 0; i < stream.Shards.length; i++) {
         if (stream.Shards[i].SequenceNumberRange.EndingSequenceNumber == null &&
-            hashKey.cmp(stream.Shards[i].HashKeyRange.StartingHashKey) >= 0 &&
-            hashKey.cmp(stream.Shards[i].HashKeyRange.EndingHashKey) <= 0) {
+            hashKey.comparedTo(stream.Shards[i].HashKeyRange.StartingHashKey) >= 0 &&
+            hashKey.comparedTo(stream.Shards[i].HashKeyRange.EndingHashKey) <= 0) {
           shardIx = i
           shardId = stream.Shards[i].ShardId
           shardCreateTime = db.parseSequence(
