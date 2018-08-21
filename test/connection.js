@@ -1,8 +1,12 @@
 var https = require('https'),
     once = require('once'),
+    cbor = require('cbor'),
     kinesalite = require('..'),
     request = require('./helpers').request,
     uuidRegex = /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/
+
+var AMZ_JSON = 'application/x-amz-json-1.1'
+var AMZ_CBOR = 'application/x-amz-cbor-1.1'
 
 function assertBody(statusCode, contentType, body, done) {
   return function(err, res) {
@@ -15,12 +19,16 @@ function assertBody(statusCode, contentType, body, done) {
       res.headers.should.not.have.property('content-type')
     }
     if (!Buffer.isBuffer(res.body)) {
-      if (typeof res.body != 'string') res.body = JSON.stringify(res.body)
-      res.body = new Buffer(res.body, 'utf8')
+      if (contentType == AMZ_CBOR) {
+        res.body = cbor.Encoder.encodeOne(res.body)
+      } else if (typeof res.body != 'string') {
+        res.body = JSON.stringify(res.body)
+      }
+      res.body = Buffer.from(res.body, 'utf8')
     }
     res.headers['content-length'].should.equal(String(res.body.length))
     res.headers['x-amzn-requestid'].should.match(uuidRegex)
-    new Buffer(res.headers['x-amz-id-2'], 'base64').length.should.be.within(64, 80)
+    Buffer.from(res.headers['x-amz-id-2'], 'base64').length.should.be.within(64, 80)
     done()
   }
 }
@@ -69,8 +77,12 @@ function assertUnknownOperationXml(done) {
   return assertBody(404, null, '<UnknownOperationException/>\n', done)
 }
 
-function assertUnknown(done) {
-  return assertBody(400, 'application/x-amz-json-1.1', {__type: 'UnknownOperationException'}, done)
+function assertUnknownJson(done, contentType) {
+  return assertBody(400, AMZ_JSON, {__type: 'UnknownOperationException'}, done)
+}
+
+function assertUnknownCbor(done) {
+  return assertBody(400, AMZ_CBOR, {__type: 'UnknownOperationException'}, done)
 }
 
 function assertUnknownDeprecated(done) {
@@ -80,18 +92,12 @@ function assertUnknownDeprecated(done) {
   }, done)
 }
 
-function assertUnknownCbor(done) {
-  return assertBody(400, 'application/x-amz-cbor-1.1', Buffer.concat([
-    new Buffer('bf66', 'hex'),
-    new Buffer('__type', 'utf8'),
-    new Buffer('7819', 'hex'),
-    new Buffer('UnknownOperationException', 'utf8'),
-    new Buffer('ff', 'hex')
-  ]), done)
+function assertSerializationJson(done) {
+  return assertBody(400, AMZ_JSON, {__type: 'SerializationException'}, done)
 }
 
-function assertSerialization(done) {
-  return assertBody(400, 'application/x-amz-json-1.1', {__type: 'SerializationException'}, done)
+function assertSerializationCbor(done) {
+  return assertBody(400, AMZ_CBOR, {__type: 'SerializationException'}, done)
 }
 
 function assertSerializationDeprecated(done) {
@@ -101,39 +107,29 @@ function assertSerializationDeprecated(done) {
   }, done)
 }
 
-function assertSerializationCbor(done) {
-  return assertBody(400, 'application/x-amz-cbor-1.1', Buffer.concat([
-    new Buffer('bf66', 'hex'),
-    new Buffer('__type', 'utf8'),
-    new Buffer('76', 'hex'),
-    new Buffer('SerializationException', 'utf8'),
-    new Buffer('ff', 'hex')
-  ]), done)
-}
-
 function assertMissing(done) {
-  return assertBody(400, 'application/x-amz-json-1.1', {
+  return assertBody(400, AMZ_JSON, {
     __type: 'MissingAuthenticationTokenException',
     message: 'Missing Authentication Token',
   }, done)
 }
 
 function assertIncomplete(msg, done) {
-  return assertBody(400, 'application/x-amz-json-1.1', {
+  return assertBody(400, AMZ_JSON, {
     __type: 'IncompleteSignatureException',
     message: msg,
   }, done)
 }
 
 function assertInvalid(done) {
-  return assertBody(400, 'application/x-amz-json-1.1', {
+  return assertBody(400, AMZ_JSON, {
     __type: 'InvalidSignatureException',
     message: 'Found both \'X-Amz-Algorithm\' as a query-string param and \'Authorization\' as HTTP header.',
   }, done)
 }
 
 function assertOk(done) {
-  return assertBody(200, 'application/x-amz-json-1.1', {HasMoreStreams: false, StreamNames: []}, done)
+  return assertBody(200, AMZ_JSON, {HasMoreStreams: false, StreamNames: []}, done)
 }
 
 function assertCors(headers, done) {
@@ -223,13 +219,13 @@ describe('kinesalite connections', function() {
                           returnFn = assertCors
                         } else if (method == 'POST' && ~['application/x-amz-json-1.1', 'application/json'].indexOf(contentHeader)) {
                           if (body && body != '{}') {
-                            returnFn = contentHeader == 'application/x-amz-json-1.1' ? assertSerialization : assertSerializationDeprecated
+                            returnFn = contentHeader == AMZ_JSON ? assertSerializationJson : assertSerializationDeprecated
                           } else if (contentHeader == 'application/json') {
                             returnFn = assertUnknownDeprecated
                           } else if (targetHeader != 'Kinesis_20131202.ListStreams') {
-                            returnFn = assertUnknown
+                            returnFn = assertUnknownJson
                           } else if (body != '{}') {
-                            returnFn = assertSerialization
+                            returnFn = assertSerializationJson
                           } else if (path == '/?X-Amz-Algorithm') {
                             returnFn = authHeader ? assertInvalid :
                               assertIncomplete.bind(null, 'AWS query-string parameters must include \'X-Amz-Algorithm\'. AWS query-string parameters must include \'X-Amz-Credential\'. AWS query-string parameters must include \'X-Amz-Signature\'. AWS query-string parameters must include \'X-Amz-SignedHeaders\'. AWS query-string parameters must include \'X-Amz-Date\'. Re-examine the query-string parameters.')
@@ -384,11 +380,11 @@ describe('kinesalite connections', function() {
   describe('JSON', function() {
 
     it('should return UnknownOperationException if no target', function(done) {
-      request({headers: {'content-type': 'application/x-amz-json-1.1'}}, assertUnknown(done))
+      request({headers: {'content-type': AMZ_JSON}}, assertUnknownJson(done))
     })
 
     it('should return UnknownOperationException if no target and no auth', function(done) {
-      request({headers: {'content-type': 'application/x-amz-json-1.1'}, noSign: true}, assertUnknown(done))
+      request({headers: {'content-type': AMZ_JSON}, noSign: true}, assertUnknownJson(done))
     })
 
     it('should return CBOR UnknownOperationException if no target and application/json', function(done) {
@@ -404,23 +400,23 @@ describe('kinesalite connections', function() {
 
     it('should return SerializationException if no body', function(done) {
       request({headers: {
-        'content-type': 'application/x-amz-json-1.1',
+        'content-type': AMZ_JSON,
         'x-amz-target': 'Kinesis_20131202.ListStreams',
-      }}, assertSerialization(done))
+      }}, assertSerializationJson(done))
     })
 
     it('should return SerializationException if no body and no auth', function(done) {
       request({headers: {
-        'content-type': 'application/x-amz-json-1.1',
+        'content-type': AMZ_JSON,
         'x-amz-target': 'Kinesis_20131202.ListStreams',
-      }, noSign: true}, assertSerialization(done))
+      }, noSign: true}, assertSerializationJson(done))
     })
 
     it('should return SerializationException if non-JSON body', function(done) {
       request({headers: {
-        'content-type': 'application/x-amz-json-1.1',
+        'content-type': AMZ_JSON,
         'x-amz-target': 'Kinesis_20131202.ListStreams',
-      }, body: 'hello', noSign: true}, assertSerialization(done))
+      }, body: 'hello', noSign: true}, assertSerializationJson(done))
     })
 
     it('should return UnknownOperationException if valid target and body and application/json', function(done) {
@@ -446,7 +442,7 @@ describe('kinesalite connections', function() {
 
     it('should return MissingAuthenticationTokenException if no auth', function(done) {
       request({headers: {
-        'content-type': 'application/x-amz-json-1.1',
+        'content-type': AMZ_JSON,
         'x-amz-target': 'Kinesis_20131202.ListStreams',
       }, body: '{}', noSign: true}, assertMissing(done))
     })
@@ -460,7 +456,7 @@ describe('kinesalite connections', function() {
 
     it('should return IncompleteSignatureException if invalid auth', function(done) {
       request({headers: {
-        'content-type': 'application/x-amz-json-1.1',
+        'content-type': AMZ_JSON,
         'x-amz-target': 'Kinesis_20131202.ListStreams',
         'Authorization': 'X',
       }, body: '{}', noSign: true},
@@ -475,7 +471,7 @@ describe('kinesalite connections', function() {
       request({
         path: '/?X-Amz-Algorith',
         headers: {
-          'content-type': 'application/x-amz-json-1.1',
+          'content-type': AMZ_JSON,
           'x-amz-target': 'Kinesis_20131202.ListStreams',
           'Authorization': 'X',
         },
@@ -492,7 +488,7 @@ describe('kinesalite connections', function() {
       request({
         path: '/?X-Amz-Credential=a&X-Amz-Signature=b&X-Amz-SignedHeaders=c&X-Amz-Date=d',
         headers: {
-          'content-type': 'application/x-amz-json-1.1',
+          'content-type': AMZ_JSON,
           'x-amz-target': 'Kinesis_20131202.ListStreams',
         },
         body: '{}',
@@ -504,7 +500,7 @@ describe('kinesalite connections', function() {
       request({
         path: '/?X-Amz-Algorithm',
         headers: {
-          'content-type': 'application/x-amz-json-1.1',
+          'content-type': AMZ_JSON,
           'x-amz-target': 'Kinesis_20131202.ListStreams',
           'Authorization': 'X',
         },
@@ -516,7 +512,7 @@ describe('kinesalite connections', function() {
     it('should return IncompleteSignatureException if header is "AWS4- Signature=b Credential=a"', function(done) {
       request({
         headers: {
-          'content-type': 'application/x-amz-json-1.1',
+          'content-type': AMZ_JSON,
           'x-amz-target': 'Kinesis_20131202.ListStreams',
           'Authorization': 'AWS4- Signature=b Credential=a',
           'Date': 'a',
@@ -530,7 +526,7 @@ describe('kinesalite connections', function() {
     it('should return IncompleteSignatureException if header is "AWS4- Signature=b,Credential=a"', function(done) {
       request({
         headers: {
-          'content-type': 'application/x-amz-json-1.1',
+          'content-type': AMZ_JSON,
           'x-amz-target': 'Kinesis_20131202.ListStreams',
           'Authorization': 'AWS4- Signature=b,Credential=a',
           'Date': 'a',
@@ -544,7 +540,7 @@ describe('kinesalite connections', function() {
     it('should return IncompleteSignatureException if header is "AWS4- Signature=b, Credential=a"', function(done) {
       request({
         headers: {
-          'content-type': 'application/x-amz-json-1.1',
+          'content-type': AMZ_JSON,
           'x-amz-target': 'Kinesis_20131202.ListStreams',
           'Authorization': 'AWS4- Signature=b, Credential=a',
           'Date': 'a',
@@ -559,7 +555,7 @@ describe('kinesalite connections', function() {
       request({
         path: '/?X-Amz-Algorithm',
         headers: {
-          'content-type': 'application/x-amz-json-1.1',
+          'content-type': AMZ_JSON,
           'x-amz-target': 'Kinesis_20131202.ListStreams',
         },
         body: '{}',
@@ -576,7 +572,7 @@ describe('kinesalite connections', function() {
       request({
         path: '/?X-Amz-Algorithm=a&X-Amz-Credential=b&X-Amz-Signature=c&X-Amz-Date=d',
         headers: {
-          'content-type': 'application/x-amz-json-1.1',
+          'content-type': AMZ_JSON,
           'x-amz-target': 'Kinesis_20131202.ListStreams',
         },
         body: '{}',

@@ -4,11 +4,15 @@ var https = require('https'),
     path = require('path'),
     url = require('url'),
     crypto = require('crypto'),
+    cbor = require('cbor')
     uuid = require('uuid'),
     validations = require('./validations'),
     db = require('./db')
 
 var MAX_REQUEST_BYTES = 7 * 1024 * 1024
+var AMZ_JSON = 'application/x-amz-json-1.1'
+var AMZ_CBOR = 'application/x-amz-cbor-1.1'
+
 
 var validApis = ['Kinesis_20131202'],
     validOperations = ['AddTagsToStream', 'CreateStream', 'DeleteStream', 'DescribeStream', 'DescribeStreamSummary',
@@ -73,30 +77,19 @@ function sendJson(req, res, data, statusCode) {
   sendRaw(req, res, body, statusCode)
 }
 
-function sendCborUnknown(req, res) {
-  res.setHeader('Content-Type', 'application/x-amz-cbor-1.1')
-  return sendRaw(req, res, Buffer.concat([
-    new Buffer('bf66', 'hex'),
-    new Buffer('__type', 'utf8'),
-    new Buffer('7819', 'hex'),
-    new Buffer('UnknownOperationException', 'utf8'),
-    new Buffer('ff', 'hex'),
-  ]), 400)
+function sendCbor(req, res, data, statusCode) {
+  var body = data != null ? cbor.Encoder.encodeOne(data) : ''
+  res.setHeader('Content-Type', res.contentType);
+  sendRaw(req, res, body, statusCode)
 }
 
-function sendCborSerialization(req, res) {
-  res.setHeader('Content-Type', 'application/x-amz-cbor-1.1')
-  return sendRaw(req, res, Buffer.concat([
-    new Buffer('bf66', 'hex'),
-    new Buffer('__type', 'utf8'),
-    new Buffer('76', 'hex'),
-    new Buffer('SerializationException', 'utf8'),
-    new Buffer('ff', 'hex'),
-  ]), 400)
+function sendResponse(req, res, data, statusCode) {
+  return res.contentType == AMZ_CBOR ? sendCbor(req, res, data, statusCode) :
+    sendJson(req, res, data, statusCode)
 }
 
 function sendError(req, res, contentValid, type, msg) {
-  return contentValid ? sendJson(req, res, {__type: type, message: msg}, 400) :
+  return contentValid ? sendResponse(req, res, {__type: type, message: msg}, 400) :
     typeof msg == 'number' ? sendRaw(req, res, '<' + type + '/>\n', msg) :
       sendRaw(req, res, '<' + type + '>\n  <Message>' + msg + '</Message>\n</' + type + '>\n', 403)
 }
@@ -113,8 +106,6 @@ function httpHandler(store, req, res) {
     body = body ? Buffer.concat([body, data], newLength) : data
   })
   req.on('end', function() {
-
-    body = body ? body.toString() : ''
 
     // All responses after this point have a RequestId
     res.setHeader('x-amzn-RequestId', uuid.v1())
@@ -147,7 +138,7 @@ function httpHandler(store, req, res) {
     }
 
     var contentType = (req.headers['content-type'] || '').split(';')[0].trim()
-    var contentValid = ~['application/x-amz-json-1.1', 'application/json'].indexOf(contentType)
+    var contentValid = ~[AMZ_JSON, AMZ_CBOR, 'application/json'].indexOf(contentType)
 
     var target = (req.headers['x-amz-target'] || '').split('.')
     var service = target[0]
@@ -160,13 +151,12 @@ function httpHandler(store, req, res) {
     // THEN if the method and content-type are ok, see if the JSON parses:
 
     if (!body) {
-      if (contentType == 'application/x-amz-json-1.1') {
-        res.contentType = 'application/x-amz-json-1.1'
-        return sendJson(req, res, {__type: serviceValid && operationValid ? 'SerializationException' : 'UnknownOperationException'}, 400)
+      if (contentType == AMZ_JSON) {
+        res.contentType = AMZ_JSON;
+      } else {
+        res.contentType = AMZ_CBOR;
       }
-
-      res.setHeader('Content-Type', 'application/x-amz-cbor-1.1')
-      return serviceValid && operationValid ? sendCborSerialization(req, res) : sendCborUnknown(req, res)
+      return sendResponse(req, res, {__type: serviceValid && operationValid ? 'SerializationException' : 'UnknownOperationException'}, 400)
     }
 
     if (!contentValid) {
@@ -180,7 +170,11 @@ function httpHandler(store, req, res) {
     res.contentType = contentType
 
     var data
-    try { data = JSON.parse(body) } catch (e) { }
+    if (contentType == AMZ_CBOR) {
+      try { data = cbor.Decoder.decodeFirstSync(body) } catch (e) { }
+    } else {
+      try { data = JSON.parse(body.toString()) } catch (e) { }
+    }
 
     if (typeof data != 'object' || data == null) {
       if (contentType == 'application/json') {
@@ -189,7 +183,7 @@ function httpHandler(store, req, res) {
           Version: '1.0',
         }, 200)
       }
-      return sendJson(req, res, {__type: 'SerializationException'}, 400)
+      return sendResponse(req, res, {__type: 'SerializationException'}, 400)
     }
 
     // After this point, application/json doesn't seem to progress any further
@@ -201,7 +195,7 @@ function httpHandler(store, req, res) {
     }
 
     if (!serviceValid || !operationValid) {
-      return sendJson(req, res, {__type: 'UnknownOperationException'}, 400)
+      return sendResponse(req, res, {__type: 'UnknownOperationException'}, 400)
     }
 
     // THEN check auth:
@@ -256,14 +250,14 @@ function httpHandler(store, req, res) {
       data = validations.checkTypes(data, actionValidation.types)
       validations.checkValidations(data, actionValidation.types, actionValidation.custom, operation)
     } catch (e) {
-      if (e.statusCode) return sendJson(req, res, e.body, e.statusCode)
+      if (e.statusCode) return sendResponse(req, res, e.body, e.statusCode)
       throw e
     }
 
     actions[action](store, data, function(err, data) {
-      if (err && err.statusCode) return sendJson(req, res, err.body, err.statusCode)
+      if (err && err.statusCode) return sendResponse(req, res, err.body, err.statusCode)
       if (err) throw err
-      sendJson(req, res, data)
+      sendResponse(req, res, data)
     })
   })
 }

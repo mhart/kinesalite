@@ -27,6 +27,7 @@
   "dependencies": {
     "async": "^2.6.2",
     "bignumber.js": "^9.0.0",
+    "cbor": "^5.0.1",
     "lazy": "^1.0.11",
     "levelup": "^4.0.1",
     "lock": "^1.1.0",

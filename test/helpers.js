@@ -4,6 +4,7 @@ var http = require('http'),
     async = require('async'),
     once = require('once'),
     BigNumber = require('bignumber.js'),
+    cbor = require('cbor'),
     kinesalite = require('..')
 
 http.globalAgent.maxSockets = https.globalAgent.maxSockets = Infinity
@@ -82,9 +83,11 @@ function request(options, cb) {
       if ((res.headers['content-type'] || '').indexOf('application/x-amz-cbor') !== 0) {
         res.body = res.body.toString('utf8')
         try { res.body = JSON.parse(res.body) } catch (e) {} // eslint-disable-line no-empty
-        if (res.body.__type == 'LimitExceededException' && /^Rate exceeded/.test(res.body.message))
-          return setTimeout(request, Math.floor(Math.random() * 1000), options, cb)
+      } else {
+        try { res.body = cbor.Decoder.decodeFirstSync(res.body) } catch (e) {} // eslint-disable-line no-empty
       }
+      if (res.body.__type == 'LimitExceededException' && /^Rate exceeded/.test(res.body.message))
+        return setTimeout(request, Math.floor(Math.random() * 1000), options, cb)
       cb(null, res)
     })
   }).on('error', cb).end(options.body)
