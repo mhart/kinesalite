@@ -13,6 +13,11 @@ module.exports = function listShards(store, data, cb) {
   store.getStream(data.StreamName, function(err, stream) {
     if (err) return cb(err)
 
-    cb(null, {Shards: stream.Shards})
+    var outputShards = stream.Shards
+    if (data.ExclusiveStartShardId) {
+      outputShards = stream.Shards.filter(shard => shard.ShardId > data.ExclusiveStartShardId)
+    }
+
+    cb(null, {Shards: outputShards})
   })
 }
