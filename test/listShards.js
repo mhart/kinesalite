@@ -128,7 +128,30 @@ describe('listShards', function() {
       })
     })
 
+    it('should return stream shards starting with shard which follows ExclusiveStartShardId', function(done) {
+      request(opts({StreamName: helpers.testStream, ExclusiveStartShardId: 'shardId-000000000001'}), function(err, res) {
+        if (err) return done(err)
+        res.statusCode.should.equal(200)
+
+        res.body.Shards[0].SequenceNumberRange.StartingSequenceNumber.should.match(/^\d{56}$/)
+
+        delete res.body.Shards[0].SequenceNumberRange.StartingSequenceNumber
+
+        res.body.should.eql({
+          Shards: [{
+            ShardId: 'shardId-000000000002',
+            SequenceNumberRange: {},
+            HashKeyRange: {
+              StartingHashKey: '226854911280625642308916404954512140970',
+              EndingHashKey: '340282366920938463463374607431768211455',
+            },
+          }],
+        })
+
+        done()
+      })
+    })
+
   })
 
 })
-
