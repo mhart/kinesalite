@@ -2,9 +2,10 @@ var crypto = require('crypto'),
     lazy = require('lazy'),
     levelup = require('levelup'),
     memdown = require('memdown'),
-    sublevel = require('level-sublevel'),
+    sub = require('subleveldown'),
     lock = require('lock'),
-    BigNumber = require('bignumber.js')
+    BigNumber = require('bignumber.js'),
+    once = require('once')
 
 exports.create = create
 exports.lazy = lazyStream
@@ -29,8 +30,7 @@ function create(options) {
   if (options.shardLimit == null) options.shardLimit = 10
 
   var db = levelup(options.path ? require('leveldown')(options.path) : memdown()),
-      sublevelDb = sublevel(db),
-      metaDb = sublevelDb.sublevel('meta', {valueEncoding: 'json'}),
+      metaDb = sub(db, 'meta', {valueEncoding: 'json'}),
       streamDbs = []
 
   metaDb.lock = lock.Lock()
@@ -41,13 +41,14 @@ function create(options) {
 
   function getStreamDb(name) {
     if (!streamDbs[name]) {
-      streamDbs[name] = sublevelDb.sublevel('stream-' + name, {valueEncoding: 'json'})
+      streamDbs[name] = sub(db, 'stream-' + name, {valueEncoding: 'json'})
       streamDbs[name].lock = lock.Lock()
     }
     return streamDbs[name]
   }
 
   function deleteStreamDb(name, cb) {
+    cb = once(cb)
     var streamDb = getStreamDb(name)
     delete streamDbs[name]
     lazyStream(streamDb.createKeyStream(), cb).join(function(keys) {
@@ -56,6 +57,7 @@ function create(options) {
   }
 
   function getStream(name, cb) {
+    cb = once(cb)
     metaDb.get(name, function(err, stream) {
       if (err) {
         if (err.name == 'NotFoundError') {
@@ -96,6 +98,8 @@ function create(options) {
 function lazyStream(stream, errHandler) {
   if (errHandler) stream.on('error', errHandler)
   var streamAsLazy = lazy(stream)
+  stream.removeAllListeners('readable')
+  stream.on('data', streamAsLazy.emit.bind(streamAsLazy, 'data'))
   if (stream.destroy) streamAsLazy.on('pipe', stream.destroy.bind(stream))
   return streamAsLazy
 }

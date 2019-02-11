@@ -29,13 +29,13 @@
     "async": "^2.6.1",
     "bignumber.js": "^8.0.2",
     "lazy": "^1.0.11",
-    "level-sublevel": "^6.6.5",
     "levelup": "^4.0.0",
     "lock": "^1.1.0",
     "memdown": "^3.0.0",
     "minimist": "^1.2.0",
     "node-uuid": "^1.4.7",
-    "once": "^1.3.3"
+    "once": "^1.3.3",
+    "subleveldown": "^3.0.1"
   },
   "optionalDependencies": {
     "leveldown": "^4.0.1"
