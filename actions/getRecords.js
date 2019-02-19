@@ -1,6 +1,17 @@
 var crypto = require('crypto'),
     once = require('once'),
-    db = require('../db')
+    db = require('../db'),
+    math = require('mathjs'),
+    sizeof = require('object-sizeof')
+
+var sumOfBytes = 0
+var fiveMegaBytes = 5 * math.pow(2,20)
+function lessThanFiveMB() {
+  return function(y) {
+    sumOfBytes = sumOfBytes + sizeof(y)
+    return sumOfBytes < fiveMegaBytes;
+  };
+}
 
 module.exports = function getRecords(store, data, cb) {
 
@@ -76,7 +87,7 @@ module.exports = function getRecords(store, data, cb) {
     }
 
     db.lazy(streamDb.createReadStream(opts), cb)
-      .take(data.Limit || 10000)
+      .take(data.Limit || 10000).takeWhile(lessThanFiveMB())
       .map(function(item) {
         lastItem = item.value
         lastItem.SequenceNumber = item.key.split('/')[1]
@@ -113,6 +124,7 @@ module.exports = function getRecords(store, data, cb) {
           }),
         })
 
+        sumOfBytes = 0
         if (keysToDelete.length) {
           // Do this async
           streamDb.batch(keysToDelete.map(function(key) { return {type: 'del', key: key} }), function(err) {
