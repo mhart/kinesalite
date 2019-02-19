@@ -86,6 +86,7 @@ module.exports = function getRecords(store, data, cb) {
       lt: db.shardIxToHex(shardIx + 1),
     }
 
+      // The get records will return a maximum of 5MB or 10,000 records whichever is reached first.
     db.lazy(streamDb.createReadStream(opts), cb)
       .take(data.Limit || 10000).takeWhile(lessThanFiveMB())
       .map(function(item) {
