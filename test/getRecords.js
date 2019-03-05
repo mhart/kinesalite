@@ -642,93 +642,105 @@ describe('getRecords', function() {
     })
 
     it('Should return max of 5 MB for each get records', function(done) {
-       // 500k bytes translates to total of 1.3 MB in base 64 string as per sizeof library as each character is 2 bytes.
-       var records = [
-         {PartitionKey: 'a', Data: crypto.randomBytes(500000).toString('base64'), ExplicitHashKey: '0'},
-         {PartitionKey: 'b', Data: crypto.randomBytes(500000).toString('base64'), ExplicitHashKey: '0'},
-         {PartitionKey: 'c', Data: crypto.randomBytes(500000).toString('base64'), ExplicitHashKey: '0'},
-         {PartitionKey: 'd', Data: crypto.randomBytes(500000).toString('base64'), ExplicitHashKey: '0'},
-         {PartitionKey: 'e', Data: crypto.randomBytes(500000).toString('base64'), ExplicitHashKey: '0'},
-      ]
-
-      request(helpers.opts('PutRecords', {StreamName: helpers.testStream, Records: records}), function(err, res) {
-        if (err) return done(err)
-        res.statusCode.should.equal(200)
-
-        var recordsPut = res.body.Records
-
-        request(helpers.opts('GetShardIterator', {
-          StreamName: helpers.testStream,
-          ShardId: 'shardId-0',
-          ShardIteratorType: 'TRIM_HORIZON'
-        }), function(err, res) {
+      this.timeout(100000)
+      var stream = {StreamName: randomName(), ShardCount: 1}
+      request(helpers.opts('CreateStream', stream), function(err, res) {
           if (err) return done(err)
           res.statusCode.should.equal(200)
 
-          request(opts({ShardIterator: res.body.ShardIterator}), function(err, res) {
-            if (err) return done(err)
-            res.statusCode.should.equal(200)
-
-            var nextIterator = res.body.NextShardIterator
-            helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
-            delete res.body.NextShardIterator
-
-            res.body.MillisBehindLatest.should.be.within(0, 5000)
-            delete res.body.MillisBehindLatest
-
-            // Not checking arrival time due to the high record size.
-            res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
-            res.body.should.eql({
-              Records: [
-                {
-                  PartitionKey: records[0].PartitionKey,
-                  Data: records[0].Data,
-                  SequenceNumber: recordsPut[0].SequenceNumber,
-                },
-                {
-                  PartitionKey: records[1].PartitionKey,
-                  Data: records[1].Data,
-                  SequenceNumber: recordsPut[1].SequenceNumber,
-                },
-                {
-                  PartitionKey: records[2].PartitionKey,
-                  Data: records[2].Data,
-                  SequenceNumber: recordsPut[2].SequenceNumber,
-                },
-              ],
-            })
-            request(opts({ShardIterator: nextIterator}), function(err, res) {
+          helpers.waitUntilActive(stream.StreamName, function (err, res) {
               if (err) return done(err)
               res.statusCode.should.equal(200)
 
-              helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
-              delete res.body.NextShardIterator
+              // 500k bytes translates to total of 1.3 MB in base 64 string as per sizeof library as each character is 2 bytes.
+              var records = [
+                  {PartitionKey: 'a', Data: crypto.randomBytes(500000).toString('base64'), ExplicitHashKey: '0'},
+                  {PartitionKey: 'b', Data: crypto.randomBytes(500000).toString('base64'), ExplicitHashKey: '0'},
+                  {PartitionKey: 'c', Data: crypto.randomBytes(500000).toString('base64'), ExplicitHashKey: '0'},
+                  {PartitionKey: 'd', Data: crypto.randomBytes(500000).toString('base64'), ExplicitHashKey: '0'},
+              ]
 
-              res.body.MillisBehindLatest.should.be.within(0, 5000)
-              delete res.body.MillisBehindLatest
+              request(helpers.opts('PutRecords', {
+                  StreamName: stream.StreamName,
+                  Records: records
+              }), function (err, res) {
+                  if (err) return done(err)
+                  res.statusCode.should.equal(200)
 
-              helpers.assertArrivalTimes(res.body.Records)
-              res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
+                  var recordsPut = res.body.Records
 
-              res.body.should.eql({
-                Records: [
+                  request(helpers.opts('GetShardIterator', {
+                      StreamName: stream.StreamName,
+                      ShardId: 'shardId-0',
+                      ShardIteratorType: 'TRIM_HORIZON'
+                  }), function (err, res) {
+                      if (err) return done(err)
+                      res.statusCode.should.equal(200)
 
-                  {
-                    PartitionKey: records[3].PartitionKey,
-                    Data: records[3].Data,
-                    SequenceNumber: recordsPut[3].SequenceNumber,
-                  },
-                  {
-                    PartitionKey: records[4].PartitionKey,
-                    Data: records[4].Data,
-                    SequenceNumber: recordsPut[4].SequenceNumber,
-                  },
-                ],
+                      request(opts({ShardIterator: res.body.ShardIterator}), function (err, res) {
+                          if (err) return done(err)
+                          res.statusCode.should.equal(200)
+
+                          var nextIterator = res.body.NextShardIterator
+                          helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+                          delete res.body.NextShardIterator
+
+                          res.body.MillisBehindLatest.should.be.within(0, 5000)
+                          delete res.body.MillisBehindLatest
+
+                          // Not checking arrival time due to the high record size.
+                          res.body.Records.forEach(function (record) {
+                              delete record.ApproximateArrivalTimestamp
+                          })
+                          res.body.should.eql({
+                              Records: [
+                                  {
+                                      PartitionKey: records[0].PartitionKey,
+                                      Data: records[0].Data,
+                                      SequenceNumber: recordsPut[0].SequenceNumber,
+                                  },
+                                  {
+                                      PartitionKey: records[1].PartitionKey,
+                                      Data: records[1].Data,
+                                      SequenceNumber: recordsPut[1].SequenceNumber,
+                                  },
+                                  {
+                                      PartitionKey: records[2].PartitionKey,
+                                      Data: records[2].Data,
+                                      SequenceNumber: recordsPut[2].SequenceNumber,
+                                  },
+                              ],
+                          })
+                          request(opts({ShardIterator: nextIterator}), function (err, res) {
+                              if (err) return done(err)
+                              res.statusCode.should.equal(200)
+
+                              helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+                              delete res.body.NextShardIterator
+
+                              res.body.MillisBehindLatest.should.be.within(0, 5000)
+                              delete res.body.MillisBehindLatest
+
+                              res.body.Records.forEach(function (record) {
+                                  delete record.ApproximateArrivalTimestamp
+                              })
+
+                              res.body.should.eql({
+                                  Records: [
+
+                                      {
+                                          PartitionKey: records[3].PartitionKey,
+                                          Data: records[3].Data,
+                                          SequenceNumber: recordsPut[3].SequenceNumber,
+                                      },
+                                  ],
+                              })
+                              done()
+                          })
+                      })
+                  })
               })
-              done()
-            })
           })
-        })
       })
     })
 
