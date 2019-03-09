@@ -1,14 +1,15 @@
 var crypto = require('crypto'),
     once = require('once'),
-    db = require('../db'),
-    math = require('mathjs'),
-    sizeof = require('object-sizeof')
+    db = require('../db')
 
 var sumOfBytes = 0
-var fiveMegaBytes = 5 * math.pow(2,20)
-function lessThanFiveMB() {
-  return function(y) {
-    sumOfBytes = sumOfBytes + sizeof(y)
+
+var fiveMegaBytes = 5 * 1024 * 1024
+function lessThanFiveMB(sumOfBytes) {
+  return function(item) {
+    // console.log('Value : %s', JSON.stringify(item.value.Data))
+    buffer = new Buffer(item.value.Data, 'base64')
+    sumOfBytes = sumOfBytes + Buffer.byteLength(buffer.toString('ascii'))
     return sumOfBytes < fiveMegaBytes;
   };
 }
@@ -86,9 +87,10 @@ module.exports = function getRecords(store, data, cb) {
       lt: db.shardIxToHex(shardIx + 1),
     }
 
+    var sumOfBytes = 0
       // The get records will return a maximum of 5MB or 10,000 records whichever is reached first.
     db.lazy(streamDb.createReadStream(opts), cb)
-      .take(data.Limit || 10000).takeWhile(lessThanFiveMB())
+      .take(data.Limit || 10000).takeWhile(lessThanFiveMB(sumOfBytes))
       .map(function(item) {
         lastItem = item.value
         lastItem.SequenceNumber = item.key.split('/')[1]
@@ -125,7 +127,6 @@ module.exports = function getRecords(store, data, cb) {
           }),
         })
 
-        sumOfBytes = 0
         if (keysToDelete.length) {
           // Do this async
           streamDb.batch(keysToDelete.map(function(key) { return {type: 'del', key: key} }), function(err) {
