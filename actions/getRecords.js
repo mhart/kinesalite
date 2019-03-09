@@ -5,7 +5,6 @@ var crypto = require('crypto'),
 var fiveMegaBytes = 5 * 1024 * 1024
 function lessThanFiveMB(sumOfBytes) {
   return function(item) {
-    // console.log('Value : %s', JSON.stringify(item.value.Data))
     buffer = new Buffer(item.value.Data, 'base64')
     sumOfBytes = sumOfBytes + Buffer.byteLength(buffer.toString('ascii'))
     return sumOfBytes < fiveMegaBytes;
