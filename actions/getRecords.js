@@ -2,8 +2,6 @@ var crypto = require('crypto'),
     once = require('once'),
     db = require('../db')
 
-var sumOfBytes = 0
-
 var fiveMegaBytes = 5 * 1024 * 1024
 function lessThanFiveMB(sumOfBytes) {
   return function(item) {
