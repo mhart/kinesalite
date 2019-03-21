@@ -2,6 +2,15 @@ var crypto = require('crypto'),
     once = require('once'),
     db = require('../db')
 
+var fiveMegaBytes = 5 * 1024 * 1024
+function lessThanFiveMB(sumOfBytes) {
+  return function(item) {
+    // Converting the base64 size to the standard ascii size. Ignoring the '=' padding as exact 5 MB is not necessary.
+    sumOfBytes += item.value.Data.length * 0.75
+    return sumOfBytes < fiveMegaBytes;
+  };
+}
+
 module.exports = function getRecords(store, data, cb) {
 
   var metaDb = store.metaDb, shardIx, shardId, iteratorTime, streamName, seqNo, seqObj, pieces,
@@ -75,8 +84,10 @@ module.exports = function getRecords(store, data, cb) {
       lt: db.shardIxToHex(shardIx + 1),
     }
 
+    var sumOfBytes = 0
+      // The get records will return a maximum of 5MB or 10,000 records whichever is reached first.
     db.lazy(streamDb.createReadStream(opts), cb)
-      .take(data.Limit || 10000)
+      .take(data.Limit || 10000).takeWhile(lessThanFiveMB(sumOfBytes))
       .map(function(item) {
         lastItem = item.value
         lastItem.SequenceNumber = item.key.split('/')[1]
