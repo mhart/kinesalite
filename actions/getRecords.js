@@ -5,8 +5,8 @@ var crypto = require('crypto'),
 var fiveMegaBytes = 5 * 1024 * 1024
 function lessThanFiveMB(sumOfBytes) {
   return function(item) {
-    buffer = new Buffer(item.value.Data, 'base64')
-    sumOfBytes = sumOfBytes + Buffer.byteLength(buffer.toString('ascii'))
+    // Converting the base64 size to the standard ascii size. Ignoring the '=' padding as exact 5 MB is not necessary.
+    sumOfBytes += item.value.Data.length * 0.75
     return sumOfBytes < fiveMegaBytes;
   };
 }
