@@ -5,8 +5,7 @@
   "main": "index.js",
   "bin": "cli.js",
   "scripts": {
-    "test": "mocha --require should --reporter spec -t $([ $REMOTE ] && echo 30s || echo 4s)",
-    "coverage": "istanbul cover ./node_modules/.bin/_mocha -- --require should -t 4s"
+    "test": "mocha --require should --reporter spec -t $([ $REMOTE ] && echo 30s || echo 4s)"
   },
   "repository": "mhart/kinesalite",
   "keywords": [
@@ -26,10 +25,10 @@
   "author": "Michael Hart <michael.hart.au@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "async": "^2.6.1",
-    "bignumber.js": "^8.0.2",
+    "async": "^2.6.2",
+    "bignumber.js": "^8.1.1",
     "lazy": "^1.0.11",
-    "levelup": "^4.0.0",
+    "levelup": "^4.0.1",
     "lock": "^1.1.0",
     "memdown": "^3.0.0",
     "minimist": "^1.2.0",
@@ -42,7 +41,6 @@
   },
   "devDependencies": {
     "aws4": "^1.8.0",
-    "istanbul": "^0.4.2",
     "mocha": "^5.2.0",
     "should": "^13.2.3"
   }
