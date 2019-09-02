@@ -20,7 +20,7 @@ module.exports = function createStream(store, data, cb) {
       db.sumShards(store, function(err, shardSum) {
         if (err) return cb(err)
 
-        if (shardSum + data.ShardCount > store.shardLimit) {
+        if (store.shardLimit > 0 && shardSum + data.ShardCount > store.shardLimit) {
           return cb(db.clientError('LimitExceededException',
               'This request would exceed the shard limit for the account ' + metaDb.awsAccountId + ' in ' +
               metaDb.awsRegion + '. Current shard count for the account: ' + shardSum +

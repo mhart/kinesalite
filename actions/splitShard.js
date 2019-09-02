@@ -36,7 +36,7 @@ module.exports = function splitShard(store, data, cb) {
       db.sumShards(store, function(err, shardSum) {
         if (err) return cb(err)
 
-        if (shardSum + 1 > store.shardLimit) {
+        if (store.shardLimit > 0 && shardSum + 1 > store.shardLimit) {
           return cb(db.clientError('LimitExceededException',
               'This request would exceed the shard limit for the account ' + metaDb.awsAccountId + ' in ' +
               metaDb.awsRegion + '. Current shard count for the account: ' + shardSum +
