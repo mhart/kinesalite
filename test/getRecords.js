@@ -302,73 +302,75 @@ describe('getRecords', function() {
         if (err) return done(err)
         res.statusCode.should.equal(200)
 
-        var secondInsertSeconds = new Date().getTime() / 1000;
+        setTimeout(function() {
+          var secondInsertSeconds = new Date().getTime() / 1000
 
-        var hashKey1 = new BigNumber(2).pow(128).minus(1).toFixed(),
-          hashKey2 = new BigNumber(2).pow(128).div(3).integerValue(BigNumber.ROUND_FLOOR).times(2).minus(1).toFixed(),
-          hashKey3 = new BigNumber(2).pow(128).div(3).integerValue(BigNumber.ROUND_FLOOR).times(2).toFixed(),
-          records2 = [
-            {PartitionKey: 'a', Data: crypto.randomBytes(10).toString('base64')},
-            {PartitionKey: 'b', Data: crypto.randomBytes(10).toString('base64')},
-            {PartitionKey: 'e', Data: crypto.randomBytes(10).toString('base64')},
-            {PartitionKey: 'f', Data: crypto.randomBytes(10).toString('base64')},
-            {PartitionKey: 'a', Data: crypto.randomBytes(10).toString('base64'), ExplicitHashKey: hashKey1},
-            {PartitionKey: 'a', Data: crypto.randomBytes(10).toString('base64'), ExplicitHashKey: hashKey2},
-            {PartitionKey: 'a', Data: crypto.randomBytes(10).toString('base64'), ExplicitHashKey: hashKey3},
-          ]
+          var hashKey1 = new BigNumber(2).pow(128).minus(1).toFixed(),
+            hashKey2 = new BigNumber(2).pow(128).div(3).integerValue(BigNumber.ROUND_FLOOR).times(2).minus(1).toFixed(),
+            hashKey3 = new BigNumber(2).pow(128).div(3).integerValue(BigNumber.ROUND_FLOOR).times(2).toFixed(),
+            records2 = [
+              {PartitionKey: 'a', Data: crypto.randomBytes(10).toString('base64')},
+              {PartitionKey: 'b', Data: crypto.randomBytes(10).toString('base64')},
+              {PartitionKey: 'e', Data: crypto.randomBytes(10).toString('base64')},
+              {PartitionKey: 'f', Data: crypto.randomBytes(10).toString('base64')},
+              {PartitionKey: 'a', Data: crypto.randomBytes(10).toString('base64'), ExplicitHashKey: hashKey1},
+              {PartitionKey: 'a', Data: crypto.randomBytes(10).toString('base64'), ExplicitHashKey: hashKey2},
+              {PartitionKey: 'a', Data: crypto.randomBytes(10).toString('base64'), ExplicitHashKey: hashKey3},
+            ]
 
-        request(helpers.opts('PutRecords', {StreamName: helpers.testStream, Records: records2}), function(err, res) {
-          if (err) return done(err)
-          res.statusCode.should.equal(200)
-          var recordsPut2 = res.body.Records
-
-          request(helpers.opts('GetShardIterator', {
-            StreamName: helpers.testStream,
-            ShardId: 'shardId-1',
-            ShardIteratorType: 'AT_TIMESTAMP',
-            Timestamp: secondInsertSeconds
-          }), function(err, res) {
+          request(helpers.opts('PutRecords', {StreamName: helpers.testStream, Records: records2}), function(err, res) {
             if (err) return done(err)
             res.statusCode.should.equal(200)
+            var recordsPut2 = res.body.Records
 
-            var shardIterator = res.body.ShardIterator
-
-            request(opts({ShardIterator: shardIterator}), function(err, res) {
+            request(helpers.opts('GetShardIterator', {
+              StreamName: helpers.testStream,
+              ShardId: 'shardId-1',
+              ShardIteratorType: 'AT_TIMESTAMP',
+              Timestamp: secondInsertSeconds,
+            }), function(err, res) {
               if (err) return done(err)
               res.statusCode.should.equal(200)
 
-              delete res.body.MillisBehindLatest
+              var shardIterator = res.body.ShardIterator
 
-              helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
-              delete res.body.NextShardIterator
+              request(opts({ShardIterator: shardIterator}), function(err, res) {
+                if (err) return done(err)
+                res.statusCode.should.equal(200)
 
-              helpers.assertArrivalTimes(res.body.Records)
-              res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
+                delete res.body.MillisBehindLatest
 
-              res.body.should.eql({
-                Records: [
-                  {
-                    PartitionKey: records2[1].PartitionKey,
-                    Data: records2[1].Data,
-                    SequenceNumber: recordsPut2[1].SequenceNumber,
-                  },
-                  {
-                    PartitionKey: records2[3].PartitionKey,
-                    Data: records2[3].Data,
-                    SequenceNumber: recordsPut2[3].SequenceNumber,
-                  },
-                  {
-                    PartitionKey: records2[5].PartitionKey,
-                    Data: records2[5].Data,
-                    SequenceNumber: recordsPut2[5].SequenceNumber,
-                  },
-                ],
+                helpers.assertShardIterator(res.body.NextShardIterator, helpers.testStream)
+                delete res.body.NextShardIterator
+
+                helpers.assertArrivalTimes(res.body.Records)
+                res.body.Records.forEach(function(record) { delete record.ApproximateArrivalTimestamp })
+
+                res.body.should.eql({
+                  Records: [
+                    {
+                      PartitionKey: records2[1].PartitionKey,
+                      Data: records2[1].Data,
+                      SequenceNumber: recordsPut2[1].SequenceNumber,
+                    },
+                    {
+                      PartitionKey: records2[3].PartitionKey,
+                      Data: records2[3].Data,
+                      SequenceNumber: recordsPut2[3].SequenceNumber,
+                    },
+                    {
+                      PartitionKey: records2[5].PartitionKey,
+                      Data: records2[5].Data,
+                      SequenceNumber: recordsPut2[5].SequenceNumber,
+                    },
+                  ],
+                })
+
+                done()
               })
-
-              done()
             })
           })
-        })
+        }, 1)
       })
     })
 
