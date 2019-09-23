@@ -4,7 +4,7 @@ var https = require('https'),
     path = require('path'),
     url = require('url'),
     crypto = require('crypto'),
-    uuid = require('node-uuid'),
+    uuid = require('uuid'),
     validations = require('./validations'),
     db = require('./db')
 
