@@ -302,7 +302,7 @@ describe('getRecords', function() {
         if (err) return done(err)
         res.statusCode.should.equal(200)
 
-        var secondInsertSeconds = new Date().getTime() / 1000;
+        var secondInsertSeconds
 
         var hashKey1 = new BigNumber(2).pow(128).minus(1).toFixed(),
           hashKey2 = new BigNumber(2).pow(128).div(3).integerValue(BigNumber.ROUND_FLOOR).times(2).minus(1).toFixed(),
@@ -317,7 +317,16 @@ describe('getRecords', function() {
             {PartitionKey: 'a', Data: crypto.randomBytes(10).toString('base64'), ExplicitHashKey: hashKey3},
           ]
 
-        request(helpers.opts('PutRecords', {StreamName: helpers.testStream, Records: records2}), function(err, res) {
+        var secondInsert = function(cb) {
+          secondInsertSeconds = new Date().getTime() / 1000
+          request(helpers.opts('PutRecords', {StreamName: helpers.testStream, Records: records2}), cb)
+        }
+        // We need to ensure we're at least a millisecond after the last PutRecords
+        var secondInsertWithDelay = function(cb) {
+          setTimeout(function() { secondInsert(cb) }, 1)
+        }
+
+        secondInsertWithDelay(function(err, res) {
           if (err) return done(err)
           res.statusCode.should.equal(200)
           var recordsPut2 = res.body.Records
@@ -326,7 +335,7 @@ describe('getRecords', function() {
             StreamName: helpers.testStream,
             ShardId: 'shardId-1',
             ShardIteratorType: 'AT_TIMESTAMP',
-            Timestamp: secondInsertSeconds
+            Timestamp: secondInsertSeconds,
           }), function(err, res) {
             if (err) return done(err)
             res.statusCode.should.equal(200)
