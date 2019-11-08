@@ -13,6 +13,8 @@ module.exports = function describeStreamSummary(store, data, cb) {
     delete stream.Shards
     delete stream.HasMoreShards
 
+    stream.ConsumerCount = 0
+
     cb(null, {StreamDescriptionSummary: stream})
   })
 }

@@ -58,10 +58,9 @@ describe('describeStreamSummary', function() {
       request(opts({StreamName: helpers.testStream}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
-        var createTime = Date.now() / 1000
 
-        res.body.StreamDescriptionSummary.StreamCreationTimestamp.should.be.above(createTime - 10)
-        res.body.StreamDescriptionSummary.StreamCreationTimestamp.should.be.below(createTime + 10)
+        res.body.StreamDescriptionSummary.StreamCreationTimestamp.should.be.above(0)
+        res.body.StreamDescriptionSummary.StreamCreationTimestamp.should.be.below(Date.now() / 1000)
         delete res.body.StreamDescriptionSummary.StreamCreationTimestamp
 
         res.body.should.eql({
@@ -74,6 +73,7 @@ describe('describeStreamSummary', function() {
             EncryptionType: 'NONE',
             EnhancedMonitoring: [{ShardLevelMetrics: []}],
             OpenShardCount: 3,
+            ConsumerCount: 0,
           },
         })
 
