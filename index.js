@@ -175,9 +175,9 @@ function httpHandler(store, req, res) {
     if (typeof data != 'object' || data == null) {
       if (contentType == 'application/json') {
         return sendJson(req, res, {
-          Output: {__type: 'com.amazon.coral.service#SerializationException', Message: null},
+          Output: {__type: 'com.amazon.coral.service#SerializationException'},
           Version: '1.0',
-        }, 200)
+        }, 400)
       }
       return sendResponse(req, res, {__type: 'SerializationException'}, 400)
     }
@@ -185,9 +185,9 @@ function httpHandler(store, req, res) {
     // After this point, application/json doesn't seem to progress any further
     if (contentType == 'application/json') {
       return sendJson(req, res, {
-        Output: {__type: 'com.amazon.coral.service#UnknownOperationException', message: null},
+        Output: {__type: 'com.amazon.coral.service#UnknownOperationException'},
         Version: '1.0',
-      }, 200)
+      }, 404)
     }
 
     if (!serviceValid || !operationValid) {

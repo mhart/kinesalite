@@ -18,15 +18,7 @@ function assertBody(statusCode, contentType, body, done) {
     } else {
       res.headers.should.not.have.property('content-type')
     }
-    if (!Buffer.isBuffer(res.body)) {
-      if (contentType == AMZ_CBOR) {
-        res.body = cbor.Encoder.encodeOne(res.body)
-      } else if (typeof res.body != 'string') {
-        res.body = JSON.stringify(res.body)
-      }
-      res.body = Buffer.from(res.body, 'utf8')
-    }
-    res.headers['content-length'].should.equal(String(res.body.length))
+    res.headers['content-length'].should.equal(String(res.rawBody.length))
     res.headers['x-amzn-requestid'].should.match(uuidRegex)
     Buffer.from(res.headers['x-amz-id-2'], 'base64').length.should.be.within(64, 80)
     done()
@@ -86,8 +78,8 @@ function assertUnknownCbor(done) {
 }
 
 function assertUnknownDeprecated(done) {
-  return assertBody(200, 'application/json', {
-    Output: {__type: 'com.amazon.coral.service#UnknownOperationException', message: null},
+  return assertBody(404, 'application/json', {
+    Output: {__type: 'com.amazon.coral.service#UnknownOperationException'},
     Version: '1.0',
   }, done)
 }
@@ -101,8 +93,8 @@ function assertSerializationCbor(done) {
 }
 
 function assertSerializationDeprecated(done) {
-  return assertBody(200, 'application/json', {
-    Output: {__type: 'com.amazon.coral.service#SerializationException', Message: null},
+  return assertBody(400, 'application/json', {
+    Output: {__type: 'com.amazon.coral.service#SerializationException'},
     Version: '1.0',
   }, done)
 }

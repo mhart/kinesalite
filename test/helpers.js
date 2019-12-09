@@ -79,12 +79,12 @@ function request(options, cb) {
     var chunks = []
     res.on('data', function(chunk) { chunks.push(chunk) })
     res.on('end', function() {
-      res.body = Buffer.concat(chunks)
+      res.rawBody = Buffer.concat(chunks)
       if ((res.headers['content-type'] || '').indexOf('application/x-amz-cbor') !== 0) {
-        res.body = res.body.toString('utf8')
+        res.body = res.rawBody.toString('utf8')
         try { res.body = JSON.parse(res.body) } catch (e) {} // eslint-disable-line no-empty
       } else {
-        try { res.body = cbor.Decoder.decodeFirstSync(res.body) } catch (e) {} // eslint-disable-line no-empty
+        try { res.body = cbor.Decoder.decodeFirstSync(res.rawBody) } catch (e) {} // eslint-disable-line no-empty
       }
       if (res.body.__type == 'LimitExceededException' && /^Rate exceeded/.test(res.body.message))
         return setTimeout(request, Math.floor(Math.random() * 1000), options, cb)
