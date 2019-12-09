@@ -336,7 +336,7 @@ function assertSequenceNumber(seqNum, shardIx, timestamp) {
 }
 
 function assertShardIterator(shardIterator, streamName) {
-  var buffer = new Buffer(shardIterator, 'base64')
+  var buffer = Buffer.from(shardIterator, 'base64')
   shardIterator.should.equal(buffer.toString('base64'))
   var lengthMod16 = (buffer.length - 152) % 16
   lengthMod16.should.equal(0)

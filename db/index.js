@@ -21,6 +21,10 @@ exports.partitionKeyToHashKey = partitionKeyToHashKey
 exports.createShardIterator = createShardIterator
 exports.sumShards = sumShards
 exports.ITERATOR_PWD = 'kinesalite'
+// see https://github.com/nodejs/node/issues/16746#issuecomment-348027003
+exports.ITERATOR_PWD_KEY = Buffer.from('1133a5a833666b49abf28c8ba302930f0b2fb240dccd43cf4dfbc0ca91f17751', 'hex')
+exports.ITERATOR_PWD_IV = Buffer.from('7bf139dbabbea2d9995d6fcae1dff7da', 'hex')
+
 
 function create(options) {
   options = options || {}
@@ -253,9 +257,9 @@ function createShardIterator(streamName, shardId, seq) {
       seq,
       new Array(37).join('0'), // Not entirely sure what would be making up all this data in production
     ].join('/'),
-    cipher = crypto.createCipher('aes-256-cbc', exports.ITERATOR_PWD),
+    cipher = crypto.createCipheriv('aes-256-cbc', exports.ITERATOR_PWD_KEY, exports.ITERATOR_PWD_IV)
     buffer = Buffer.concat([
-      new Buffer([0, 0, 0, 0, 0, 0, 0, 1]),
+      Buffer.from([0, 0, 0, 0, 0, 0, 0, 1]),
       cipher.update(encryptStr, 'utf8'),
       cipher.final(),
     ])

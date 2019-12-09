@@ -93,7 +93,7 @@ function checkTypes(data, types) {
           throw typeError('\'' + val + '\' can not be converted to a Blob: ' +
             'Invalid Base64 character: \'' + match[0][0] + '\'')
         // TODO: need a better check than this...
-        if (new Buffer(val, 'base64').toString('base64') != val)
+        if (Buffer.from(val, 'base64').toString('base64') != val)
           throw typeError('\'' + val + '\' can not be converted to a Blob: ' +
             'Invalid last non-pad Base64 character dectected')
         return val
@@ -225,13 +225,13 @@ validateFns.regex = function(parent, key, pattern, data, type, memberStr, errors
   validate(RegExp('^' + pattern + '$').test(data), 'Member must satisfy regular expression pattern: ' + pattern, data, type, memberStr, parent, key, errors)
 }
 validateFns.lengthGreaterThanOrEqual = function(parent, key, val, data, type, memberStr, errors) {
-  if (type == 'Blob') data = new Buffer(data, 'base64')
+  if (type == 'Blob') data = Buffer.from(data, 'base64')
   var length = (typeof data == 'object' && !Array.isArray(data) && !Buffer.isBuffer(data)) ?
     Object.keys(data).length : data.length
   validate(length >= val, 'Member must have length greater than or equal to ' + val, data, type, memberStr, parent, key, errors)
 }
 validateFns.lengthLessThanOrEqual = function(parent, key, val, data, type, memberStr, errors) {
-  if (type == 'Blob') data = new Buffer(data, 'base64')
+  if (type == 'Blob') data = Buffer.from(data, 'base64')
   var length = (typeof data == 'object' && !Array.isArray(data) && !Buffer.isBuffer(data)) ?
     Object.keys(data).length : data.length
   validate(length <= val, 'Member must have length less than or equal to ' + val, data, type, memberStr, parent, key, errors)
@@ -274,7 +274,7 @@ function valueStr(data, type, memberStr) {
   if (data == null) return 'null'
   switch (type) {
     case 'Blob':
-      var length = new Buffer(data, 'base64').length
+      var length = Buffer.from(data, 'base64').length
       return 'java.nio.HeapByteBuffer[pos=0 lim=' + length + ' cap=' + length + ']'
     case 'List':
       return '[' + data.map(function(item) { return memberStr || item }).join(', ') + ']'

@@ -67,7 +67,7 @@ describe('putRecord ', function() {
 
     it('should return ValidationException for long StreamName', function(done) {
       var name = new Array(129 + 1).join('a'), name2 = new Array(257 + 1).join('a'),
-        data = new Buffer(1048577).toString('base64')
+        data = Buffer.allocUnsafe(1048577).toString('base64')
       assertValidation({StreamName: name, PartitionKey: name2, Data: data, ExplicitHashKey: ''}, [
         'Value \'' + name2 + '\' at \'partitionKey\' failed to satisfy constraint: ' +
         'Member must have length less than or equal to 256',
@@ -171,7 +171,7 @@ describe('putRecord ', function() {
     })
 
     it('should work with large Data', function(done) {
-      var now = Date.now(), data = new Buffer(51200).toString('base64')
+      var now = Date.now(), data = Buffer.allocUnsafe(51200).toString('base64')
       request(opts({StreamName: helpers.testStream, PartitionKey: 'a', Data: data}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)

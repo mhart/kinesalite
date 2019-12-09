@@ -5,8 +5,8 @@ var crypto = require('crypto'),
 module.exports = function getRecords(store, data, cb) {
 
   var metaDb = store.metaDb, shardIx, shardId, iteratorTime, streamName, seqNo, seqObj, pieces,
-    buffer = new Buffer(data.ShardIterator, 'base64'), now = Date.now(),
-    decipher = crypto.createDecipher('aes-256-cbc', db.ITERATOR_PWD)
+    buffer = Buffer.from(data.ShardIterator, 'base64'), now = Date.now(),
+    decipher = crypto.createDecipheriv('aes-256-cbc', db.ITERATOR_PWD_KEY, db.ITERATOR_PWD_IV)
 
   if (buffer.length < 152 || buffer.length > 280 || buffer.toString('base64') != data.ShardIterator)
     return cb(invalidShardIterator())
