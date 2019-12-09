@@ -9,7 +9,7 @@ module.exports = function listShards(store, data, cb) {
     return cb(db.clientError('InvalidArgumentException', 'NextToken and StreamName cannot be provided together.'))
   }
 
-  //TODO get stream according to the given input [NextToken|StreamCreationTimestamp|StreamName]
+  // TODO get stream according to the given input [NextToken|StreamCreationTimestamp|StreamName]
   store.getStream(data.StreamName, function(err, stream) {
     if (err) return cb(err)
 

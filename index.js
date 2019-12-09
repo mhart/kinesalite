@@ -4,7 +4,7 @@ var https = require('https'),
     path = require('path'),
     url = require('url'),
     crypto = require('crypto'),
-    cbor = require('cbor')
+    cbor = require('cbor'),
     uuid = require('uuid'),
     validations = require('./validations'),
     db = require('./db')
@@ -79,7 +79,7 @@ function sendJson(req, res, data, statusCode) {
 
 function sendCbor(req, res, data, statusCode) {
   var body = data != null ? cbor.Encoder.encodeOne(data) : ''
-  res.setHeader('Content-Type', res.contentType);
+  res.setHeader('Content-Type', res.contentType)
   sendRaw(req, res, body, statusCode)
 }
 
@@ -151,11 +151,7 @@ function httpHandler(store, req, res) {
     // THEN if the method and content-type are ok, see if the JSON parses:
 
     if (!body) {
-      if (contentType == AMZ_JSON) {
-        res.contentType = AMZ_JSON;
-      } else {
-        res.contentType = AMZ_CBOR;
-      }
+      res.contentType = contentType == AMZ_JSON ? AMZ_JSON : AMZ_CBOR
       return sendResponse(req, res, {__type: serviceValid && operationValid ? 'SerializationException' : 'UnknownOperationException'}, 400)
     }
 

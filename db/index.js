@@ -33,7 +33,7 @@ function create(options) {
       metaDb = sub(db, 'meta', {valueEncoding: 'json'}),
       streamDbs = []
 
-  metaDb.lock = lock.Lock()
+  metaDb.lock = lock.Lock() // eslint-disable-line new-cap
 
   // XXX: Is there a better way to get this?
   metaDb.awsAccountId = (process.env.AWS_ACCOUNT_ID || '0000-0000-0000').replace(/[^\d]/g, '')
@@ -42,7 +42,7 @@ function create(options) {
   function getStreamDb(name) {
     if (!streamDbs[name]) {
       streamDbs[name] = sub(db, 'stream-' + name, {valueEncoding: 'json'})
-      streamDbs[name].lock = lock.Lock()
+      streamDbs[name].lock = lock.Lock() // eslint-disable-line new-cap
     }
     return streamDbs[name]
   }
