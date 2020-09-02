@@ -1,8 +1,7 @@
-var BigNumber = require('bignumber.js'),
-    db = require('../db')
+let db = require('../db'),
+    createShards = require('./util.createShards')
 
-var POW_128 = new BigNumber(2).pow(128),
-    SEQ_ADJUST_MS = 2000
+let SEQ_ADJUST_MS = 2000
 
 module.exports = function createStream(store, data, cb) {
 
@@ -30,20 +29,7 @@ module.exports = function createStream(store, data, cb) {
               'for current limits and how to request higher limits.'))
         }
 
-        var i, shards = new Array(data.ShardCount), shardHash = POW_128.div(data.ShardCount).integerValue(BigNumber.ROUND_FLOOR),
-          createTime = Date.now() - SEQ_ADJUST_MS, stream
-        for (i = 0; i < data.ShardCount; i++) {
-          shards[i] = {
-            HashKeyRange: {
-              StartingHashKey: shardHash.times(i).toFixed(),
-              EndingHashKey: (i < data.ShardCount - 1 ? shardHash.times(i + 1) : POW_128).minus(1).toFixed(),
-            },
-            SequenceNumberRange: {
-              StartingSequenceNumber: db.stringifySequence({shardCreateTime: createTime, shardIx: i}),
-            },
-            ShardId: db.shardIdName(i),
-          }
-        }
+        let createTime = Date.now() - SEQ_ADJUST_MS, stream
         stream = {
           RetentionPeriodHours: 24,
           EnhancedMonitoring: [{ShardLevelMetrics: []}],
@@ -58,6 +44,7 @@ module.exports = function createStream(store, data, cb) {
           _tags: Object.create(null), // Hidden data, remove when returning
         }
 
+        let shards = createShards(data.ShardCount)
         metaDb.put(key, stream, function(err) {
           if (err) return cb(err)
 

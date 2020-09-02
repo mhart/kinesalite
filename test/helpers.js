@@ -32,6 +32,8 @@ exports.randomName = randomName
 exports.waitUntilActive = waitUntilActive
 exports.waitUntilDeleted = waitUntilDeleted
 exports.testStream = randomName()
+exports.createTestStreams = createTestStreams
+exports.deleteTestStreams = deleteTestStreams
 // For testing:
 // exports.testStream = '__kinesalite_test_1'
 
@@ -40,7 +42,7 @@ var port = 10000 + Math.round(Math.random() * 10000),
       {host: 'kinesis.' + exports.awsRegion + '.amazonaws.com', method: 'POST', ssl: true} :
       {host: '127.0.0.1', port: port, method: 'POST'}
 
-var kinesaliteServer = kinesalite({path: process.env.KINESALITE_PATH})
+var kinesaliteServer = kinesalite({path: process.env.KINESALITE_PATH, shardLimit: exports.shardLimit})
 
 before(function(done) {
   this.timeout(200000)

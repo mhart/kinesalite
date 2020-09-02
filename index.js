@@ -17,7 +17,7 @@ var AMZ_CBOR = 'application/x-amz-cbor-1.1'
 var validApis = ['Kinesis_20131202'],
     validOperations = ['AddTagsToStream', 'CreateStream', 'DeleteStream', 'DescribeStream', 'DescribeStreamSummary',
       'GetRecords', 'GetShardIterator', 'ListShards', 'ListStreams', 'ListTagsForStream', 'MergeShards', 'PutRecord',
-      'PutRecords', 'RemoveTagsFromStream', 'SplitShard', 'IncreaseStreamRetentionPeriod', 'DecreaseStreamRetentionPeriod'],
+      'PutRecords', 'RemoveTagsFromStream', 'SplitShard', 'IncreaseStreamRetentionPeriod', 'DecreaseStreamRetentionPeriod', 'UpdateShardCount'],
     actions = {},
     actionValidations = {}
 
