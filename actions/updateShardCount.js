@@ -89,7 +89,8 @@ module.exports = function UpdateShardCount(store, data, cb) {
 
           }, store.updateStreamMs)
 
-          cb(null, { StreamName: key, CurrentShardCount: shardSum, TargetShardCount: data.TargetShardCount })
+          let currentShardCount = stream.Shards.length
+          cb(null, { StreamName: key, CurrentShardCount: currentShardCount, TargetShardCount: data.TargetShardCount })
         })
       })
     })
