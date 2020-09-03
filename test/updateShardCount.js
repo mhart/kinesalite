@@ -175,7 +175,9 @@ describe('updateShardCount', function() {
             if (err) return done(err)
 
             res.statusCode.should.equal(200)
-            res.body.should.equal('')
+            res.body.StreamName.should.equal(stream.StreamName)
+            res.body.CurrentShardCount.should.equal(2)
+            res.body.TargetShardCount.should.equal(4)
 
             request(helpers.opts('DescribeStream', stream), function(err, res) {
 
