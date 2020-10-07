@@ -1,6 +1,7 @@
 var crypto = require('crypto'),
     BigNumber = require('bignumber.js'),
-    helpers = require('./helpers')
+    helpers = require('./helpers'),
+    async = require('async')
 
 var target = 'GetRecords',
     request = helpers.request,
@@ -177,7 +178,41 @@ describe('getRecords', function() {
     })
   })
 
+  var getRecordsWithIterator = function(it, rs, callback) {
+      request(helpers.opts('GetRecords', {ShardIterator: it}),
+              function(err, res) {
+                  datas = res.body.Records.map(function(r) { return r.Data; });
+                  callback(err,
+                          {it: res.body.NextShardIterator, rs: rs.concat(datas)});
+              });
+  };
+
   describe('functionality', function() {
+
+    it('next shard iterator doesnt return duplicate of the same record', function(done) {
+        var stream = helpers.testStream
+        var record = {StreamName: stream, PartitionKey: 'a', Data: crypto.randomBytes(128).toString('base64')};
+        var shard = 'shardId-0';
+        request(helpers.opts('PutRecord', record), function(err, res) {
+            if(err) return done(err);
+            request(helpers.opts('GetShardIterator', {
+                StreamName: stream,
+                ShardId: shard,
+                ShardIteratorType: 'TRIM_HORIZON'
+            }), function(err, res) {
+                if(err) return done(err);
+                async.reduce([1,2,3,4,5], {rs: [], it: res.body.ShardIterator},
+                        function(acc, i, callback) {
+                            getRecordsWithIterator(acc.it, acc.rs, callback);
+                        },
+                        function(err, res) {
+                            if(err) return done(err);
+                            res.rs.should.eql([record.Data])
+                            done();
+                        });
+            });
+        });
+    });
 
     it('should return correct AT_SEQUENCE_NUMBER and AFTER_SEQUENCE_NUMBER records', function(done) {
       var hashKey1 = new BigNumber(2).pow(128).minus(1).toFixed(),
