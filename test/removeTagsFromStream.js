@@ -82,32 +82,32 @@ describe('removeTagsFromStream', function() {
     it('should return InvalidArgumentException if ; in TagKeys', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, TagKeys: ['abc;def']},
         'Some tags contain invalid characters. Valid characters: ' +
-        'Unicode letters, digits, white space, _ . / = + - % @.', done)
+        'Unicode letters, digits, white space, _ . / = + - % @ :.', done)
     })
 
     it('should return InvalidArgumentException if tab in TagKeys', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, TagKeys: ['abc\tdef']},
         'Some tags contain invalid characters. Valid characters: ' +
-        'Unicode letters, digits, white space, _ . / = + - % @.', done)
+        'Unicode letters, digits, white space, _ . / = + - % @ :.', done)
     })
 
     it('should return InvalidArgumentException if newline in TagKeys', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, TagKeys: ['abc\ndef']},
         'Some tags contain invalid characters. Valid characters: ' +
-        'Unicode letters, digits, white space, _ . / = + - % @.', done)
+        'Unicode letters, digits, white space, _ . / = + - % @ :.', done)
     })
 
     it('should return InvalidArgumentException if comma in TagKeys', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, TagKeys: ['abc,def']},
         'Some tags contain invalid characters. Valid characters: ' +
-        'Unicode letters, digits, white space, _ . / = + - % @.', done)
+        'Unicode letters, digits, white space, _ . / = + - % @ :.', done)
     })
 
     it('should return InvalidArgumentException if % in TagKeys', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, TagKeys: ['abc%def']},
         'Failed to remove tags from stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
         ' because some tags contained illegal characters. The allowed characters are ' +
-        'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'@\'.', done)
+        'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'@\',\':\'.', done)
     })
 
   })
@@ -115,7 +115,7 @@ describe('removeTagsFromStream', function() {
   describe('functionality', function() {
 
     it('should succeed if valid characters in tag keys', function(done) {
-      request(opts({StreamName: helpers.testStream, TagKeys: ['ü0 _.', '/=+-@']}), function(err, res) {
+      request(opts({StreamName: helpers.testStream, TagKeys: ['ü0 _.', '/=+-@:']}), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
         res.body.should.equal('')
@@ -126,7 +126,7 @@ describe('removeTagsFromStream', function() {
     it('should add and remove tags keys', function(done) {
       request(helpers.opts('AddTagsToStream', {
         StreamName: helpers.testStream,
-        Tags: {a: 'a', 'ü0 _.': 'a', '/=+-@': 'a'},
+        Tags: {a: 'a', 'ü0 _.': 'a', '/=+-@:': 'a'},
       }), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
@@ -136,9 +136,9 @@ describe('removeTagsFromStream', function() {
           res.statusCode.should.equal(200)
           res.body.Tags.should.containEql({Key: 'a', Value: 'a'})
           res.body.Tags.should.containEql({Key: 'ü0 _.', Value: 'a'})
-          res.body.Tags.should.containEql({Key: '/=+-@', Value: 'a'})
+          res.body.Tags.should.containEql({Key: '/=+-@:', Value: 'a'})
 
-          request(opts({StreamName: helpers.testStream, TagKeys: ['ü0 _.', '/=+-@', 'b', 'c']}), function(err, res) {
+          request(opts({StreamName: helpers.testStream, TagKeys: ['ü0 _.', '/=+-@:', 'b', 'c']}), function(err, res) {
             if (err) return done(err)
             res.statusCode.should.equal(200)
             res.body.should.equal('')
@@ -148,7 +148,7 @@ describe('removeTagsFromStream', function() {
               res.statusCode.should.equal(200)
               res.body.Tags.should.containEql({Key: 'a', Value: 'a'})
               res.body.Tags.should.not.containEql({Key: 'ü0 _.', Value: 'a'})
-              res.body.Tags.should.not.containEql({Key: '/=+-@', Value: 'a'})
+              res.body.Tags.should.not.containEql({Key: '/=+-@:', Value: 'a'})
 
               request(opts({StreamName: helpers.testStream, TagKeys: ['a']}), done)
             })
