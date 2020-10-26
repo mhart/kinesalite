@@ -93,63 +93,63 @@ describe('addTagsToStream', function() {
     it('should return InvalidArgumentException if ; in tag key', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, Tags: {'abc;def': '1'}},
         'Some tags contain invalid characters. Valid characters: ' +
-        'Unicode letters, digits, white space, _ . / = + - % @.', done)
+        'Unicode letters, digits, white space, _ . / = + - % @ :.', done)
     })
 
     it('should return InvalidArgumentException if tab in tag key', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, Tags: {'abc\tdef': '1'}},
         'Some tags contain invalid characters. Valid characters: ' +
-        'Unicode letters, digits, white space, _ . / = + - % @.', done)
+        'Unicode letters, digits, white space, _ . / = + - % @ :.', done)
     })
 
     it('should return InvalidArgumentException if newline in tag key', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, Tags: {'abc\ndef': '1'}},
         'Some tags contain invalid characters. Valid characters: ' +
-        'Unicode letters, digits, white space, _ . / = + - % @.', done)
+        'Unicode letters, digits, white space, _ . / = + - % @ :.', done)
     })
 
     it('should return InvalidArgumentException if comma in tag key', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, Tags: {'abc,def': '1'}},
         'Some tags contain invalid characters. Valid characters: ' +
-        'Unicode letters, digits, white space, _ . / = + - % @.', done)
+        'Unicode letters, digits, white space, _ . / = + - % @ :.', done)
     })
 
     it('should return InvalidArgumentException if % in tag key', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, Tags: {'abc%def': '1'}},
         'Failed to add tags to stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
         ' because some tags contained illegal characters. The allowed characters are ' +
-        'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'@\'.', done)
+        'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'@\',\':\'.', done)
     })
 
     it('should return InvalidArgumentException if ; in tag value', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, Tags: {a: 'abc;def'}},
         'Some tags contain invalid characters. Valid characters: ' +
-        'Unicode letters, digits, white space, _ . / = + - % @.', done)
+        'Unicode letters, digits, white space, _ . / = + - % @ :.', done)
     })
 
     it('should return InvalidArgumentException if tab in tag value', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, Tags: {a: 'abc\tdef'}},
         'Some tags contain invalid characters. Valid characters: ' +
-        'Unicode letters, digits, white space, _ . / = + - % @.', done)
+        'Unicode letters, digits, white space, _ . / = + - % @ :.', done)
     })
 
     it('should return InvalidArgumentException if newline in tag value', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, Tags: {a: 'abc\ndef'}},
         'Some tags contain invalid characters. Valid characters: ' +
-        'Unicode letters, digits, white space, _ . / = + - % @.', done)
+        'Unicode letters, digits, white space, _ . / = + - % @ :.', done)
     })
 
     it('should return InvalidArgumentException if comma in tag value', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, Tags: {a: 'abc,def'}},
         'Some tags contain invalid characters. Valid characters: ' +
-        'Unicode letters, digits, white space, _ . / = + - % @.', done)
+        'Unicode letters, digits, white space, _ . / = + - % @ :.', done)
     })
 
     it('should return InvalidArgumentException if % in tag value', function(done) {
       assertInvalidArgument({StreamName: helpers.testStream, Tags: {a: 'abc%def'}},
         'Failed to add tags to stream ' + helpers.testStream + ' under account ' + helpers.awsAccountId +
         ' because some tags contained illegal characters. The allowed characters are ' +
-        'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'@\'.', done)
+        'Unicode letters, white-spaces, \'_\',\',\',\'/\',\'=\',\'+\',\'-\',\'@\',\':\'.', done)
     })
 
   })
@@ -159,7 +159,7 @@ describe('addTagsToStream', function() {
     it('should add and remove tags keys', function(done) {
       request(opts({
         StreamName: helpers.testStream,
-        Tags: {a: 'a', 'ü0 _.': 'a', '/=+-@': 'a', b: 'ü0 _./=+-@', c: ''},
+        Tags: {a: 'a', 'ü0 _.': 'a', '/=+-@:': 'a', b: 'ü0 _./=+-@', c: ''},
       }), function(err, res) {
         if (err) return done(err)
         res.statusCode.should.equal(200)
@@ -191,7 +191,7 @@ describe('addTagsToStream', function() {
             res.statusCode.should.equal(200)
             res.body.Tags.should.containEql({Key: 'a', Value: 'a'})
             res.body.Tags.should.containEql({Key: 'ü0 _.', Value: 'a'})
-            res.body.Tags.should.containEql({Key: '/=+-@', Value: 'a'})
+            res.body.Tags.should.containEql({Key: '/=+-@:', Value: 'a'})
             res.body.Tags.should.containEql({Key: 'b', Value: 'ü0 _./=+-@'})
             res.body.Tags.should.containEql({Key: 'c', Value: ''})
 
@@ -204,7 +204,7 @@ describe('addTagsToStream', function() {
                 res.statusCode.should.equal(200)
                 res.body.Tags.should.containEql({Key: 'a', Value: 'b'})
                 res.body.Tags.should.containEql({Key: 'ü0 _.', Value: 'a'})
-                res.body.Tags.should.containEql({Key: '/=+-@', Value: 'a'})
+                res.body.Tags.should.containEql({Key: '/=+-@:', Value: 'a'})
                 res.body.Tags.should.containEql({Key: 'b', Value: 'ü0 _./=+-@'})
                 res.body.Tags.should.containEql({Key: 'c', Value: ''})
 
