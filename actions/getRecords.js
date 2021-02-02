@@ -5,7 +5,7 @@ var crypto = require('crypto'),
 module.exports = function getRecords(store, data, cb) {
 
   var metaDb = store.metaDb, shardIx, shardId, iteratorTime, streamName, seqNo, seqObj, pieces,
-    buffer = Buffer.from(data.ShardIterator, 'base64'), now = Date.now(),
+    buffer = Buffer.from(data.ShardIterator, 'base64'), now = Date.now(), clockSkewInMillis = 100,
     decipher = crypto.createDecipheriv('aes-256-cbc', db.ITERATOR_PWD_KEY, db.ITERATOR_PWD_IV)
 
   if (buffer.length < 152 || buffer.length > 280 || buffer.toString('base64') != data.ShardIterator)
@@ -32,7 +32,7 @@ module.exports = function getRecords(store, data, cb) {
   if (!/^shardId-[\d]{12}$/.test(shardId) || !(shardIx >= 0 && shardIx < 2147483648))
     return cb(invalidShardIterator())
 
-  if (!(iteratorTime > 0 && iteratorTime <= now))
+  if (!(iteratorTime > 0 && iteratorTime <= now + clockSkewInMillis))  // clock may go back between two getRecords calls
     return cb(invalidShardIterator())
 
   if (!/[a-zA-Z0-9_.-]+/.test(streamName) || !streamName.length || streamName.length > 128)
