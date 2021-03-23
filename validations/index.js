@@ -82,7 +82,9 @@ function checkTypes(data, types) {
           case 'number':
             throw typeError('class com.amazon.coral.value.json.numbers.TruncatingBigNumber can not be converted to a Blob')
           case 'object':
-            if (Buffer.isBuffer(val)) return val
+            // Blob could be a Buffer object when coming from CBOR request.
+            // Return base64-encoded string to match with the behavior of JSON requests.
+            if (Buffer.isBuffer(val)) return val.toString('base64')
             if (Array.isArray(val)) throw typeError('Start of list found where not expected')
             throw typeError('Start of structure or map found where not expected.')
         }
